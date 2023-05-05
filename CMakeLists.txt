@@ -7,4 +7,4 @@ include_directories(.)
 include_directories(src)
 
 add_executable(TicketSystem
-        src/bpt.hpp)
+        src/utility/bpt.hpp src/utility/vector.hpp src/head-files/tokenScanner.hpp src/head-files/user.hpp src/head-files/train.hpp src/head-files/releasedTrain.hpp src/head-files/transaction.hpp)
