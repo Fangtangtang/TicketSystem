@@ -4,3 +4,7 @@ Makefile
 CMakeCache.txt
 cmake_install.cmake
 .cmake/
+./code
+schedule.md
+intro.md
+data/

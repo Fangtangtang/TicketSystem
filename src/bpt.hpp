@@ -6,7 +6,7 @@
 #include <string>
 #include <queue>
 
-template<class Index, class Key, class Value>
+template<class Key, class Value, class Compare1, class Compare2>
 class BPlusTree {
 private:
     static constexpr int node_size = 200;
@@ -28,15 +28,12 @@ private:
     public:
         KeyGroup() = default;
 
-        KeyGroup(const Key &key1, const long &address) : key(key1), address(address) {}
+        KeyGroup(const Key &key1, const long &address = 0) : key(key1), address(address) {}
 
         Key GetKey() const {
             return key;
         }
 
-        Index GetIndex() const {
-            return key.GetIndex();
-        }
     };
 
     struct ValueType {
@@ -54,18 +51,34 @@ private:
     public:
         ValueType() = default;
 
-        ValueType(const Key &key1, const Value &value1) : key(key1), value(value1) {}
+        ValueType(const Key &key1, const Value &value1 = 0) : key(key1), value(value1) {}
 
         Key GetKey() const {
             return key;
         }
 
-        Index GetIndex() const {
-            return key.GetIndex();
-        }
-
         Value GetValue() const {
             return value;
+        }
+    };
+
+    struct Cmp1 {
+        bool operator()(const KeyGroup &a, const KeyGroup &b) const {
+            return compare1(a.key, b.key);
+        }
+
+        bool operator()(const ValueType &a, const ValueType &b) const {
+            return compare1(a.key, b.key);
+        }
+    };
+
+    struct Cmp2 {
+        bool operator()(const KeyGroup &a, const KeyGroup &b) const {
+            return compare2(a.key, b.key);
+        }
+
+        bool operator()(const ValueType &a, const ValueType &b) const {
+            return compare2(a.key, b.key);
         }
     };
 
@@ -137,12 +150,17 @@ private:
     Node current_node;
     Block current_block;
 
+    Cmp1 cmp1;
+    Cmp2 cmp2;
     //associated with file when construct the tree
     std::fstream r_w_tree;
     std::fstream r_w_list;
+
+    static Compare1 compare1;
+    static Compare2 compare2;
 public:
     //associate the tree with file
-    BPlusTree(const std::string &file_name, const std::string &list_name) {
+    BPlusTree(const std::string &file_name, const std::string &list_name) : cmp1(), cmp2() {
         r_w_tree.open(file_name);
 
         if (!r_w_tree.good()) {//doesn't exist
@@ -257,7 +275,8 @@ public:
             WriteBlock(new_block, root_node.key[0].address);
             return;
         }
-        InsertInNode(key, value, root_node);
+        KeyGroup target(key);
+        InsertInNode(key, target, value, root_node);
         if (root_node.size == node_size) {//root need to break
             //write son_of_root
             if (!root_node.son_is_block) {
@@ -292,7 +311,8 @@ public:
     bool Delete(const Key &key) {
         long iter = 0;
         bool adjust_flag = true;
-        bool flag = RemoveInNode(key, iter, root_node, adjust_flag);
+        KeyGroup target(key);
+        bool flag = RemoveInNode(key, target, iter, root_node, adjust_flag);
         if (root_node.size == 1) {//root need to adjust
             if (!root_node.son_is_block) {
                 //change root
@@ -310,33 +330,27 @@ public:
         return flag;
     }
 
-    //find based on key
-    std::pair<Value, bool> Find(const Key &key) {
-        current_node = root_node;//start from root
-        long iter;
-        return FindNode(key, iter);
+    void StrictFind(const Key &key) {
+        Find(key, cmp1);
     }
 
     //find based on index
-    void Find(const Index &index_of_key) {
+    template<class Compare>
+    void Find(const Key &key, Compare cmp) {
         current_node = root_node;//start from root
         long iter;
-        FindNode(index_of_key, iter);
+        KeyGroup target(key);
+        FindNode(target, iter, cmp);
     }
 
 private:
 
-    /*
-     * based on index
-     * lower_bound
-     * return -1 if exceed
-     */
     template<class Array>
-    int BinarySearch(Array array[], int l, int r, const Key &target) {
+    int BinarySearch(Array array[], int l, int r, const Array &target) {
         int mid, ans = -1;
         while (l <= r) {
             mid = (l + r) >> 1;
-            if (array[mid].GetKey() < target) {
+            if (array[mid] < target) {
                 l = mid + 1;
             } else {
                 r = mid - 1;
@@ -346,16 +360,12 @@ private:
         return ans;
     }
 
-    /*
-     * over-loaded
-     * based on index
-     */
-    template<class Array>
-    int BinarySearch(Array array[], int l, int r, const Index &target) {
+    template<class Array, class Compare>
+    int BinarySearch(Array array[], int l, int r, const Array &target, Compare cmp) {
         int mid, ans = -1;
         while (l <= r) {
             mid = (l + r) >> 1;
-            if (array[mid].GetIndex() < target) {
+            if (cmp(array[mid], target)) {
                 l = mid + 1;
             } else {
                 r = mid - 1;
@@ -390,72 +400,35 @@ private:
         r_w_list.write(reinterpret_cast<char *> (&current), sizeof(Block));
     }
 
-    void printEle(const Index &index_of_key, int index_in_block) {
+    template<class Compare>
+    void printEle(const ValueType &target, int index_in_block, Compare cmp) {
         while (index_in_block < current_block.size &&
-               current_block.storage[index_in_block].GetIndex() == index_of_key) {
+               !(cmp(current_block.storage[index_in_block], target) ||
+                 cmp(target, current_block.storage[index_in_block]))) {
             std::cout << current_block.storage[index_in_block].value << ' ';
             ++index_in_block;
         }
         if (index_in_block == current_block.size && current_block.next_block_address > 0) {
             long iter = current_block.next_block_address;
             ReadBlock(current_block, iter);
-            printEle(index_of_key, 0);
+            printEle(target, 0, cmp);
         }
     }
 
-    /*
-     * find ele based on key
-     * lower_bound index in block
-     */
-    std::pair<Value, bool> FindEle(const Key &key, long &iter) {
+    template<class Compare>
+    void FindEle(const Key &key, long &iter, Compare cmp) {
         ReadBlock(current_block, iter);
-        int index_in_block = BinarySearch(current_block.storage, 0, current_block.size - 1, key);
+        ValueType target(key);
+        int index_in_block = BinarySearch(current_block.storage, 0, current_block.size - 1, target, cmp);
         while (index_in_block == -1 && current_block.next_block_address != -1) {
             ReadBlock(current_block, current_block.next_block_address);
-            index_in_block = BinarySearch(current_block.storage, 0, current_block.size - 1, key);
+            index_in_block = BinarySearch(current_block.storage, 0, current_block.size - 1, target, cmp);
         }
-        if (current_block.storage[index_in_block].key == key)
-            return std::make_pair(current_block.storage[index_in_block].GetValue(), true);
-        else return std::make_pair(current_block.storage[index_in_block].GetValue(), false);
-    }
-
-    /*
-     * find ele based on index
-     * lower_bound index in block
-     */
-    void FindEle(const Index &index_of_key, long &iter) {
-        ReadBlock(current_block, iter);
-        int index_in_block = BinarySearch(current_block.storage, 0, current_block.size - 1, index_of_key);
-        while (index_in_block == -1 && current_block.next_block_address != -1) {
-            ReadBlock(current_block, current_block.next_block_address);
-            index_in_block = BinarySearch(current_block.storage, 0, current_block.size - 1, index_of_key);
-        }
-        if (current_block.storage[index_in_block].GetIndex() == index_of_key) {
+        if (!(cmp(current_block.storage[index_in_block], target) ||
+              cmp(target, current_block.storage[index_in_block]))) {
             //print from current, along the linked blocks
-            printEle(index_of_key, index_in_block);
+            printEle(target, index_in_block, cmp);
         } else std::cout << "null";
-    }
-
-    /*
-     * based on key
-     * recursive find the node
-     * not exist return false
-     * exist return true
-     */
-    std::pair<Value, bool> FindNode(const Key &key, long &iter) {
-        if (current_node.key[current_node.size - 1].GetKey() < key) {//exceed
-            return std::make_pair(Value(), false);
-        }
-        int index = BinarySearch(current_node.key, 0, current_node.size - 1, key);
-        iter = current_node.key[index].address;
-        //end of recursion
-        if (current_node.son_is_block) {
-            return FindEle(key, iter);
-        }
-        if (!current_node.node_type) {//is_root
-            current_node = son_of_root[index];
-        } else ReadNode(current_node, iter);
-        FindNode(key, iter);
     }
 
     /*
@@ -464,19 +437,20 @@ private:
       * not exist return false
       * exist return true
       */
-    void FindNode(const Index &index_of_key, long &iter) {
-        int index = BinarySearch(current_node.key, 0, current_node.size - 1, index_of_key);
+    template<class Compare>
+    void FindNode(const KeyGroup &target, long &iter, Compare cmp) {
+        int index = BinarySearch(current_node.key, 0, current_node.size - 1, target, cmp);
         if (index == -1) index = current_node.size - 1;
         iter = current_node.key[index].address;
         //end of recursion
         if (current_node.son_is_block) {
-            FindEle(index_of_key, iter);
+            FindEle(target.key, iter, cmp);
             return;
         }
         if (!current_node.node_type) {//is_root
             current_node = son_of_root[index];
         } else ReadNode(current_node, iter);
-        FindNode(index_of_key, iter);
+        FindNode(target, iter, cmp);
     }
 
 
@@ -527,9 +501,10 @@ private:
         ++father.size;
     }
 
-    void InsertInNode(const Key &key, const Value &value, Node &current, long iter = -1) {
+
+    void InsertInNode(const Key &key, const KeyGroup &target, const Value &value, Node &current, long iter = -1) {
         bool write_current_flag = false;//if current is changed and is not root or son_of_root
-        int index = BinarySearch(current.key, 0, current.size - 1, key);
+        int index = BinarySearch(current.key, 0, current.size - 1, target);
         if (index == -1) {
             current.key[current.size - 1].key = key;
             write_current_flag = true;
@@ -544,14 +519,14 @@ private:
             } else WriteBlock(current_block, current.key[index].address);
         } else {
             if (!current.node_type) {//is root
-                InsertInNode(key, value, son_of_root[index]);
+                InsertInNode(key, target, value, son_of_root[index]);
                 if (son_of_root[index].size == node_size) {
                     BreakNode(son_of_root[index], current, index);
                 }
             } else {
                 Node next_node;
                 ReadNode(next_node, current.key[index].address);
-                InsertInNode(key, value, next_node, current.key[index].address);
+                InsertInNode(key, target, value, next_node, current.key[index].address);
                 if (next_node.size == node_size) {
                     BreakNode(next_node, current, index);
                     if (current.node_type < 0) write_current_flag = true;
@@ -562,14 +537,14 @@ private:
     }
 
     void InsertInBlock(const Key &key, const Value &value) {
-        int index_in_block = BinarySearch(current_block.storage, 0, current_block.size - 1, key);
+        ValueType target(key, value);
+        int index_in_block = BinarySearch(current_block.storage, 0, current_block.size - 1, target);
         if (index_in_block == -1)index_in_block = current_block.size;
         else if (current_block.storage[index_in_block].key == key) return;
         for (int i = current_block.size; i > index_in_block; --i) {
             current_block.storage[i] = current_block.storage[i - 1];
         }
-        current_block.storage[index_in_block].key = key;
-        current_block.storage[index_in_block].value = value;
+        current_block.storage[index_in_block] = target;
         ++current_block.size;
     }
 
@@ -777,12 +752,12 @@ private:
      * adjust_flag==true:adjust upwards
      *              false:"stop"(node remain unchanged)
      */
-    bool RemoveInNode(const Key &key, long &iter, Node &current, bool &adjust_flag) {
+    bool RemoveInNode(const Key &key, const KeyGroup &target, long &iter, Node &current, bool &adjust_flag) {
         if (current.key[current.size - 1].GetKey() < key) {//exceed
             return false;
         }
         //the index of the section
-        int index = BinarySearch(current.key, 0, current.size - 1, key);
+        int index = BinarySearch(current.key, 0, current.size - 1, target);
         iter = current.key[index].address;
         //end of recursion
         if (current.son_is_block) {
@@ -791,13 +766,13 @@ private:
         } else {
             //next layer
             if (!current.node_type) {
-                if (!RemoveInNode(key, iter, son_of_root[index], adjust_flag))return false;
+                if (!RemoveInNode(key, target, iter, son_of_root[index], adjust_flag))return false;
                 if (adjust_flag) AdjustRemoveInNode(son_of_root[index], current, index, adjust_flag);
                 if (!adjust_flag) current.key[index].key = son_of_root[index].key[son_of_root[index].size - 1].key;
             } else {
                 Node next;
                 ReadNode(next, iter);
-                if (!RemoveInNode(key, iter, next, adjust_flag))return false;
+                if (!RemoveInNode(key, target, iter, next, adjust_flag))return false;
                 if (adjust_flag) AdjustRemoveInNode(next, current, index, adjust_flag);
                 else {
                     if (next.node_type < 0) WriteNode(next, current.key[index].address);//write back
@@ -810,7 +785,8 @@ private:
 
     bool RemoveInBlock(const Key &key, long &iter, bool &adjust_flag) {
         ReadBlock(current_block, iter);
-        int index_in_block = BinarySearch(current_block.storage, 0, current_block.size - 1, key);
+        ValueType target(key);
+        int index_in_block = BinarySearch(current_block.storage, 0, current_block.size - 1, target);
         if (current_block.storage[index_in_block].key == key) {//the ele to be removed
             --current_block.size;
             for (int i = index_in_block; i < current_block.size; ++i) {
@@ -828,4 +804,9 @@ private:
     }
 };
 
+template<class Key, class Value, class Compare1, class Compare2>
+Compare1 BPlusTree<Key, Value, Compare1, Compare2>::compare1 = Compare1();
+
+template<class Key, class Value, class Compare1, class Compare2>
+Compare2 BPlusTree<Key, Value, Compare1, Compare2>::compare2 = Compare2();
 #endif //TICKETSYSTEM_BPT_HPP
