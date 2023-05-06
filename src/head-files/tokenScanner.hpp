@@ -150,7 +150,6 @@ std::string TokenScanner::ShowRest() {
     return input.substr(tokenStart, length - tokenStart);
 }
 
-
 //private
 void TokenScanner::UpdatePos() {
     if (tokenEnd >= length - 1) {
