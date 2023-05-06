@@ -2,7 +2,7 @@
 #define TICKETSYSTEM_TOKENSCANNER_HPP
 
 #include <string>
-#include <string.h>
+#include <cstring>
 #include <cctype>
 
 class TokenScanner {
@@ -24,6 +24,9 @@ public:
 
     //下一个合法token为int
     void NextToken(int &intNum);
+
+    //下一个合法token为short
+    void NextToken(short &shortNum);
 
     //下一个合法token为double
     void NextToken(double &doubleNum);
@@ -75,7 +78,7 @@ void TokenScanner::NextToken(char *token) {
         ++tokenEnd;
         if (tokenEnd == length) break;
     }
-    str = input.substr(tokenStart, tokenEnd - tokenStart);
+    std::string str = input.substr(tokenStart, tokenEnd - tokenStart);
     strcpy(token, str.c_str());
     UpdatePos();
 }
@@ -93,6 +96,21 @@ void TokenScanner::NextToken(int &intNum) {
         }
     }
     intNum = int(num);
+    UpdatePos();
+}
+
+void TokenScanner::NextToken(short &shortNum) {
+    shortNum = 0;
+    int num = 0;
+    while (input[tokenEnd] != ' ') {
+        num *= 10;
+        if (input[tokenEnd] - '0' >= 0 && input[tokenEnd] - '0' < 10) {
+            num += (input[tokenEnd] - '0');
+            ++tokenEnd;
+            if (tokenEnd == length) break;
+        }
+    }
+    shortNum = short(num);
     UpdatePos();
 }
 
@@ -141,7 +159,7 @@ void TokenScanner::Quote(char *token) {
     while (input[tokenEnd] != '"' && input[tokenEnd] != ' ') {
         ++tokenEnd;
     }
-    str = input.substr(tokenStart, tokenEnd - tokenStart);
+    std::string str = input.substr(tokenStart, tokenEnd - tokenStart);
     strcpy(token, str.c_str());
     UpdatePos();
 }

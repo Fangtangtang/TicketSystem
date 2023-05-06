@@ -34,7 +34,7 @@ struct CompareUsername {
 };
 
 class Time {
-
+      short
 };
 
 #endif //TICKETSYSTEM_TOOL_HPP
