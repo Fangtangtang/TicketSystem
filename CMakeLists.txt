@@ -17,4 +17,4 @@ add_executable(code
         src/head-files/releasedTrain.hpp
         src/head-files/transaction.hpp
         src/head-files/waitingList.hpp
-        src/main.cpp src/head-files/loginList.hpp src/utility/map.hpp)
+        src/main.cpp src/head-files/loginList.hpp src/utility/map.hpp src/utility/tool.hpp)

@@ -14,6 +14,7 @@
 
 #include "../utility/bpt.hpp"
 #include "../utility/pair.hpp"
+#include "../utility/tool.hpp"
 #include "tokenScanner.hpp"
 
 /*
@@ -24,34 +25,6 @@
  *        Key:Username
  *        Value:int (privilege)
  */
-struct Compare;
-
-class UserSystem;
-
-class Username {
-    char username[20] = {'\0'};
-
-    friend Compare;
-
-    friend UserSystem;
-
-public:
-    Username() = default;
-
-    explicit Username(char *username_);
-
-};
-
-Username::Username(char *username_) {
-    memset(username, 0, sizeof(username));
-    strcpy(username, username_);
-}
-
-struct Compare {
-    bool operator()(const Username &a, const Username &b) const {
-        return strcmp(a.username, b.username) < 0;
-    }
-};
 
 class User {
     char password[30] = {'\0'};
@@ -105,7 +78,7 @@ User::User(char *password_, char *name_, char *mailAddr_, int privilege_ = 10) :
  */
 class UserSystem {
 private:
-    BPlusTree<Username, User, Compare, Compare> userInformation{"nodeTree_of_user", "list_of_user"};
+    BPlusTree<Username, User, CompareUsername, CompareUsername> userInformation{"nodeTree_of_user", "list_of_user"};
 
     static const char empty_str[1];
 
@@ -143,7 +116,7 @@ public:
      * return privilege if exist
      * return false if not exist or wrong password
      */
-    pair<int, bool> FindUser(TokenScanner &tokenScanner, const Username &username);
+    sjtu::pair<int, bool> FindUser(TokenScanner &tokenScanner, const Username &username);
 };
 
 const char UserSystem::empty_str[1] = {'\0'};
