@@ -67,6 +67,25 @@ public:
     void PrintInformation() {
         std::cout << name << ' ' << mailAddr << ' ' << privilege << '\n';
     }
+
+    void ModifyPassword(char *password_) {
+        memset(password, 0, sizeof(password));
+        strcpy(password, password_);
+    }
+
+    void ModifyName(char *name_) {
+        memset(name, 0, sizeof(name));
+        strcpy(name, name_);
+    }
+
+    void ModifyMailAddr(char *mailAddr_) {
+        memset(mailAddr, 0, sizeof(mailAddr));
+        strcpy(mailAddr, mailAddr_);
+    }
+
+    void ModifyPrivilege(const int privilege_) {
+        privilege = privilege_;
+    }
 };
 
 
