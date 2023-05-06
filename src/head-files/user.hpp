@@ -38,7 +38,7 @@ class Username {
 public:
     Username() = default;
 
-    Username(char *username_);
+    explicit Username(char *username_);
 
 };
 
