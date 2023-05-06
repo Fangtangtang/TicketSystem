@@ -56,9 +56,6 @@ namespace sjtu {
                 return;
             }
             std::swap(storage[Random(l, r)], storage[l]);
-//            T *at = storage[Random(l, r)];
-//            storage[Random(l, r)] = storage[l];
-//            storage[l] = at;
             T *tmp = storage[l];
             int left = l, right = r;
             do {
