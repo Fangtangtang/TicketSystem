@@ -13,6 +13,8 @@
 #define TICKETSYSTEM_USER_HPP
 
 #include "../utility/bpt.hpp"
+#include "../utility/pair.hpp"
+#include "tokenScanner.hpp"
 
 /*
  * unique identifier of user
@@ -27,7 +29,6 @@ struct Compare;
 class UserSystem;
 
 class Username {
-private:
     char username[20] = {'\0'};
 
     friend Compare;
@@ -38,6 +39,7 @@ public:
     Username() = default;
 
     Username(char *username_);
+
 };
 
 Username::Username(char *username_) {
@@ -62,7 +64,11 @@ public:
 
     User(char *password_, char *name_, char *mailAddr_, int privilege_);
 
+    void PrintInformation() {
+        std::cout << name << ' ' << mailAddr << ' ' << privilege << '\n';
+    }
 };
+
 
 User::User(char *password_, char *name_, char *mailAddr_, int privilege_ = 10) :
         privilege(privilege_) {
@@ -82,8 +88,45 @@ class UserSystem {
 private:
     BPlusTree<Username, User, Compare, Compare> userInformation{"nodeTree_of_user", "list_of_user"};
 
+    static const char empty_str[1];
+
 public:
-    
+    /*
+     * add_user
+     * return 0 if succeed
+     *      new username, lower privilege
+     * return -1 if failed
+     * special case: add the first user
+     */
+    int AddUser(TokenScanner &tokenScanner, const int &cur_privilege);
+
+    /*
+     * query_profile
+     * print string of user_inf if succeed
+     *     "username name mailAddr privilege"
+     * print -1 if failed
+     */
+    void QueryProfile(TokenScanner &tokenScanner, const int &cur_privilege);
+
+    /*
+     * modify_profile
+     * print string of modified user_inf if succeed
+     *      allow default arguments
+     *      lower privilege
+     *     "username name mailAddr privilege"
+     * print -1 if failed
+     */
+    void ModifyProfile(TokenScanner &tokenScanner, const int &cur_privilege);
+
+    /*
+     * login
+     * if user isn't in loginList, find if the user exist
+     * return privilege if exist
+     * return false if not exist or wrong password
+     */
+    pair<int, bool> FindUser(TokenScanner &tokenScanner, const Username &username);
 };
+
+const char UserSystem::empty_str[1] = {'\0'};
 
 #endif //TICKETSYSTEM_USER_HPP
