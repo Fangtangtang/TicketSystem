@@ -34,18 +34,80 @@ struct CompareUsername {
     }
 };
 
+/*
+ * Time class to manage data and time from June 1st to August 31st
+ */
 class Time {
+    int minutes = 0;
+
+public:
+    Time() = default;
+
+    Time(int month, int day, int hour, int minute) {
+        if (month == 8)day += 61;
+        if (month == 7)day += 30;
+        --day;
+        hour += day * 24;
+        minutes = minute + hour * 60;
+    }
+
+    friend std::ostream &operator<<(std::ostream &os, const Time &time_) {
+        int month, day, hour, minute = time_.minutes;
+        //convert
+        hour = minute / 60;
+        minute %= 60;
+        day = hour / 24;
+        hour %= 24;
+        ++day;
+        if (day > 61) {
+            month = 8;
+            day -= 61;
+        } else {
+            if (day > 30) {
+                month = 7;
+                day -= 30;
+            } else month = 6;
+        }
+        //print
+        os << 0 << month << '-';
+        if (day < 9)os << 0;
+        os << day << ' ';
+        if (hour < 9)os << 0;
+        os << hour << ':';
+        if (minute < 9)os << 0;
+        os << minute;
+        return os;
+    }
+
+    int GetInterval(const Time &other) {
+        return minutes > other.minutes ? minutes - other.minutes : other.minutes - minutes;
+    }
+
+    void AddMinute(int delta) {
+        minutes += delta;
+    }
+
+    void AddDay(int month, int day) {
+        if (month == 8)day += 61;
+        if (month == 7)day += 30;
+        --day;
+        minutes += day * 24 * 60;
+    }
+};
+
+
+class MyTime {
     short month = 0;
     short date = 0;
     short hour = 0;
     short minute = 0;
 public:
-    Time() = default;
+    MyTime() = default;
 
-    Time(short month_, short date_, short hour_, short minute_) : month(month_), date(date_),
-                                                                  hour(hour_), minute(minute_) {};
+    MyTime(short month_, short date_, short hour_, short minute_) : month(month_), date(date_),
+                                                                    hour(hour_), minute(minute_) {};
 
-    friend std::ostream &operator<<(std::ostream &os, const Time &time_) {
+    friend std::ostream &operator<<(std::ostream &os, const MyTime &time_) {
         os << 0 << time_.month << '-';
         if (time_.date < 9)os << 0;
         os << time_.date << ' ';
@@ -56,7 +118,7 @@ public:
         return os;
     }
 
-    friend Time operator+(const Time &a, const Time &b) {
+    friend MyTime operator+(const MyTime &a, const MyTime &b) {
         auto minute_ = short(a.minute + b.minute);
         auto hour_ = short(a.hour + b.hour + minute_ / 60);
         minute_ %= 60;
