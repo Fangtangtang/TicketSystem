@@ -10,7 +10,11 @@
 #ifndef TICKETSYSTEM_TRANSACTION_HPP
 #define TICKETSYSTEM_TRANSACTION_HPP
 
+#include "../utility/bpt.hpp"
+#include "../utility/pair.hpp"
 #include "../utility/tool.hpp"
+#include "tokenScanner.hpp"
+
 
 struct Compare1;
 struct Compare2;
@@ -64,12 +68,13 @@ class TransactionDetail {
     int price = 0;
     int num = 0;
     STATUS status = success;
+    long train_address = 0;//store train_address in train_information file for faster read
 
 public:
     TransactionDetail() = default;
 
     TransactionDetail(char *trainID_, char *from_, char *to_, const Time &leaving_time_, const Time &arriving_time_,
-                      int price_, int num_, STATUS status_);
+                      const int &price_, const int &num_, const STATUS &status_, const long &train_address_);
 
     void ModifyStatus(const STATUS &status_) {
         status = status_;
@@ -92,12 +97,14 @@ public:
 
 TransactionDetail::TransactionDetail(char *trainID_, char *from_, char *to_,
                                      const Time &leaving_time_, const Time &arriving_time_,
-                                     int price_, int num_, STATUS status_) :
+                                     const int &price_, const int &num_, const STATUS &status_,
+                                     const long &train_address_) :
         leaving_time(leaving_time_),
         arriving_time(arriving_time_),
         price(price_),
         num(num_),
-        status(status_) {
+        status(status_),
+        train_address(train_address_) {
     memset(trainID, 0, sizeof(trainID));
     strcpy(trainID, trainID_);
     memset(from, 0, sizeof(from));
@@ -105,5 +112,41 @@ TransactionDetail::TransactionDetail(char *trainID_, char *from_, char *to_,
     memset(to, 0, sizeof(to));
     strcpy(to, to_);
 }
+
+/*
+ * manage operations about transaction information
+ * including add ,query, modify
+ */
+class TransactionSystem {
+    BPlusTree<Transaction, TransactionDetail, Compare1, Compare2> TransactionInformation{"nodeTree_of_transaction",
+                                                                                         "list_of_transaction"};
+public:
+
+    /*
+     * buy_ticket
+     * add transaction if valid
+     */
+    void AddTransaction(const Username &username_, const int &timestamp_,
+                        char *trainID_, char *from, char *to,
+                        const Time &leaving_time_, const Time &arriving_time_,
+                        const int &price_, const int &num_, const STATUS &status_, const long &train_address_);
+
+    /*
+     * query_order
+     * print all the orders of user
+     * print number of orders and information if succeed
+     * print -1 if failed
+     */
+    void QueryOrder(const Username &username_);
+
+    /*
+     * refund_ticket
+     * modify status
+     * return 0 and train_address in train_information file if succeed
+     * return -1 if failed
+     */
+    int RefundTicket(const Username &username_, const int &index_of_transaction, long &train_address_);
+
+};
 
 #endif //TICKETSYSTEM_TRANSACTION_HPP
