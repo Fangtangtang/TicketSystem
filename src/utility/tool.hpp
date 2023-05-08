@@ -34,6 +34,36 @@ struct CompareUsername {
     }
 };
 
+struct CompareTrainID;
+
+class TrainID {
+    char trainID[20] = {'\0'};
+    friend CompareTrainID;
+public:
+    TrainID() = default;
+
+    explicit TrainID(char *trainID_);
+
+    friend std::ostream &operator<<(std::ostream &os,const TrainID&information);
+
+};
+
+TrainID::TrainID(char *trainID_) {
+    memset(trainID, 0, sizeof(trainID));
+    strcpy(trainID, trainID_);
+}
+
+std::ostream &operator<<(std::ostream &os, const TrainID &information) {
+    os<<information.trainID;
+    return os;
+}
+
+struct CompareTrainID{
+    bool operator()(const TrainID&a,const TrainID&b){
+        return strcmp(a.trainID, b.trainID) < 0;
+    }
+    
+};
 /*
  * Time class to manage data and time from June 1st to August 31st
  */

@@ -60,7 +60,7 @@ enum STATUS {
 };
 
 class TransactionDetail {
-    char trainID[20] = {'\0'};
+    TrainID trainID;
     char from[30] = {'\0'};
     char to[30] = {'\0'};
     Time leaving_time;
@@ -73,7 +73,8 @@ class TransactionDetail {
 public:
     TransactionDetail() = default;
 
-    TransactionDetail(char *trainID_, char *from_, char *to_, const Time &leaving_time_, const Time &arriving_time_,
+    TransactionDetail(const TrainID &trainID_, char *from_, char *to_, const Time &leaving_time_,
+                      const Time &arriving_time_,
                       const int &price_, const int &num_, const STATUS &status_, const long &train_address_);
 
     void ModifyStatus(const STATUS &status_) {
@@ -95,18 +96,17 @@ public:
     }
 };
 
-TransactionDetail::TransactionDetail(char *trainID_, char *from_, char *to_,
+TransactionDetail::TransactionDetail(const TrainID &trainID_, char *from_, char *to_,
                                      const Time &leaving_time_, const Time &arriving_time_,
                                      const int &price_, const int &num_, const STATUS &status_,
-                                     const long &train_address_) :
+                                     const long &train_address_=0) :
+        trainID(trainID_),
         leaving_time(leaving_time_),
         arriving_time(arriving_time_),
         price(price_),
         num(num_),
         status(status_),
         train_address(train_address_) {
-    memset(trainID, 0, sizeof(trainID));
-    strcpy(trainID, trainID_);
     memset(from, 0, sizeof(from));
     strcpy(from, from_);
     memset(to, 0, sizeof(to));
@@ -127,7 +127,7 @@ public:
      * add transaction if valid
      */
     void AddTransaction(const Username &username_, const int &timestamp_,
-                        char *trainID_, char *from, char *to,
+                        const TrainID &trainID_, char *from, char *to,
                         const Time &leaving_time_, const Time &arriving_time_,
                         const int &price_, const int &num_, const STATUS &status_, const long &train_address_);
 
