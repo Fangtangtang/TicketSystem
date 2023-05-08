@@ -43,7 +43,7 @@ class Time {
 public:
     Time() = default;
 
-    Time(int month, int day, int hour, int minute) {
+    Time(int hour, int minute, int month = 6, int day = 1) {
         if (month == 8)day += 61;
         if (month == 7)day += 30;
         --day;
@@ -79,7 +79,7 @@ public:
         return os;
     }
 
-    int GetInterval(const Time &other) {
+    int GetInterval(const Time &other) const {
         return minutes > other.minutes ? minutes - other.minutes : other.minutes - minutes;
     }
 

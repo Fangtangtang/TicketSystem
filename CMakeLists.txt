@@ -7,14 +7,25 @@ include_directories(.)
 include_directories(src)
 
 add_executable(code
+        #utility
         src/utility/bpt.hpp
         src/utility/vector.hpp
         src/utility/pair.hpp
         src/utility/exceptions.hpp
+        src/utility/map.hpp
+        src/utility/tool.hpp
+
+        #headFile
         src/head-files/tokenScanner.hpp
         src/head-files/user.hpp
         src/head-files/train.hpp
         src/head-files/releasedTrain.hpp
         src/head-files/transaction.hpp
         src/head-files/waitingList.hpp
-        src/main.cpp src/head-files/loginList.hpp src/utility/map.hpp src/utility/tool.hpp my_data/tryTime.cpp)
+        src/head-files/loginList.hpp
+
+        src/main.cpp
+
+        #try
+#        my_data/tryTime.cpp
+        my_data/tryTransaction.cpp)

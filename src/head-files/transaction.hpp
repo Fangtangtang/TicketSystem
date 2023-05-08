@@ -61,9 +61,49 @@ class TransactionDetail {
     char to[30] = {'\0'};
     Time leaving_time;
     Time arriving_time;
-    int price;
-    int num;
-    STATUS status;
+    int price = 0;
+    int num = 0;
+    STATUS status = success;
+
+public:
+    TransactionDetail() = default;
+
+    TransactionDetail(char *trainID_, char *from_, char *to_, const Time &leaving_time_, const Time &arriving_time_,
+                      int price_, int num_, STATUS status_);
+
+    void ModifyStatus(const STATUS &status_) {
+        status = status_;
+    }
+
+    friend std::ostream &operator<<(std::ostream &os, const TransactionDetail &information) {
+        //status
+        if (information.status == success) os << "[success] ";
+        else if (information.status == pending) os << "[pending] ";
+        else os << "[refunded] ";
+        //stations
+        os << information.trainID << ' ';
+        os << information.from << ' ' << information.leaving_time;
+        os << " -> ";
+        os << information.to << ' ' << information.arriving_time << ' ';
+        os << information.price << ' ' << information.num << '\n';
+        return os;
+    }
 };
+
+TransactionDetail::TransactionDetail(char *trainID_, char *from_, char *to_,
+                                     const Time &leaving_time_, const Time &arriving_time_,
+                                     int price_, int num_, STATUS status_) :
+        leaving_time(leaving_time_),
+        arriving_time(arriving_time_),
+        price(price_),
+        num(num_),
+        status(status_) {
+    memset(trainID, 0, sizeof(trainID));
+    strcpy(trainID, trainID_);
+    memset(from, 0, sizeof(from));
+    strcpy(from, from_);
+    memset(to, 0, sizeof(to));
+    strcpy(to, to_);
+}
 
 #endif //TICKETSYSTEM_TRANSACTION_HPP
