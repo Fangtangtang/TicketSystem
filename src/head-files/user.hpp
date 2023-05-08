@@ -37,8 +37,9 @@ public:
 
     User(char *password_, char *name_, char *mailAddr_, int privilege_);
 
-    void PrintInformation() {
-        std::cout << name << ' ' << mailAddr << ' ' << privilege << '\n';
+    friend std::ostream &operator<<(std::ostream &os, const User &information) {
+        os << information.name << ' ' << information.mailAddr << ' ' << information.privilege << '\n';
+        return os;
     }
 
     void ModifyPassword(char *password_) {
