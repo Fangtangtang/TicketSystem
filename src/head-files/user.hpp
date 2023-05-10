@@ -18,9 +18,6 @@
 #include "tokenScanner.hpp"
 
 /*
- * unique identifier of user
- * used as key when store user_information in bpt
- *
  * ele to be stored in loginList:
  *        Key:Username
  *        Value:int (privilege)

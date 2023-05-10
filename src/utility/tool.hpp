@@ -7,6 +7,13 @@
 #include <cstring>
 #include <iostream>
 
+/*
+ * Username class
+ * ----------------------------------------------------------------------------------------------------
+ * used in UserSystem, TransactionSystem, LoginList
+ * basic Compare class included
+ *
+ */
 struct CompareUsername;
 
 class Username {
@@ -34,6 +41,12 @@ struct CompareUsername {
     }
 };
 
+/*
+ * TrainID class
+ * ----------------------------------------------------------------------------------------------------
+ * used in TrainSystem, TransactionSystem, ReleasedTrainSystem
+ * basic Compare class included
+ */
 struct CompareTrainID;
 
 class TrainID {
@@ -44,7 +57,7 @@ public:
 
     explicit TrainID(char *trainID_);
 
-    friend std::ostream &operator<<(std::ostream &os,const TrainID&information);
+    friend std::ostream &operator<<(std::ostream &os, const TrainID &information);
 
 };
 
@@ -54,18 +67,20 @@ TrainID::TrainID(char *trainID_) {
 }
 
 std::ostream &operator<<(std::ostream &os, const TrainID &information) {
-    os<<information.trainID;
+    os << information.trainID;
     return os;
 }
 
-struct CompareTrainID{
-    bool operator()(const TrainID&a,const TrainID&b){
+struct CompareTrainID {
+    bool operator()(const TrainID &a, const TrainID &b) {
         return strcmp(a.trainID, b.trainID) < 0;
     }
-    
 };
+
 /*
- * Time class to manage data and time from June 1st to August 31st
+ * Time class
+ * -------------------------------------------------------------------------------------------------------------
+ * manage date and time from June 1st to August 31st
  */
 class Time {
     int minutes = 0;
@@ -107,6 +122,34 @@ public:
         if (minute < 9)os << 0;
         os << minute;
         return os;
+    }
+
+    void PrintInformation(const int &interval) const {
+        int month, day, hour, minute = minutes;
+        //convert
+        hour = minute / 60;
+        minute %= 60;
+        day = hour / 24;
+        hour %= 24;
+        ++day;
+        day += interval;
+        if (day > 61) {
+            month = 8;
+            day -= 61;
+        } else {
+            if (day > 30) {
+                month = 7;
+                day -= 30;
+            } else month = 6;
+        }
+        //print
+        std::cout << 0 << month << '-';
+        if (day < 9)std::cout << 0;
+        std::cout << day << ' ';
+        if (hour < 9)std::cout << 0;
+        std::cout << hour << ':';
+        if (minute < 9)std::cout << 0;
+        std::cout << minute;
     }
 
     int GetInterval(const Time &other) const {
@@ -194,5 +237,49 @@ public:
         }
     }
 };
+
+/*
+ * Station class
+ * -------------------------------------------------------------------------------------------------------------
+ */
+
+class Station {
+    char from[30] = {'\0'};
+    char to[30] = {'\0'};
+    int price = 0;
+    Time leaving_time;
+    Time arriving_time;
+
+public:
+    Station() = default;
+
+    Station(char *from_, char *to_, const int &price, const Time &leaving_time_, const Time &arriving_time);
+
+    void PrintInformation(const int &interval);
+};
+
+Station::Station(char *from_, char *to_, const int &price_, const Time &leaving_time_, const Time &arriving_time) :
+        price(price_), leaving_time(leaving_time_), arriving_time(arriving_time) {
+    memset(from, 0, sizeof(from));
+    strcpy(from, from_);
+    memset(to, 0, sizeof(to));
+    strcpy(to, to_);
+}
+
+void Station::PrintInformation(const int &interval) {
+    std::cout << from << ' ';
+    leaving_time.PrintInformation(interval);
+    std::cout << " -> ";
+    arriving_time.PrintInformation(interval);
+    std::cout << ' ' << price;
+}
+
+
+/*
+ * Ticket class
+ * -------------------------------------------------------------------------------------------------------------
+ * manage basic information of ticket between two stations
+ * store
+ */
 
 #endif //TICKETSYSTEM_TOOL_HPP
