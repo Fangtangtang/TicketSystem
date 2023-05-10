@@ -6,8 +6,6 @@
  *         delete_train
  *         release_train
  *         query_train
- *
- *
  */
 
 #ifndef TICKETSYSTEM_TRAIN_HPP
@@ -17,41 +15,76 @@
 #include "../utility/bpt.hpp"
 #include "../utility/pair.hpp"
 #include "../utility/tool.hpp"
+#include "../utility/file_manager.hpp"
 #include "tokenScanner.hpp"
 
+
 /*
- * value type stored in train_file
- *       basic information about train,
- *       address of station_name_file,
- *       address of seat_number_file,
+ * manage operations about train information
+ * including add, query, modify, delete
  */
-class Train {
-    int stationNum = 0;
-    Time start_sale;
-    Time stop_sale;
-    long station_addr = 0;
-    long seat_addr = 0;
-    char type = '\0';
-    bool released = false;
+class TrainSystem {
+    /*
+     * Key: TrainID
+     * Value: Train
+     * store basic information and some address
+     */
+    BPlusTree<TrainID, Train, CompareTrainID, CompareTrainID> trainInformation{"nodeTree_of_train", "list_of_train"};
+
+    FileManager<Station> stationInformation{"station_file"};
+
+    FileManager<int> seatInformation{"seat_file"};
+
+    /*
+     * add_train
+     * return address of Station storing information of the first one
+     */
+    long AddStation(TokenScanner &tokenScanner);
+
+    /*
+     * add_train
+     * return address of first seat(int)
+     */
+    long AddSeat(TokenScanner &tokenScanner);
+
+    /*
+     * release_train & query_train
+     * return pair
+     * if not found or invalid return false
+     * else return Train
+     */
+    sjtu::pair<Train, bool> FindTrain(const TrainID &trainID_);
 
 public:
-    Train() = default;
+    /*
+     * add_train
+     * return 0 if succeed
+     * return -1 if failed
+     */
+    int AddTrain(TokenScanner &tokenScanner, const TrainID &trainID_);
 
-    Train(const int &stationNum_, const Time &start_sale_, const Time &stop_sale_, const char &type_,
-          const long &station, const long &seat);
+    /*
+     * delete_train
+     * delete unreleased train
+     * return 0 if succeed
+     * return -1 if failed
+     */
+    int DeleteTrain(const TrainID &trainID_);
 
-    bool Release();
+    /*
+     * release_train
+     * return pair
+     * if not found or invalid return false
+     * else return Train
+     */
+    sjtu::pair<Train, bool> ReleaseTrain(const TrainID &trainID_);
+
+    /*
+     * query_train
+     * print all the information
+     * return -1 if failed
+     */
+    void QueryTrain(const TrainID &trainID_);
 };
-
-Train::Train(const int &stationNum_, const Time &start_sale_, const Time &stop_sale_, const char &type_,
-             const long &station, const long &seat) :
-        stationNum(stationNum_), start_sale(start_sale_), stop_sale(stop_sale_), type(type_),
-        station_addr(station), seat_addr(seat) {}
-
-bool Train::Release() {
-    if (released)return false;
-    released = true;
-    return true;
-}
 
 #endif //TICKETSYSTEM_TRAIN_HPP

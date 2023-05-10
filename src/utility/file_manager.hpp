@@ -2,6 +2,8 @@
  * FILE_MANAGER
  * used to read and write file directly 
  * all the ele stored are of same type
+ *
+ * different managers can be associated with the same file
  */
 
 #ifndef TICKETSYSTEM_FILE_MANAGER_HPP
