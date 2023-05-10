@@ -274,7 +274,6 @@ void Station::PrintInformation(const int &interval) {
     std::cout << ' ' << price;
 }
 
-
 /*
  * Ticket class
  * -------------------------------------------------------------------------------------------------------------

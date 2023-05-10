@@ -28,4 +28,5 @@ add_executable(code
 
         #try
 #        my_data/tryTime.cpp
-        my_data/tryTransaction.cpp)
+#        my_data/tryTransaction.cpp
+        src/utility/file_manager.hpp my_data/tryFileManager.cpp)
