@@ -20,7 +20,7 @@ add_executable(code
         src/head-files/tokenScanner.hpp
         src/head-files/user.hpp
         src/head-files/train.hpp
-        src/head-files/releasedTrain.hpp
+        src/head-files/ticket.hpp
         src/head-files/transaction.hpp
         src/head-files/waitingList.hpp
         src/head-files/loginList.hpp
@@ -30,4 +30,4 @@ add_executable(code
         #try
         #my_data/tryTime.cpp
         #my_data/tryTransaction.cpp
-        my_data/tryFileManager.cpp)
+        my_data/tryFileManager.cpp )

@@ -9,8 +9,8 @@
  *         refund_ticket
  */
 
-#ifndef TICKETSYSTEM_RELEASEDTRAIN_HPP
-#define TICKETSYSTEM_RELEASEDTRAIN_HPP
+#ifndef TICKETSYSTEM_TICKET_HPP
+#define TICKETSYSTEM_TICKET_HPP
 
 #include "../utility/bpt.hpp"
 #include "../utility/vector.hpp"
@@ -104,4 +104,4 @@ public:
 
 };
 
-#endif //TICKETSYSTEM_RELEASEDTRAIN_HPP
+#endif //TICKETSYSTEM_TICKET_HPP
