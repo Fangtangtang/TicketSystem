@@ -14,6 +14,7 @@ add_executable(code
         src/utility/exceptions.hpp
         src/utility/map.hpp
         src/utility/tool.hpp
+        src/utility/file_manager.hpp
 
         #headFile
         src/head-files/tokenScanner.hpp
@@ -27,6 +28,6 @@ add_executable(code
         src/main.cpp
 
         #try
-#        my_data/tryTime.cpp
-#        my_data/tryTransaction.cpp
-        src/utility/file_manager.hpp my_data/tryFileManager.cpp)
+        #my_data/tryTime.cpp
+        #my_data/tryTransaction.cpp
+        my_data/tryFileManager.cpp)
