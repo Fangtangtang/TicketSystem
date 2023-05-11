@@ -346,47 +346,28 @@ class TimeBased;
 class CostBased;
 
 class Ticket {
-    TrainID trainID;
     char from[30] = {'\0'};
     char to[30] = {'\0'};
-    int price = 0;
     //TODO 是否保留time或arriving_time
-    int time = 0;
-    Time leaving_time;
-    Time arriving_time;
-    long seat_addr = 0;
+    Time start_sale;
+    Time stop_sale;
 
     friend CompareTicket;
-    friend TimeBased;
-    friend CostBased;
+
 public:
     Ticket() = default;
 
-    Ticket(const TrainID &trainID_, char *from_, char *to_,
-           const int &price_, const int &time_, const Time &leaving_time_, const Time &arriving_time_,
-           const long &seat_addr);
+    Ticket(char *from_, char *to_, const Time &start_sale_, const Time &stop_sale_);
 
-    long PrintInformation();
 };
 
-Ticket::Ticket(const TrainID &trainID_, char *from_, char *to_, const int &price_, const int &time_,
-               const Time &leaving_time_, const Time &arriving_time_, const long &seat_addr_) :
-        trainID(trainID_), price(price_), time(time_),
-        leaving_time(leaving_time_), arriving_time(arriving_time_),
-        seat_addr(seat_addr_) {
+
+Ticket::Ticket(char *from_, char *to_, const Time &start_sale_, const Time &stop_sale_) :
+        start_sale(start_sale_), stop_sale(stop_sale_) {
     memset(from, 0, sizeof(from));
     strcpy(from, from_);
     memset(to, 0, sizeof(to));
     strcpy(to, to_);
-}
-
-long Ticket::PrintInformation() {
-    std::cout << trainID << ' '
-              << from << ' ' << leaving_time
-              << " -> "
-              << to << ' ' << arriving_time
-              << ' ' << price;
-    return seat_addr;
 }
 
 /*
@@ -402,27 +383,9 @@ bool CompareTicket::operator()(const Ticket &a, const Ticket &b) {
     if (cmp) return cmp < 0;
     cmp = strcmp(a.to, b.to);
     if (cmp) return cmp < 0;
-    if (!(a.leaving_time == b.leaving_time)) return a.leaving_time < b.leaving_time;
-    if (!(a.arriving_time == b.arriving_time)) return a.arriving_time < b.arriving_time;
-    return a.trainID < b.trainID;
+    if (!(a.start_sale == b.start_sale)) return a.start_sale < b.start_sale;
+    return a.stop_sale < b.stop_sale;
 }
 
-struct TimeBased {
-    bool operator()(const Ticket &a, const Ticket &b);
-};
-
-bool TimeBased::operator()(const Ticket &a, const Ticket &b) {
-    if (a.time != b.time) return a.time < b.time;
-    return a.trainID < b.trainID;
-}
-
-struct CostBased {
-    bool operator()(const Ticket &a, const Ticket &b);
-};
-
-bool CostBased::operator()(const Ticket &a, const Ticket &b) {
-    if (a.price != b.price) return a.price < b.price;
-    return a.trainID < b.trainID;
-}
 
 #endif //TICKETSYSTEM_TOOL_HPP
