@@ -35,6 +35,7 @@ class TrainSystem {
 
     FileManager<int> seatInformation{"seat_file"};
 
+public:
     /*
      * add_train
      * return address of Station storing information of the first one

@@ -341,9 +341,7 @@ void Station::PrintInformation(const int &interval) {
  */
 class CompareTicket;
 
-class TimeBased;
-
-class CostBased;
+class CompareTicket2;
 
 class Ticket {
     char from[30] = {'\0'};
@@ -353,7 +351,7 @@ class Ticket {
     Time stop_sale;
 
     friend CompareTicket;
-
+    friend CompareTicket2;
 public:
     Ticket() = default;
 
@@ -387,5 +385,16 @@ bool CompareTicket::operator()(const Ticket &a, const Ticket &b) {
     return a.stop_sale < b.stop_sale;
 }
 
+struct CompareTicket2 {
+    bool operator()(const Ticket &a, const Ticket &b);
+};
+
+//TODO
+//modify
+bool CompareTicket2::operator()(const Ticket &a, const Ticket &b) {
+    int cmp = strcmp(a.from, b.from);
+    if (cmp) return cmp < 0;
+    if (!(a.start_sale == b.start_sale)) return a.start_sale < b.start_sale;
+}
 
 #endif //TICKETSYSTEM_TOOL_HPP

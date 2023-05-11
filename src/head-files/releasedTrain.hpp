@@ -19,6 +19,7 @@
 #include "../utility/file_manager.hpp"
 #include "tokenScanner.hpp"
 
+
 class TimeBased;
 
 class CostBased;
@@ -68,10 +69,39 @@ bool CostBased::operator()(const TicketDetail &a, const TicketDetail &b) {
     return a.trainID < b.trainID;
 }
 
-
+/*
+ * manage operations about ticket information
+ * including add, query
+ */
 class TicketSystem {
+    BPlusTree<Ticket, TicketDetail, CompareTicket, CompareTicket2> ticketInformation{"nodeTree_of_ticket",
+                                                                                     "list_of_ticket"};
 
+    FileManager<int> seatInformation{"seat_file"};
 
+public:
+    /*
+     * release_train
+     * store ticket information of the train to file
+     * TODO
+     */
+    void AddTicket();
+
+    /*
+     * query_ticket
+     * given date from to
+     * print based on time or cost
+     */
+    void QueryTicket(TokenScanner &tokenScanner);
+
+    /*
+     * query_transfer
+     * given date from to
+     * need to transfer
+     * return best choice based on time or cost
+     */
+    void QueryTransfer(TokenScanner &tokenScanner);
+    
 };
 
 #endif //TICKETSYSTEM_RELEASEDTRAIN_HPP

@@ -536,8 +536,8 @@ namespace sjtu {
             if (ind > size_of_vector) throw index_out_of_bound();
             if (end_of_vector == size_of_vector) {//拓展空间
                 T **tmp = doubleSpace();//在vector的storage开新的指针数组，原来的 指针数组暂归在tmp下
-                copyDate(tmp, 0, ind - 1);//0- (index-1)直接接管
-                storage[index] = new T(value);//插入
+                copyDate(tmp, 0, ind - 1);//0- (ind-1)直接接管
+                storage[ind] = new T(value);//插入
                 copyDate(tmp, ind, end_of_vector - 1, 1);//错位接管
                 delete[] tmp;//删旧指针数组
             } else {
@@ -546,7 +546,7 @@ namespace sjtu {
                     storage[current_index] = storage[current_index - 1];
                     --current_index;
                 }
-                storage(index) = new T(value);
+                storage(ind) = new T(value);
             }
             ++end_of_vector;
             return iterator(ind, this);
