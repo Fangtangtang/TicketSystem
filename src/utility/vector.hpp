@@ -1,13 +1,10 @@
 #ifndef TICKETSYSTEM_VECTOR_HPP
 #define TICKETSYSTEM_VECTOR_HPP
 
-#include "exceptions.hpp"
 
 #include <iostream>
 #include <climits>
 #include <cstddef>
-#include <ctime>
-#include <cstdlib>
 //size_t 无符号整数，做数组下标
 namespace sjtu {
 /**
@@ -15,16 +12,15 @@ namespace sjtu {
  * store data in a successive memory and support random access.
  * 连续空间 随机存取
  */
-    template<class T, class Compare=std::less <T>>
+
+    template<typename T>
     class vector {
     private:
         T **storage = nullptr;//指针数组的数组名
 
         size_t size_of_vector = 0;//数组大小
 
-        size_t end_of_vector = 0;//数组最后一个元素下一位下标
-
-        Compare cmp;
+        size_t end_of_vector = 0;//数组最后一个元素的下一位下标
 
         //在vector的storage开新的指针数组，原来的 指针数组暂归在tmp下
         //修改
@@ -39,41 +35,12 @@ namespace sjtu {
             srand(time(NULL));
             return l + rand() % (r - l + 1);
         }
-
-        void bubSort(int l, int r) {
-            for (int i = l + 1; i <= r; ++i) {
-                for (int j = i; j > 0 && cmp(*storage[j], *storage[j - 1]); j--)
-                    std::swap(storage[j], storage[j - 1]);
-            }
-        }
+        template <typename U>
+        friend void bubSort(vector<U> &vec, int l, int r, bool (*cmp)(U, U));
 
         //sort the array based on cmp
-        void sort(int l, int r) {
-
-            if (l >= r) return;
-            if (r - l < 10) {
-                bubSort(l, r);
-                return;
-            }
-            std::swap(storage[Random(l, r)], storage[l]);
-            T *tmp = storage[l];
-            int left = l, right = r;
-            do {
-                while (cmp(*tmp, *storage[r]) && l < r) --r;
-                if (l < r) {
-                    storage[l] = storage[r];
-                    ++l;
-                }
-                while (cmp(*storage[l], *tmp) && l < r) ++l;
-                if (l < r) {
-                    storage[r] = storage[l];
-                    --r;
-                }
-            } while (l < r);
-            storage[l] = tmp;
-            sort(left, l - 1);
-            sort(l + 1, right);
-        }
+        template <typename U>
+        friend void Sort(vector<U> &vec, int l, int r, bool (*cmp)(U, U));
 
     public:
         /**
@@ -87,7 +54,7 @@ namespace sjtu {
         class const_iterator;//类声明
 
         class iterator {
-            friend class vector<T, Compare>;
+            friend class vector<T>;
             // The following code is written for the C++ type_traits library.
             // Type traits is a C++ feature for describing certain properties of a type.
             // For instance, for an iterator, iterator::value_type is the type that the
@@ -114,12 +81,12 @@ namespace sjtu {
              *   just add whatever you want.
              */
             size_t index = 0;//在vector指针数组中的下标
-            vector<T, Compare> *vector_location = nullptr;//iterator对应的vector的地址
+            vector<T> *vector_location = nullptr;//iterator对应的vector的地址
 
         public:
             iterator() = default;
 
-            iterator(size_t pos = 0, vector<T, Compare> *location = nullptr) {
+            iterator(size_t pos = 0, vector<T> *location = nullptr) {
                 index = pos;
                 vector_location = location;
             }
@@ -130,13 +97,13 @@ namespace sjtu {
              * 迭代器跨区间
              */
             iterator operator+(const int &n) const {
-                vector<T, Compare>::iterator tmp(this->index, this->vector_location);
+                vector<T>::iterator tmp(this->index, this->vector_location);
                 tmp.index += n;
                 return tmp;
             }
 
             iterator operator-(const int &n) const {
-                vector<T, Compare>::iterator tmp(this);
+                vector<T>::iterator tmp(this);
                 tmp.index += n;
                 return tmp;
             }
@@ -144,7 +111,6 @@ namespace sjtu {
             // return the distance between two iterators,
             // if these two iterators point to different vectors, throw invalid_iterator.
             int operator-(const iterator &rhs) const {
-                if (vector_location != rhs.vector_location) throw invalid_iterator();
                 return index - rhs.index;
             }
 
@@ -162,7 +128,7 @@ namespace sjtu {
              *  iter++
              */
             iterator operator++(int) {
-                vector<T, Compare>::iterator tmp(this);
+                vector<T>::iterator tmp(this);
                 ++this->index;
                 return tmp;
             }
@@ -179,7 +145,7 @@ namespace sjtu {
              *  iter--
              */
             iterator operator--(int) {
-                vector<T, Compare>::iterator tmp(this);
+                vector<T>::iterator tmp(this);
                 --this->index;
                 return tmp;
             }
@@ -247,24 +213,24 @@ namespace sjtu {
         private:
 
             size_t index = 0;//在vector指针数组中的下标
-            const vector<T, Compare> *vector_location = nullptr;//iterator对应的vector的地址
+            const vector<T> *vector_location = nullptr;//iterator对应的vector的地址
 
         public:
             const_iterator() = default;
 
-            const_iterator(size_t pos = 0, const vector<T, Compare> *location = nullptr) {
+            const_iterator(size_t pos = 0, const vector<T> *location = nullptr) {
                 index = pos;
                 vector_location = location;
             }
 
             const_iterator operator+(const int &n) const {
-                vector<T, Compare>::const_iterator tmp(this);
+                vector<T>::const_iterator tmp(this);
                 tmp.index += n;
                 return tmp;
             }
 
             const_iterator operator-(const int &n) const {
-                vector<T, Compare>::const_iterator tmp(this);
+                vector<T>::const_iterator tmp(this);
                 tmp.index += n;
                 return tmp;
             }
@@ -272,7 +238,6 @@ namespace sjtu {
             // return the distance between two iterators,
             // if these two iterators point to different vectors, throw invalid_iterator.
             int operator-(const const_iterator &rhs) const {
-                if (vector_location != rhs.vector_location) throw invalid_iterator();
                 return index - rhs.index;
             }
 
@@ -290,7 +255,7 @@ namespace sjtu {
              *  iter++
              */
             const_iterator operator++(int) {
-                vector<T, Compare>::const_iterator tmp(this);
+                vector<T>::const_iterator tmp(this);
                 ++this->index;
                 return tmp;
             }
@@ -307,7 +272,7 @@ namespace sjtu {
              *  iter--
              */
             const_iterator operator--(int) {
-                vector<T, Compare>::const_iterator tmp(this);
+                vector<T>::const_iterator tmp(this);
                 --this->index;
                 return tmp;
             }
@@ -397,22 +362,16 @@ namespace sjtu {
             return *this;
         }
 
-        void sort() {
-            sort(0, end_of_vector - 1);
-        }
-
         /**
          * assigns specified element with bounds checking
          * throw index_out_of_bound if pos is not in [0, size)
          * 检查下标越界的赋值
          */
         T &at(const size_t &pos) {
-            if (pos >= size_of_vector) throw index_out_of_bound();
             return *storage[pos];
         }
 
         const T &at(const size_t &pos) const {
-            if (pos >= size_of_vector) throw index_out_of_bound();
             return *storage[pos];
         }
 
@@ -423,12 +382,10 @@ namespace sjtu {
          *   In STL this operator does not check the boundary but I want you to do.
          */
         T &operator[](const size_t &pos) {
-            if (pos >= size_of_vector) throw index_out_of_bound();
             return *storage[pos];
         }
 
         const T &operator[](const size_t &pos) const {
-            if (pos >= size_of_vector) throw index_out_of_bound();
             return *storage[pos];
         }
 
@@ -437,7 +394,6 @@ namespace sjtu {
          * throw container_is_empty if size == 0
          */
         const T &front() const {
-            if (!size_of_vector) throw container_is_empty();
             return *storage[0];
         }
 
@@ -446,7 +402,6 @@ namespace sjtu {
          * throw container_is_empty if size == 0
          */
         const T &back() const {
-            if (!size_of_vector) throw container_is_empty();
             return *storage[end_of_vector - 1];
         }
 
@@ -506,7 +461,6 @@ namespace sjtu {
          * pos合法吗
          */
         iterator insert(iterator pos, const T &value) {
-            if (pos.vector_location != this) throw runtime_error();
             size_t index = pos.index;//待插入的下标
             if (end_of_vector == size_of_vector) {//拓展空间
                 T **tmp = doubleSpace();//在vector的storage开新的指针数组，原来的 指针数组暂归在tmp下
@@ -533,10 +487,9 @@ namespace sjtu {
          * throw index_out_of_bound if ind > size (in this situation ind can be size because after inserting the size will increase 1.)
          */
         iterator insert(const size_t &ind, const T &value) {
-            if (ind > size_of_vector) throw index_out_of_bound();
             if (end_of_vector == size_of_vector) {//拓展空间
                 T **tmp = doubleSpace();//在vector的storage开新的指针数组，原来的 指针数组暂归在tmp下
-                copyDate(tmp, 0, ind - 1);//0- (ind-1)直接接管
+                copyDate(tmp, 0, ind - 1);//0- (index-1)直接接管
                 storage[ind] = new T(value);//插入
                 copyDate(tmp, ind, end_of_vector - 1, 1);//错位接管
                 delete[] tmp;//删旧指针数组
@@ -558,7 +511,6 @@ namespace sjtu {
          * If the iterator pos refers the last element, the end() iterator is returned.
          */
         iterator erase(iterator pos) {
-            if (pos.vector_location != this) throw runtime_error();
             size_t index = pos.index;
             --end_of_vector;
             T *tmp = storage[index];
@@ -576,7 +528,6 @@ namespace sjtu {
          * throw index_out_of_bound if ind >= size
          */
         iterator erase(const size_t &ind) {
-            if (ind >= size_of_vector) throw index_out_of_bound();
             --end_of_vector;
             size_t index = ind;
             T *tmp = storage[index];
@@ -606,15 +557,14 @@ namespace sjtu {
          * throw container_is_empty if size() == 0
          */
         void pop_back() {
-            if (!size()) throw container_is_empty();
             --end_of_vector;
             delete storage[end_of_vector];
         }
     };
 
     //拷贝构造函数
-    template<class T, class Compare>
-    vector<T, Compare>::vector(const vector &other) :cmp() {
+    template<typename T>
+    vector<T>::vector(const vector &other) {
         size_of_vector = other.size_of_vector;
         end_of_vector = other.end_of_vector;
         storage = new T *[size_of_vector];//新的指针数组
@@ -626,16 +576,16 @@ namespace sjtu {
     //析构函数
     //先析构指针数组指向的对象
     //析构指针数组
-    template<class T, class Compare>
-    vector<T, Compare>::~vector() {
+    template<typename T>
+    vector<T>::~vector() {
         for (int i = 0; i < end_of_vector; ++i) {
             delete storage[i];
         }
         delete[] storage;
     }
 
-    template<class T, class Compare>
-    T **vector<T, Compare>::doubleSpace() {
+    template<typename T>
+    T **vector<T>::doubleSpace() {
         T **tmp = storage;
         if (!size_of_vector) size_of_vector = 1;
         size_of_vector *= 2;
@@ -646,11 +596,48 @@ namespace sjtu {
     //从数组的begin项开始到end项结束
     //storage接管tmp指向的空间
     //错位为step
-    template<class T, class Compare>
-    void vector<T, Compare>::copyDate(T **tmp, size_t begin, size_t end, int step) {
+    template<typename T>
+    void vector<T>::copyDate(T **tmp, size_t begin, size_t end, int step) {
         for (size_t current_index = begin; current_index < end; ++current_index) {
             storage[current_index + step] = tmp[current_index];
         }
     }
+
+    template<class T>
+    void bubSort(vector<T> &vec, int l, int r, bool (*cmp)(T, T)) {
+        for (int i = l + 1; i <= r; ++i) {
+            for (int j = i; j > 0 && cmp(*vec.storage[j], *vec.storage[j - 1]); j--)
+                std::swap(vec.storage[j], vec.storage[j - 1]);
+        }
+    }
+
+    template<class T>
+    void Sort(vector<T> &vec, int l, int r, bool (*cmp)(T, T)) {
+        if (l >= r) return;
+        if (r - l < 10) {
+            bubSort(vec, l, r, cmp);
+            return;
+        }
+        std::swap(vec.storage[vec.Random(l, r)], vec.storage[l]);
+        T *tmp = vec.storage[l];
+        int left = l, right = r;
+        do {
+            while (cmp(*tmp, *vec.storage[r]) && l < r) --r;
+            if (l < r) {
+                vec.storage[l] = vec.storage[r];
+                ++l;
+            }
+            while (cmp(*vec.storage[l], *tmp) && l < r) ++l;
+            if (l < r) {
+                vec.storage[r] = vec.storage[l];
+                --r;
+            }
+        } while (l < r);
+        vec.storage[l] = tmp;
+        Sort(vec, left, l - 1, cmp);
+        Sort(vec, l + 1, right, cmp);
+    }
 }
+
+
 #endif //TICKETSYSTEM_VECTOR_HPP

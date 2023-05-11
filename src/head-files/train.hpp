@@ -6,6 +6,7 @@
  *         delete_train
  *         release_train
  *         query_train
+ *         buy_ticket
  */
 
 #ifndef TICKETSYSTEM_TRAIN_HPP
@@ -86,6 +87,8 @@ public:
      * return -1 if failed
      */
     void QueryTrain(const TrainID &trainID_);
+
+
 };
 
 #endif //TICKETSYSTEM_TRAIN_HPP
