@@ -12,7 +12,11 @@
 
 const CompareTrainID compareTrainID;
 
-class CompareWaiting;
+class Compare1;
+
+class Compare2;
+
+class Compare3;
 
 /*
  * key to identify different transaction
@@ -22,7 +26,10 @@ class WaitingOrder {
     int from = 0;//the num 'from' station
     int to = 0;
     int num = 0;
-    friend CompareWaiting;
+    friend Compare1;
+    friend Compare2;
+    friend Compare3;
+
 public:
     WaitingOrder() = default;
 
@@ -33,17 +40,32 @@ WaitingOrder::WaitingOrder(const TrainID &trainID_, const int &from_, const int 
         trainID(trainID_), from(from_), to(to_), num(num_) {
 }
 
-class CompareWaiting {
+class Compare1 {
     bool operator()(const WaitingOrder &a, const WaitingOrder &b);
-
 };
 
-bool CompareWaiting::operator()(const WaitingOrder &a, const WaitingOrder &b) {
+bool Compare1::operator()(const WaitingOrder &a, const WaitingOrder &b) {
     int cmp = compareTrainID.CompareStr(a.trainID, b.trainID);
     if (cmp) return cmp < 0;
     if (a.from != b.from) return a.from < b.from;
     if (a.to != b.to) return a.to < b.to;
     return a.num < b.num;
+}
+
+class Compare2 {
+    bool operator()(const WaitingOrder &a, const WaitingOrder &b);
+};
+
+bool Compare2::operator()(const WaitingOrder &a, const WaitingOrder &b) {
+    return a.to <= b.from;
+}
+
+class Compare3 {
+    bool operator()(const WaitingOrder &a, const WaitingOrder &b);
+};
+
+bool Compare3::operator()(const WaitingOrder &a, const WaitingOrder &b) {
+    return a.num <= b.num;
 }
 
 /*
@@ -62,6 +84,28 @@ public:
 };
 
 WaitingTransaction::WaitingTransaction(const int &timestamp_, const long &addr) : timestamp(timestamp_),
-                                                                                  transaction_addr(addr) {}
+
+/*
+ * manage waiting
+ * including add, find, delete
+ */                                                                                  transaction_addr(addr) {}
+
+class WaitingList {
+    BPlusTree<WaitingOrder, WaitingTransaction, Compare1, Compare2, Compare3> waitingList{"nodeTree_of_waiting",
+                                                                                          "list_of_waiting"};
+
+public:
+    /*
+     * buy_ticket
+     * add into waitingList
+     */
+    void StartWaiting(const TrainID &trainId, const int &from, const int &to, const int &num,
+                      const int &timestamp, const long &addr);
+
+    /*
+     * refund_ticket
+     */
+    void Rollback(const Train &train, const int &from, const int &to, const int &minimal_num);
+};
 
 #endif //TICKETSYSTEM_WAITINGLIST_HPP
