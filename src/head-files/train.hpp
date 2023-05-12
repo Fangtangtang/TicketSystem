@@ -34,7 +34,7 @@ class TrainSystem {
 
     FileManager<Station> stationInformation{"station_file"};
 
-    FileManager<int> seatInformation{"seat_file"};
+    FileManager<Seat> seatInformation{"seat_file"};
 
 public:
     /*

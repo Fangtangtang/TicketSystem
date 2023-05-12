@@ -63,6 +63,8 @@ public:
 
     friend bool operator<(const TrainID &a, const TrainID &b);
 
+    friend bool operator==(const TrainID &a, const TrainID &b);
+
     friend std::ostream &operator<<(std::ostream &os, const TrainID &information);
 
 };
@@ -76,10 +78,15 @@ bool operator<(const TrainID &a, const TrainID &b) {
     return strcmp(a.trainID, b.trainID) < 0;
 }
 
+bool operator==(const TrainID &a, const TrainID &b) {
+    return strcmp(a.trainID, b.trainID) == 0;
+}
+
 std::ostream &operator<<(std::ostream &os, const TrainID &information) {
     os << information.trainID;
     return os;
 }
+
 
 /*
  * Compare class for TrainID
@@ -88,6 +95,10 @@ std::ostream &operator<<(std::ostream &os, const TrainID &information) {
 struct CompareTrainID {
     bool operator()(const TrainID &a, const TrainID &b) {
         return strcmp(a.trainID, b.trainID) < 0;
+    }
+
+    int CompareStr(const TrainID &a, const TrainID &b) const {
+        return strcmp(a.trainID, b.trainID);
     }
 };
 
@@ -332,6 +343,17 @@ void Station::PrintInformation(const int &interval) {
     arriving_time.PrintInformation(interval);
     std::cout << ' ' << price;
 }
+
+/*
+ * Seat class
+ * -------------------------------------------------------------------------------------------------------------
+ * number of available seat
+ * address of first transaction on waiting list
+ */
+class Seat {
+    int num = 0;
+    long waiting = -1;
+};
 
 /*
  * Ticket class

@@ -35,6 +35,7 @@ namespace sjtu {
             srand(time(NULL));
             return l + rand() % (r - l + 1);
         }
+
         template <typename U>
         friend void bubSort(vector<U> &vec, int l, int r, bool (*cmp)(U, U));
 

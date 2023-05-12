@@ -38,8 +38,9 @@ Transaction::Transaction(Username username_, int timestamp_) : username(username
  */
 struct Compare1 {
     bool operator()(const Transaction &a, const Transaction &b) const {
-        if (compare_username.CompareStr(a.username, b.username)) {
-            return compare_username(a.username, b.username);
+        int cmp = compare_username.CompareStr(a.username, b.username);
+        if (cmp) {
+            return cmp < 0;
         }
         return a.timestamp < b.timestamp;
     }
@@ -69,6 +70,7 @@ class TransactionDetail {
     int num = 0;
     STATUS status = success;
     long train_address = 0;//store train_address in train_information file for faster read
+    long next_waiting = -1;//link the waiting list
 
 public:
     TransactionDetail() = default;
@@ -99,7 +101,7 @@ public:
 TransactionDetail::TransactionDetail(const TrainID &trainID_, char *from_, char *to_,
                                      const Time &leaving_time_, const Time &arriving_time_,
                                      const int &price_, const int &num_, const STATUS &status_,
-                                     const long &train_address_=0) :
+                                     const long &train_address_ = 0) :
         trainID(trainID_),
         leaving_time(leaving_time_),
         arriving_time(arriving_time_),

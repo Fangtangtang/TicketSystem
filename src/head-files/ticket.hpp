@@ -5,8 +5,6 @@
  *         release_train
  *         query_ticket
  *         query_transfer
- *         buy_ticket
- *         refund_ticket
  */
 
 #ifndef TICKETSYSTEM_TICKET_HPP
@@ -77,7 +75,7 @@ class TicketSystem {
     BPlusTree<Ticket, TicketDetail, CompareTicket, CompareTicket2> ticketInformation{"nodeTree_of_ticket",
                                                                                      "list_of_ticket"};
 
-    FileManager<int> seatInformation{"seat_file"};
+    FileManager<Seat> seatInformation{"seat_file"};
 
 public:
     /*
@@ -101,6 +99,7 @@ public:
      * return best choice based on time or cost
      */
     void QueryTransfer(TokenScanner &tokenScanner);
+
 
 };
 

@@ -337,6 +337,19 @@ public:
         return vec;
     }
 
+    //TODO
+    sjtu::vector<Value> ModerateFind(const Key &key) {
+        sjtu::vector<Value> vec;
+        Find(key, cmp1, vec);
+        return vec;
+    }
+
+    sjtu::vector<Value> WeakFind(const Key &key) {
+        sjtu::vector<Value> vec;
+        Find(key, cmp2, vec);
+        return vec;
+    }
+
     //find based on index
     template<class Compare>
     void Find(const Key &key, Compare cmp) {
