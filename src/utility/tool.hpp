@@ -310,6 +310,8 @@ bool Train::Release() {
 
 /*
  * Station class
+ * TODO
+ * modify station class to convert name of station to index faster
  * -------------------------------------------------------------------------------------------------------------
  */
 

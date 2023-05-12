@@ -77,7 +77,7 @@ User::User(char *password_, char *name_, char *mailAddr_, int privilege_ = 10) :
 class UserSystem {
 private:
     BPlusTree<Username, User, CompareUsername, CompareUsername,CompareUsername> userInformation{"nodeTree_of_user", "list_of_user"};
-
+    
     static const char empty_str[1];
 
 public:
