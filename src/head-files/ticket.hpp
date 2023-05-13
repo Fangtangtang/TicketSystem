@@ -79,13 +79,14 @@ class TicketSystem {
 
     FileManager<Seat> seatInformation{"seat_file"};
 
+    friend TrainSystem;
 public:
     /*
      * release_train
      * store ticket information of the train to file
-     * TODO
+     * cout<<0 in the end
      */
-    void AddTicket();
+    void ReleaseTrain(const Train &train);
 
     /*
      * query_ticket

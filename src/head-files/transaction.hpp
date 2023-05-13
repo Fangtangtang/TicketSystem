@@ -15,7 +15,6 @@
 #include "../utility/tool.hpp"
 #include "../utility/file_manager.hpp"
 
-
 struct CompareTrans1;
 struct CompareTrans2;
 const CompareUsername compare_username;
@@ -126,6 +125,7 @@ class TransactionSystem {
 
     FileManager<TransactionDetail> TransactionInformation{"transaction_information"};
 
+    friend TrainSystem;
 public:
 
     /*

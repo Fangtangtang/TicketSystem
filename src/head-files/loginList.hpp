@@ -38,6 +38,7 @@ class LoginList {
     */
     sjtu::map<Username, int, CompareUsername> loginList;
 
+    friend UserSystem;
 public:
 
     /*
@@ -46,6 +47,8 @@ public:
      * return -1 if failed
      *        in list\not exist\wrong password
      */
+    int Login(const Parameter &parameter);
+
     int Login(const Parameter &parameter, const Username &username);
 
     /*
@@ -57,9 +60,13 @@ public:
 
     /*
      * query_profile\modify_profile\buy_ticket\query_order\refund_ticket
-     * if user has Logged in
+     * overloaded
+     * if user has Logged in return privilege
+     * else return -1
      */
-    bool CheckLoggedIn(const Username&username);
+    int CheckLoggedIn(const Username &username);
+
+    int CheckLoggedIn(const Parameter &parameter);
 
 };
 

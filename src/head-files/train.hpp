@@ -18,7 +18,8 @@
 #include "../utility/tool.hpp"
 #include "../utility/file_manager.hpp"
 #include "parameter.hpp"
-
+#include "transaction.hpp"
+#include "ticket.hpp"
 
 /*
  * manage operations about train information
@@ -32,6 +33,9 @@ class TrainSystem {
      */
     BPlusTree<TrainID, long, CompareTrainID, CompareTrainID, CompareTrainID> trainTree{"nodeTree_of_train",
                                                                                        "list_of_train"};
+
+    BPlusTree<TrainID, long, CompareTrainID, CompareTrainID, CompareTrainID> releasedTree{"nodeTree_of_released",
+                                                                                          "list_of_released"};
 
     FileManager<Train> trainInformation{"train_file"};
 
@@ -66,7 +70,7 @@ public:
      * return 0 if succeed
      * return -1 if failed
      */
-    int AddTrain(const Parameter &parameter, const TrainID &trainID_);
+    int AddTrain(const Parameter &parameter);
 
     /*
      * delete_train
@@ -74,22 +78,23 @@ public:
      * return 0 if succeed
      * return -1 if failed
      */
-    int DeleteTrain(const TrainID &trainID_);
+    int DeleteTrain(const Parameter &parameter);
 
     /*
      * release_train
-     * return pair
-     * if not found or invalid return false
-     * else return Train
+     * if not found or invalid return -1
+     * else modify train.released, add into releasedTree, add tickets to ticketSystem return 0
      */
-    sjtu::pair<Train, bool> ReleaseTrain(const TrainID &trainID_);
+    int ReleaseTrain(const Parameter &parameter,TicketSystem &ticketSystem);
 
     /*
      * query_train
      * print all the information
      * return -1 if failed
      */
-    void QueryTrain(const TrainID &trainID_);
+    void QueryTrain(const Parameter &parameter);
+
+    void BuyTicket(const Parameter &parameter,TransactionSystem &transactionSystem);
 
 
 };

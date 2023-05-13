@@ -7,6 +7,8 @@
 #include <cstring>
 #include <iostream>
 
+class TrainSystem;
+class UserSystem;
 /*
  * Username class
  * ----------------------------------------------------------------------------------------------------

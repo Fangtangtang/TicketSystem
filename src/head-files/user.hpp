@@ -17,7 +17,7 @@
 #include "../utility/tool.hpp"
 #include "../utility/file_manager.hpp"
 #include "parameter.hpp"
-
+#include "loginList.hpp"
 
 class User {
     char password[30] = {'\0'};
@@ -109,11 +109,22 @@ public:
 
     /*
      * login
+     * check if user exist
+     * add into loginList
+     * (need to check if user has logged in)
+     */
+    int Login(const Parameter &parameter,LoginList &loginList);
+
+    /*
+     * login
      * if user isn't in loginList, find if the user exist
      * return privilege if exist
      * return false if not exist or wrong password
      */
+    sjtu::pair<char *, bool> FindUser(const Parameter &parameter);
+
     sjtu::pair<int, bool> FindUser(const Parameter &parameter, const Username &username);
+
 };
 
 const char UserSystem::empty_str[1] = {'\0'};
