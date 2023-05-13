@@ -17,15 +17,15 @@
 #include "tokenScanner.hpp"
 
 
-struct Compare1;
-struct Compare2;
+struct CompareTrans1;
+struct CompareTrans2;
 const CompareUsername compare_username;
 
 class Transaction {
     Username username;
     int timestamp = 0;
-    friend Compare1;
-    friend Compare2;
+    friend CompareTrans1;
+    friend CompareTrans2;
 public:
     Transaction() = default;
 
@@ -37,7 +37,7 @@ Transaction::Transaction(Username username_, int timestamp_) : username(username
 /*
  * used when store in file and strictFind
  */
-struct Compare1 {
+struct CompareTrans1 {
     bool operator()(const Transaction &a, const Transaction &b) const {
         int cmp = compare_username.CompareStr(a.username, b.username);
         if (cmp) {
@@ -51,7 +51,7 @@ struct Compare1 {
  * used in "index_based" find
  * use username as index
  */
-struct Compare2 {
+struct CompareTrans2 {
     bool operator()(const Transaction &a, const Transaction &b) const {
         return compare_username(a.username, b.username);
     }
@@ -121,7 +121,7 @@ TransactionDetail::TransactionDetail(const TrainID &trainID_, char *from_, char 
  * including add ,query, modify
  */
 class TransactionSystem {
-    BPlusTree<Transaction, TransactionDetail, Compare1, Compare2, Compare2> TransactionTree{
+    BPlusTree<Transaction, TransactionDetail, CompareTrans1, CompareTrans2, CompareTrans2> TransactionTree{
             "nodeTree_of_transaction",
             "list_of_transaction"};
 

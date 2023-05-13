@@ -13,11 +13,11 @@
 
 const CompareTrainID compareTrainID;
 
-class Compare1;
+class CompareWaiting1;
 
-class Compare2;
+class CompareWaiting2;
 
-class Compare3;
+class CompareWaiting3;
 
 /*
  * key to identify different transaction
@@ -27,9 +27,9 @@ class WaitingOrder {
     int from = 0;//the num 'from' station
     int to = 0;
     int num = 0;
-    friend Compare1;
-    friend Compare2;
-    friend Compare3;
+    friend CompareWaiting1;
+    friend CompareWaiting2;
+    friend CompareWaiting3;
 
 public:
     WaitingOrder() = default;
@@ -41,11 +41,11 @@ WaitingOrder::WaitingOrder(const TrainID &trainID_, const int &from_, const int 
         trainID(trainID_), from(from_), to(to_), num(num_) {
 }
 
-class Compare1 {
+class CompareWaiting1 {
     bool operator()(const WaitingOrder &a, const WaitingOrder &b);
 };
 
-bool Compare1::operator()(const WaitingOrder &a, const WaitingOrder &b) {
+bool CompareWaiting1::operator()(const WaitingOrder &a, const WaitingOrder &b) {
     int cmp = compareTrainID.CompareStr(a.trainID, b.trainID);
     if (cmp) return cmp < 0;
     if (a.from != b.from) return a.from < b.from;
@@ -53,19 +53,19 @@ bool Compare1::operator()(const WaitingOrder &a, const WaitingOrder &b) {
     return a.num < b.num;
 }
 
-class Compare2 {
+class CompareWaiting2 {
     bool operator()(const WaitingOrder &a, const WaitingOrder &b);
 };
 
-bool Compare2::operator()(const WaitingOrder &a, const WaitingOrder &b) {
+bool CompareWaiting2::operator()(const WaitingOrder &a, const WaitingOrder &b) {
     return a.to <= b.from;
 }
 
-class Compare3 {
+class CompareWaiting3 {
     bool operator()(const WaitingOrder &a, const WaitingOrder &b);
 };
 
-bool Compare3::operator()(const WaitingOrder &a, const WaitingOrder &b) {
+bool CompareWaiting3::operator()(const WaitingOrder &a, const WaitingOrder &b) {
     return a.num <= b.num;
 }
 
@@ -92,7 +92,7 @@ WaitingTransaction::WaitingTransaction(const int &timestamp_, const long &addr) 
  */                                                                                  transaction_addr(addr) {}
 
 class WaitingList {
-    BPlusTree<WaitingOrder, WaitingTransaction, Compare1, Compare2, Compare3> waitingListTree{"nodeTree_of_waiting",
+    BPlusTree<WaitingOrder, WaitingTransaction, CompareWaiting1, CompareWaiting2, CompareWaiting3> waitingListTree{"nodeTree_of_waiting",
                                                                                               "list_of_waiting"};
     FileManager<WaitingTransaction> waitingListInformation{"waiting_information"};
 

@@ -24,10 +24,12 @@ add_executable(code
         src/head-files/transaction.hpp
         src/head-files/waitingList.hpp
         src/head-files/loginList.hpp
+        src/head-files/parameter.hpp
 
         src/main.cpp
 
         #try
         #my_data/tryTime.cpp
         #my_data/tryTransaction.cpp
-        my_data/tryFileManager.cpp )
+#        my_data/tryFileManager.cpp
+        my_data/tryParameter.cpp)

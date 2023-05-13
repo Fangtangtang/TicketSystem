@@ -30,7 +30,7 @@ public:
     }
 
     //return move_num-1 th ele behind start_addr
-    void FindEle(const long &start_addr, const int &move_num, ValueType &valueType) {
+    void ReadEle(const long &start_addr, const int &move_num, ValueType &valueType) {
         r_w_file.seekg(start_addr + move_num * value_size);
         r_w_file.read(reinterpret_cast<char *> (&valueType), value_size);
     }
