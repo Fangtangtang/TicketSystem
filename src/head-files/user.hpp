@@ -18,11 +18,6 @@
 #include "../utility/file_manager.hpp"
 #include "tokenScanner.hpp"
 
-/*
- * ele to be stored in loginList:
- *        Key:Username
- *        Value:int (privilege)
- */
 
 class User {
     char password[30] = {'\0'};
