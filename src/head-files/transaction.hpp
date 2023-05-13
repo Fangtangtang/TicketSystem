@@ -14,6 +14,8 @@
 #include "../utility/pair.hpp"
 #include "../utility/tool.hpp"
 #include "../utility/file_manager.hpp"
+#include "parameter.hpp"
+#include "train.hpp"
 
 struct CompareTrans1;
 struct CompareTrans2;
@@ -143,7 +145,7 @@ public:
      * print number of orders and information if succeed
      * print -1 if failed
      */
-    void QueryOrder(const Username &username_);
+    void QueryOrder(const Parameter &parameter, LoginList &loginList);
 
     /*
      * refund_ticket
@@ -151,7 +153,8 @@ public:
      * return 0 and train_address in train_information file if succeed
      * return -1 if failed
      */
-    int RefundTicket(const Username &username_, const int &index_of_transaction, long &train_address_);
+    int RefundTicket(const Parameter &parameter, LoginList &loginList,
+                     TrainSystem &trainSystem, WaitingList &waitingList);
 
 };
 

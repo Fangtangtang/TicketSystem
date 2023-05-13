@@ -9,6 +9,7 @@
 
 class TrainSystem;
 class UserSystem;
+class TransactionSystem;
 /*
  * Username class
  * ----------------------------------------------------------------------------------------------------

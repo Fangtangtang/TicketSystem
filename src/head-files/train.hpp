@@ -18,8 +18,9 @@
 #include "../utility/tool.hpp"
 #include "../utility/file_manager.hpp"
 #include "parameter.hpp"
-#include "transaction.hpp"
 #include "ticket.hpp"
+#include "loginList.hpp"
+#include "waitingList.hpp"
 
 /*
  * manage operations about train information
@@ -43,6 +44,7 @@ class TrainSystem {
 
     FileManager<Seat> seatInformation{"seat_file"};
 
+    friend TransactionSystem;
 public:
     /*
      * add_train
@@ -85,7 +87,7 @@ public:
      * if not found or invalid return -1
      * else modify train.released, add into releasedTree, add tickets to ticketSystem return 0
      */
-    int ReleaseTrain(const Parameter &parameter,TicketSystem &ticketSystem);
+    int ReleaseTrain(const Parameter &parameter, TicketSystem &ticketSystem);
 
     /*
      * query_train
@@ -94,7 +96,7 @@ public:
      */
     void QueryTrain(const Parameter &parameter);
 
-    void BuyTicket(const Parameter &parameter,TransactionSystem &transactionSystem);
+    void BuyTicket(const Parameter &parameter, LoginList &loginList, TransactionSystem &transactionSystem,WaitingList&waitingList);
 
 
 };

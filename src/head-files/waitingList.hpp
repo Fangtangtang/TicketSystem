@@ -31,6 +31,8 @@ class WaitingOrder {
     friend CompareWaiting2;
     friend CompareWaiting3;
 
+    friend TrainSystem;
+    friend TransactionSystem;
 public:
     WaitingOrder() = default;
 

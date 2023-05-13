@@ -7,7 +7,6 @@
 #include "head-files/user.hpp"
 #include "head-files/train.hpp"
 #include "head-files/waitingList.hpp"
-#include "utility/tool.hpp"
 
 bool Initialize();
 
@@ -79,7 +78,7 @@ void ProcessLine(Parameter parameter,
         if (flag) std::cout << userSystem.AddUser(parameter, 11);
         else std::cout << userSystem.AddUser(parameter, loginList.CheckLoggedIn(parameter));
     } else if (cmd == "login") {
-        std::cout<<userSystem.Login(parameter,loginList);
+        std::cout << userSystem.Login(parameter, loginList);
     } else if (cmd == "logout") {
         std::cout << loginList.Logout(parameter);
     } else if (cmd == "query_profile") {
@@ -99,13 +98,13 @@ void ProcessLine(Parameter parameter,
     } else if (cmd == "query_transfer") {
         ticketSystem.QueryTransfer(parameter);
     } else if (cmd == "buy_ticket") {
-        trainSystem.BuyTicket(parameter, transactionSystem);
+        trainSystem.BuyTicket(parameter, loginList, transactionSystem, waitingList);
     } else if (cmd == "query_order") {
-
+        transactionSystem.QueryOrder(parameter, loginList);
     } else if (cmd == "refund_ticket") {
-
+        transactionSystem.RefundTicket(parameter, loginList, trainSystem, waitingList);
     } else if (cmd == "clean") {
-
+        //TODO
     } else if (cmd == "exit") {
         std::cout << "bye";
         flag = true;

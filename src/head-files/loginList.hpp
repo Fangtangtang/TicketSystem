@@ -39,6 +39,8 @@ class LoginList {
     sjtu::map<Username, int, CompareUsername> loginList;
 
     friend UserSystem;
+    friend TrainSystem;
+    friend TransactionSystem;
 public:
 
     /*
@@ -60,13 +62,18 @@ public:
 
     /*
      * query_profile\modify_profile\buy_ticket\query_order\refund_ticket
-     * overloaded
+     * if user has Logged in return privilege
+     * else return -1
+     */
+    int CheckLoggedIn(const Parameter &parameter);
+
+    /*
+     * buy_ticket\query_order\refund_ticket
      * if user has Logged in return privilege
      * else return -1
      */
     int CheckLoggedIn(const Username &username);
 
-    int CheckLoggedIn(const Parameter &parameter);
 
 };
 
