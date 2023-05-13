@@ -9,6 +9,7 @@
 
 #include "../utility/tool.hpp"
 #include "../utility/bpt.hpp"
+#include "../utility/file_manager.hpp"
 
 const CompareTrainID compareTrainID;
 
@@ -91,8 +92,9 @@ WaitingTransaction::WaitingTransaction(const int &timestamp_, const long &addr) 
  */                                                                                  transaction_addr(addr) {}
 
 class WaitingList {
-    BPlusTree<WaitingOrder, WaitingTransaction, Compare1, Compare2, Compare3> waitingList{"nodeTree_of_waiting",
-                                                                                          "list_of_waiting"};
+    BPlusTree<WaitingOrder, WaitingTransaction, Compare1, Compare2, Compare3> waitingListTree{"nodeTree_of_waiting",
+                                                                                              "list_of_waiting"};
+    FileManager<WaitingTransaction> waitingListInformation{"waiting_information"};
 
 public:
     /*

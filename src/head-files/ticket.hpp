@@ -72,8 +72,10 @@ bool CostBased::operator()(const TicketDetail &a, const TicketDetail &b) {
  * including add, query
  */
 class TicketSystem {
-    BPlusTree<Ticket, TicketDetail, CompareTicket, CompareTicket2,CompareTicket2> ticketInformation{"nodeTree_of_ticket",
-                                                                                     "list_of_ticket"};
+    BPlusTree<Ticket, long, CompareTicket, CompareTicket2, CompareTicket2> ticketTree{"nodeTree_of_ticket",
+                                                                                      "list_of_ticket"};
+
+    FileManager<TicketDetail> ticketInformation{"ticket_file"};
 
     FileManager<Seat> seatInformation{"seat_file"};
 

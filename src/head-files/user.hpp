@@ -15,6 +15,7 @@
 #include "../utility/bpt.hpp"
 #include "../utility/pair.hpp"
 #include "../utility/tool.hpp"
+#include "../utility/file_manager.hpp"
 #include "tokenScanner.hpp"
 
 /*
@@ -76,8 +77,11 @@ User::User(char *password_, char *name_, char *mailAddr_, int privilege_ = 10) :
  */
 class UserSystem {
 private:
-    BPlusTree<Username, User, CompareUsername, CompareUsername,CompareUsername> userInformation{"nodeTree_of_user", "list_of_user"};
-    
+    BPlusTree<Username, long, CompareUsername, CompareUsername, CompareUsername> userTree{"nodeTree_of_user",
+                                                                                          "list_of_user"};
+
+    FileManager<User> userInformation{"user_file"};
+
     static const char empty_str[1];
 
 public:

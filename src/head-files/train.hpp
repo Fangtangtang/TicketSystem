@@ -30,7 +30,10 @@ class TrainSystem {
      * Value: Train
      * store basic information and some address
      */
-    BPlusTree<TrainID, Train, CompareTrainID, CompareTrainID,CompareTrainID> trainInformation{"nodeTree_of_train", "list_of_train"};
+    BPlusTree<TrainID, long, CompareTrainID, CompareTrainID, CompareTrainID> trainTree{"nodeTree_of_train",
+                                                                                       "list_of_train"};
+
+    FileManager<Train> trainInformation{"train_file"};
 
     FileManager<Station> stationInformation{"station_file"};
 

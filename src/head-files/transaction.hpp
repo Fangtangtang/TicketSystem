@@ -13,6 +13,7 @@
 #include "../utility/bpt.hpp"
 #include "../utility/pair.hpp"
 #include "../utility/tool.hpp"
+#include "../utility/file_manager.hpp"
 #include "tokenScanner.hpp"
 
 
@@ -120,9 +121,12 @@ TransactionDetail::TransactionDetail(const TrainID &trainID_, char *from_, char 
  * including add ,query, modify
  */
 class TransactionSystem {
-    BPlusTree<Transaction, TransactionDetail, Compare1, Compare2, Compare2> TransactionInformation{
+    BPlusTree<Transaction, TransactionDetail, Compare1, Compare2, Compare2> TransactionTree{
             "nodeTree_of_transaction",
             "list_of_transaction"};
+
+    FileManager<TransactionDetail> TransactionInformation{"transaction_information"};
+
 public:
 
     /*
