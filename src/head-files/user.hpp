@@ -16,7 +16,7 @@
 #include "../utility/pair.hpp"
 #include "../utility/tool.hpp"
 #include "../utility/file_manager.hpp"
-#include "tokenScanner.hpp"
+#include "parameter.hpp"
 
 
 class User {
@@ -87,7 +87,7 @@ public:
      * return -1 if failed
      * special case: add the first user
      */
-    int AddUser(TokenScanner &tokenScanner, const int &cur_privilege);
+    int AddUser(const Parameter &parameter, const int &cur_privilege);
 
     /*
      * query_profile
@@ -95,7 +95,7 @@ public:
      *     "username name mailAddr privilege"
      * print -1 if failed
      */
-    void QueryProfile(TokenScanner &tokenScanner, const int &cur_privilege);
+    void QueryProfile(const Parameter &parameter, const int &cur_privilege);
 
     /*
      * modify_profile
@@ -105,7 +105,7 @@ public:
      *     "username name mailAddr privilege"
      * print -1 if failed
      */
-    void ModifyProfile(TokenScanner &tokenScanner, const int &cur_privilege);
+    void ModifyProfile(const Parameter &parameter, const int &cur_privilege);
 
     /*
      * login
@@ -113,7 +113,7 @@ public:
      * return privilege if exist
      * return false if not exist or wrong password
      */
-    sjtu::pair<int, bool> FindUser(TokenScanner &tokenScanner, const Username &username);
+    sjtu::pair<int, bool> FindUser(const Parameter &parameter, const Username &username);
 };
 
 const char UserSystem::empty_str[1] = {'\0'};

@@ -15,7 +15,7 @@
 #include "../utility/pair.hpp"
 #include "../utility/tool.hpp"
 #include "../utility/file_manager.hpp"
-#include "tokenScanner.hpp"
+#include "parameter.hpp"
 
 
 class TimeBased;
@@ -92,7 +92,7 @@ public:
      * given date from to
      * print based on time or cost
      */
-    void QueryTicket(TokenScanner &tokenScanner);
+    void QueryTicket(const Parameter &parameter);
 
     /*
      * query_transfer
@@ -100,7 +100,7 @@ public:
      * need to transfer
      * return best choice based on time or cost
      */
-    void QueryTransfer(TokenScanner &tokenScanner);
+    void QueryTransfer(const Parameter &parameter);
 
 
 };

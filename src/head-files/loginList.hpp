@@ -15,7 +15,7 @@
 
 #include "../utility/map.hpp"
 #include "../utility/tool.hpp"
-#include "tokenScanner.hpp"
+#include "parameter.hpp"
 
 class UserShortcut {
     int privilege = 10;
@@ -46,14 +46,14 @@ public:
      * return -1 if failed
      *        in list\not exist\wrong password
      */
-    int Login(TokenScanner &tokenScanner, const Username &username);
+    int Login(const Parameter &parameter, const Username &username);
 
     /*
      * logout
      * return 0 and erase from list if succeed
      * return -1 if failed
      */
-    int Logout(TokenScanner &tokenScanner);
+    int Logout(const Parameter &parameter);
 
     /*
      * query_profile\modify_profile\buy_ticket\query_order\refund_ticket

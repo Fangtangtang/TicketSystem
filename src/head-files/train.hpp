@@ -17,7 +17,7 @@
 #include "../utility/pair.hpp"
 #include "../utility/tool.hpp"
 #include "../utility/file_manager.hpp"
-#include "tokenScanner.hpp"
+#include "parameter.hpp"
 
 
 /*
@@ -44,13 +44,13 @@ public:
      * add_train
      * return address of Station storing information of the first one
      */
-    long AddStation(TokenScanner &tokenScanner);
+    long AddStation(const Parameter &parameter);
 
     /*
      * add_train
      * return address of first seat(int)
      */
-    long AddSeat(TokenScanner &tokenScanner);
+    long AddSeat(const Parameter &parameter);
 
     /*
      * release_train & query_train
@@ -66,7 +66,7 @@ public:
      * return 0 if succeed
      * return -1 if failed
      */
-    int AddTrain(TokenScanner &tokenScanner, const TrainID &trainID_);
+    int AddTrain(const Parameter &parameter, const TrainID &trainID_);
 
     /*
      * delete_train

@@ -14,7 +14,6 @@
 #include "../utility/pair.hpp"
 #include "../utility/tool.hpp"
 #include "../utility/file_manager.hpp"
-#include "tokenScanner.hpp"
 
 
 struct CompareTrans1;

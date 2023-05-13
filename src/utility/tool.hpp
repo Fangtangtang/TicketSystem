@@ -24,11 +24,18 @@ public:
 
     explicit Username(char *username_);
 
+    explicit Username(const std::string &username_);
+
 };
 
 Username::Username(char *username_) {
     memset(username, 0, sizeof(username));
     strcpy(username, username_);
+}
+
+Username::Username(const std::string &username_) {
+    memset(username, 0, sizeof(username));
+    strcpy(username, username_.c_str());
 }
 
 /*
@@ -61,6 +68,8 @@ public:
 
     explicit TrainID(char *trainID_);
 
+    explicit TrainID(const std::string &trainID_);
+
     friend bool operator<(const TrainID &a, const TrainID &b);
 
     friend bool operator==(const TrainID &a, const TrainID &b);
@@ -72,6 +81,11 @@ public:
 TrainID::TrainID(char *trainID_) {
     memset(trainID, 0, sizeof(trainID));
     strcpy(trainID, trainID_);
+}
+
+TrainID::TrainID(const std::string &trainID_) {
+    memset(trainID, 0, sizeof(trainID));
+    strcpy(trainID, trainID_.c_str());
 }
 
 bool operator<(const TrainID &a, const TrainID &b) {
@@ -327,6 +341,9 @@ public:
 
     Station(char *from_, char *to_, const int &price, const Time &leaving_time_, const Time &arriving_time);
 
+    Station(const std::string &from_, const std::string *to_, const int &price, const Time &leaving_time_,
+            const Time &arriving_time);
+
     void PrintInformation(const int &interval);
 };
 
@@ -336,6 +353,15 @@ Station::Station(char *from_, char *to_, const int &price_, const Time &leaving_
     strcpy(from, from_);
     memset(to, 0, sizeof(to));
     strcpy(to, to_);
+}
+
+Station::Station(const std::string &from_, const std::string *to_, const int &price_, const Time &leaving_time_,
+                 const Time &arriving_time) :
+        price(price_), leaving_time(leaving_time_), arriving_time(arriving_time) {
+    memset(from, 0, sizeof(from));
+    strcpy(from, from_.c_str());
+    memset(to, 0, sizeof(to));
+    strcpy(to, to_->c_str());
 }
 
 void Station::PrintInformation(const int &interval) {
@@ -381,6 +407,8 @@ public:
 
     Ticket(char *from_, char *to_, const Time &start_sale_, const Time &stop_sale_);
 
+    Ticket(const std::string &from_, const std::string *to_, const Time &start_sale_, const Time &stop_sale_);
+
 };
 
 
@@ -390,6 +418,14 @@ Ticket::Ticket(char *from_, char *to_, const Time &start_sale_, const Time &stop
     strcpy(from, from_);
     memset(to, 0, sizeof(to));
     strcpy(to, to_);
+}
+
+Ticket::Ticket(const std::string &from_, const std::string *to_, const Time &start_sale_, const Time &stop_sale_) :
+        start_sale(start_sale_), stop_sale(stop_sale_) {
+    memset(from, 0, sizeof(from));
+    strcpy(from, from_.c_str());
+    memset(to, 0, sizeof(to));
+    strcpy(to, to_->c_str());
 }
 
 /*

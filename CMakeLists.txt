@@ -31,5 +31,6 @@ add_executable(code
         #try
         #my_data/tryTime.cpp
         #my_data/tryTransaction.cpp
-#        my_data/tryFileManager.cpp
-        my_data/tryParameter.cpp)
+        #my_data/tryFileManager.cpp
+        #my_data/tryParameter.cpp
+        )
