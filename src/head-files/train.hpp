@@ -32,17 +32,9 @@ class TrainSystem {
      * Value: Train
      * store basic information and some address
      */
-    BPlusTree<TrainID, long, CompareTrainID, CompareTrainID, CompareTrainID> trainTree{"nodeTree_of_train",
-                                                                                       "list_of_train"};
+    BPlusTree<TrainID, long, CompareTrainID, CompareTrainID, CompareTrainID> trainTree{"train_tree"};
 
-    BPlusTree<TrainID, long, CompareTrainID, CompareTrainID, CompareTrainID> releasedTree{"nodeTree_of_released",
-                                                                                          "list_of_released"};
-
-    FileManager<Train> trainInformation{"train_file"};
-
-    FileManager<Station> stationInformation{"station_file"};
-
-    FileManager<Seat> seatInformation{"seat_file"};
+    BPlusTree<TrainID, long, CompareTrainID, CompareTrainID, CompareTrainID> releasedTree{"released_train_tree"};
 
     friend TransactionSystem;
 public:

@@ -1,5 +1,6 @@
 #include <iostream>
 #include <string>
+#include "utility/file_manager.hpp"
 #include "head-files/loginList.hpp"
 #include "head-files/parameter.hpp"
 #include "head-files/ticket.hpp"
@@ -24,6 +25,13 @@ void ProcessLine(Parameter parameter,
                  bool &flag);
 
 int main() {
+    //construct file_managers
+    FileManager<User> userFile("user_information");
+    FileManager<TransactionDetail> TransactionFile{"transaction_information"};
+    FileManager<Train> trainFile("train_information");
+    FileManager<Station> stationFile{"station_information"};
+    FileManager<Seat> seatFile{"seat_information"};
+    FileManager<WaitingTransaction> waitingListFile{"waiting_information"};
     //construct System
     UserSystem userSystem;
     TrainSystem trainSystem;
@@ -35,14 +43,14 @@ int main() {
     bool flag = Initialize();
     //process line in a loop
     while (std::cin) {
-        ProcessLine(parameter,
-                    userSystem,
-                    trainSystem,
-                    transactionSystem,
-                    ticketSystem,
-                    waitingList,
-                    loginList,
-                    flag);
+    ProcessLine(parameter,
+                userSystem,
+                trainSystem,
+                transactionSystem,
+                ticketSystem,
+                waitingList,
+                loginList,
+                flag);
         if (flag)break;
     }
     return 0;
@@ -75,8 +83,8 @@ void ProcessLine(Parameter parameter,
      * special case: add the first user(flag==true)
      */
     if (cmd == "add_user") {
-        if (flag) std::cout << userSystem.AddUser(parameter, 11);
-        else std::cout << userSystem.AddUser(parameter, loginList.CheckLoggedIn(parameter));
+        if (flag)std::cout << userSystem.AddUser(parameter);//add first
+        else std::cout << userSystem.AddUser(parameter, loginList);
     } else if (cmd == "login") {
         std::cout << userSystem.Login(parameter, loginList);
     } else if (cmd == "logout") {

@@ -4,93 +4,60 @@
 #include <fstream>
 #include <iostream>
 #include <string>
-#include <queue>
 #include "vector.hpp"
+#include "file_manager.hpp"
 
 template<class Key, class Value, class Compare1, class Compare2, class Compare3>
 class BPlusTree {
 private:
-    static constexpr int node_size = 150;
+    static constexpr int node_size = 178;
     static constexpr int block_size = 1024;
 
-    //son: (,key]
-    struct KeyGroup {
+    /*
+     * ele in node and block
+     */
+    struct EleGroup {
         Key key;
         long address = 0;
 
-        friend bool operator<(const KeyGroup &a, const KeyGroup &b) {
+        friend bool operator<(const EleGroup &a, const EleGroup &b) {
             return a.key < b.key;
         }
 
-        friend bool operator==(const KeyGroup &a, const KeyGroup &b) {
+        friend bool operator==(const EleGroup &a, const EleGroup &b) {
             return a.key == b.key;
         }
 
     public:
-        KeyGroup() = default;
+        EleGroup() = default;
 
-        KeyGroup(const Key &key1, const long &address = 0) : key(key1), address(address) {}
+        EleGroup(const Key &key1, const long &address = 0) : key(key1), address(address) {}
 
         Key GetKey() const {
             return key;
         }
 
-    };
-
-    struct ValueType {
-        Key key;
-        Value value;
-
-        friend bool operator<(const ValueType &a, const ValueType &b) {
-            return a.key < b.key;
-        }
-
-        friend bool operator==(const ValueType &a, const ValueType &b) {
-            return a.key == b.key;
-        }
-
-    public:
-        ValueType() = default;
-
-        ValueType(const Key &key1, const Value &value1 = 0) : key(key1), value(value1) {}
-
-        Key GetKey() const {
-            return key;
-        }
-
-        Value GetValue() const {
-            return value;
-        }
     };
 
     struct Cmp1 {
-        bool operator()(const KeyGroup &a, const KeyGroup &b) const {
+        bool operator()(const EleGroup &a, const EleGroup &b) const {
             return compare1(a.key, b.key);
         }
 
-        bool operator()(const ValueType &a, const ValueType &b) const {
-            return compare1(a.key, b.key);
-        }
     };
 
     struct Cmp2 {
-        bool operator()(const KeyGroup &a, const KeyGroup &b) const {
+        bool operator()(const EleGroup &a, const EleGroup &b) const {
             return compare2(a.key, b.key);
         }
 
-        bool operator()(const ValueType &a, const ValueType &b) const {
-            return compare2(a.key, b.key);
-        }
     };
 
     struct Cmp3 {
-        bool operator()(const KeyGroup &a, const KeyGroup &b) const {
+        bool operator()(const EleGroup &a, const EleGroup &b) const {
             return compare3(a.key, b.key);
         }
 
-        bool operator()(const ValueType &a, const ValueType &b) const {
-            return compare3(a.key, b.key);
-        }
     };
 
     struct Node {
@@ -102,47 +69,31 @@ private:
          * 1:son_of_root
          */
         int node_type = -1;
-        KeyGroup key[node_size];
+        EleGroup key[node_size];
 
         Node() = default;
 
-        Node(const KeyGroup &keyGroup1, const KeyGroup &keyGroup2) : size(2), son_is_block(false), node_type(0) {
+        Node(const EleGroup &keyGroup1, const EleGroup &keyGroup2) : size(2), son_is_block(false), node_type(0) {
             key[0] = keyGroup1;
             key[1] = keyGroup2;
         }
 
-        friend std::ostream &operator<<(std::ostream &os, const Node &node) {
-            os << "NODE " << node.size << '\n';
-            for (int i = 0; i < node.size; ++i) {
-                os << node.key[i].GetIndex() << ' ' << node.key[i].address << '\n';
-            }
-            os << '\n';
-            return os;
-        }
     };
 
     //all the blocks are linked like a linkList
     struct Block {
         int size = 0;
-        ValueType storage[block_size];
+        EleGroup storage[block_size];
         long next_block_address = -1;
 
         Block() = default;
 
-        Block(const Key &key, const Value &value) {
+        Block(const Key &key, const long &addr) {
             size = 1;
             storage[0].key = key;
-            storage[0].value = value;
+            storage[0].address = addr;
         }
 
-        friend std::ostream &operator<<(std::ostream &os, const Block &block) {
-            os << "BLOCK " << block.size << '\n';
-            for (int i = 0; i < block.size; ++i) {
-                os << block.storage[i].GetIndex() << ' ' << block.storage[i].GetValue() << '\n';
-            }
-            os << '\n';
-            return os;
-        }
     };
 
     /*
@@ -167,36 +118,26 @@ private:
 
     //associated with file when construct the tree
     std::fstream r_w_tree;
-    std::fstream r_w_list;
 
     static Compare1 compare1;
     static Compare2 compare2;
     static Compare3 compare3;
 
 public:
-    //associate the tree with file
-    BPlusTree(const std::string &file_name, const std::string &list_name) : cmp1(), cmp2() {
-        r_w_tree.open(file_name);
 
+    BPlusTree(const std::string &file_name) : cmp1(), cmp2() {
+        r_w_tree.open(file_name);
         if (!r_w_tree.good()) {//doesn't exist
             r_w_tree.open(file_name, std::ios::out);
             r_w_tree.close();
             r_w_tree.open(file_name);
-
             r_w_tree.seekp(0);//将指针定位到文件开头
             r_w_tree.write(reinterpret_cast<char *> (&root), sizeof(root));
             root_node.node_type = 0;
             r_w_tree.seekp(0, std::ios::end);
             root = r_w_tree.tellp();
             r_w_tree.write(reinterpret_cast<char *> (&root_node), sizeof(root_node));//root_node may be empty
-
-            r_w_list.open(list_name, std::ios::out);
-            r_w_list.close();
-            r_w_list.open(list_name);
         } else {
-
-            r_w_list.open(list_name);
-
             //read root
             r_w_tree.seekg(0);//将指针定位到文件开头
             r_w_tree.read(reinterpret_cast<char *> (&root), sizeof(root));
@@ -228,70 +169,21 @@ public:
         }
     }
 
-    void PrintBlock(std::queue<Block> block_queue) {
-        Block first_block = block_queue.front();
-        std::cout << "PRINT BLOCK AS LEAF\n";
-        while (!block_queue.empty()) {
-            current_block = block_queue.front();
-            block_queue.pop();
-            std::cout << current_block;
-        }
-        std::cout << "PRINT BLOCK AS LIST\n";
-        while (true) {
-            std::cout << first_block;
-            if (first_block.next_block_address > 0) {
-                ReadBlock(first_block, first_block.next_block_address);
-            } else break;
-        }
-    }
-
-    void Print() {
-        //write root_node
-        WriteNode(root_node, root);
-        if (!root_node.son_is_block) {
-            int num = root_node.size;
-            for (int i = 0; i < num; ++i) {
-                WriteNode(son_of_root[i], root_node.key[i].address);
-            }
-        }
-        std::queue<Node> print_queue;
-        std::queue<Block> block_queue;
-        Node print_node, son;
-        Block son_block;
-        print_queue.push(root_node);
-        while (!print_queue.empty()) {
-            print_node = print_queue.front();
-            print_queue.pop();
-            std::cout << print_node;
-            if (print_node.son_is_block) {
-                for (int i = 0; i < print_node.size; ++i) {
-                    ReadBlock(son_block, print_node.key[i].address);
-                    block_queue.push(son_block);
-                }
-            } else
-                for (int i = 0; i < print_node.size; ++i) {
-                    ReadNode(son, print_node.key[i].address);
-                    print_queue.push(son);
-                }
-        }
-        PrintBlock(block_queue);
-    }
-
     //insert downwards
     //change key when getting down
     //break upwards
-    void Insert(const Key &key, const Value &value) {
+    bool Insert(const Key &key, const Value &value, FileManager<Value> &r_w_value) {
         if (!root_node.size) {//empty
-            Block new_block(key, value);
+            Block new_block(key, r_w_value.WriteEle(value));
             ++root_node.size;
-            r_w_list.seekp(0, std::ios::end);//the end of the file
+            r_w_tree.seekp(0, std::ios::end);//the end of the file
             root_node.key[0].key = key;
-            root_node.key[0].address = r_w_list.tellp();
+            root_node.key[0].address = r_w_tree.tellp();
             WriteBlock(new_block, root_node.key[0].address);
-            return;
+            return true;
         }
-        KeyGroup target(key);
-        InsertInNode(key, target, value, root_node);
+        EleGroup target(key);
+        bool flag = InsertInNode(key, target, value, root_node, r_w_value);
         if (root_node.size == node_size) {//root need to break
             //write son_of_root
             if (!root_node.son_is_block) {
@@ -308,8 +200,8 @@ public:
             }
             new_node.son_is_block = root_node.son_is_block;
             r_w_tree.seekp(0, std::ios::end);//the end of the file
-            Node new_root(KeyGroup(root_node.key[root_node.size - 1].key, root),
-                          KeyGroup(new_node.key[new_node.size - 1].key, r_w_tree.tellp()));
+            Node new_root(EleGroup(root_node.key[root_node.size - 1].key, root),
+                          EleGroup(new_node.key[new_node.size - 1].key, r_w_tree.tellp()));
             WriteNode(root_node, new_root.key[0].address);
             WriteNode(new_node, new_root.key[1].address);
             //update son_of_root
@@ -320,13 +212,14 @@ public:
             root_node = new_root;
             WriteNode(root_node, root);
         }
+        return flag;
     }
 
     //delete and adjust upwards
     bool Delete(const Key &key) {
         long iter = 0;
         bool adjust_flag = true;
-        KeyGroup target(key);
+        EleGroup target(key);
         bool flag = RemoveInNode(key, target, iter, root_node, adjust_flag);
         if (root_node.size == 1) {//root need to adjust
             if (!root_node.son_is_block) {
@@ -345,21 +238,21 @@ public:
         return flag;
     }
 
-    sjtu::vector<Value> StrictFind(const Key &key) {
-        sjtu::vector<Value> vec;
+    sjtu::vector<long> StrictFind(const Key &key) {
+        sjtu::vector<long> vec;
         Find(key, cmp1, vec);
         return vec;
     }
 
     //TODO
-    sjtu::vector<Value> ModerateFind(const Key &key) {
-        sjtu::vector<Value> vec;
+    sjtu::vector<long> ModerateFind(const Key &key) {
+        sjtu::vector<long> vec;
         Find(key, cmp1, vec);
         return vec;
     }
 
-    sjtu::vector<Value> WeakFind(const Key &key) {
-        sjtu::vector<Value> vec;
+    sjtu::vector<long> WeakFind(const Key &key) {
+        sjtu::vector<long> vec;
         Find(key, cmp2, vec);
         return vec;
     }
@@ -397,11 +290,6 @@ private:
         return ans;
     }
 
-    template<class T>
-    T Max(const T &a, const T &b) {
-        return b < a ? a : b;
-    }
-
     inline void ReadNode(Node &current, const long &iter) {
         r_w_tree.seekg(iter);
         r_w_tree.read(reinterpret_cast<char *> (&current), sizeof(Node));
@@ -413,21 +301,21 @@ private:
     }
 
     inline void ReadBlock(Block &current, const long &iter) {
-        r_w_list.seekg(iter);
-        r_w_list.read(reinterpret_cast<char *> (&current), sizeof(Block));
+        r_w_tree.seekg(iter);
+        r_w_tree.read(reinterpret_cast<char *> (&current), sizeof(Block));
     }
 
     inline void WriteBlock(Block current, const long &iter) {
-        r_w_list.seekp(iter);
-        r_w_list.write(reinterpret_cast<char *> (&current), sizeof(Block));
+        r_w_tree.seekp(iter);
+        r_w_tree.write(reinterpret_cast<char *> (&current), sizeof(Block));
     }
 
     template<class Compare>
-    void GetEle(const ValueType &target, int index_in_block, const Compare &cmp, sjtu::vector<Value> &vec) {
+    void GetEle(const EleGroup &target, int index_in_block, const Compare &cmp, sjtu::vector<long> &vec) {
         while (index_in_block < current_block.size &&
                !(cmp(current_block.storage[index_in_block], target) ||
                  cmp(target, current_block.storage[index_in_block]))) {
-            vec.push_back(current_block.storage[index_in_block].value);
+            vec.push_back(current_block.storage[index_in_block].address);
             ++index_in_block;
         }
         if (index_in_block == current_block.size && current_block.next_block_address > 0) {
@@ -437,7 +325,7 @@ private:
         }
     }
 
-    void GetEle(const ValueType &target, int index_in_block, sjtu::vector<Value> &vec) {
+    void GetEle(const EleGroup &target, int index_in_block, sjtu::vector<long> &vec) {
         while (index_in_block < current_block.size &&
                (!(cmp2(current_block.storage[index_in_block], target) ||
                   cmp2(target, current_block.storage[index_in_block])) &&
@@ -453,9 +341,9 @@ private:
     }
 
     template<class Compare>
-    void FindFirstEle(const Key &key, long &iter, const Compare &cmp, sjtu::vector<Value> &vec) {
+    void FindFirstEle(const Key &key, long &iter, const Compare &cmp, sjtu::vector<long> &vec) {
         ReadBlock(current_block, iter);
-        ValueType target(key);
+        EleGroup target(key);
         int index_in_block = BinarySearch(current_block.storage, 0, current_block.size - 1, target, cmp);
         while (index_in_block == -1 && current_block.next_block_address != -1) {
             ReadBlock(current_block, current_block.next_block_address);
@@ -468,9 +356,9 @@ private:
         } else return;
     }
 
-    void FindFirstEle(const Key &key, long &iter, sjtu::vector<Value> &vec) {
+    void FindFirstEle(const Key &key, long &iter, sjtu::vector<long> &vec) {
         ReadBlock(current_block, iter);
-        ValueType target(key);
+        EleGroup target(key);
         int index_in_block = BinarySearch(current_block.storage, 0, current_block.size - 1, target, cmp2);
         while (index_in_block == -1 && current_block.next_block_address != -1) {
             ReadBlock(current_block, current_block.next_block_address);
@@ -485,17 +373,17 @@ private:
     }
 
     template<class Compare>
-    void Find(const Key &key, const Compare &cmp) {
+    void Find(const Key &key, const Compare &cmp, sjtu::vector<long> &vec) {
         current_node = root_node;//start from root
         long iter;
-        KeyGroup target(key);
-        FindNode(target, iter, cmp);
+        EleGroup target(key);
+        FindNode(target, iter, cmp, vec);
     }
 
     void Find(const Key &key) {
         current_node = root_node;//start from root
         long iter;
-        KeyGroup target(key);
+        EleGroup target(key);
         FindNode(target, iter);
     }
 
@@ -506,7 +394,7 @@ private:
       * exist return true
       */
     template<class Compare>
-    void FindNode(const KeyGroup &target, long &iter, const Compare &cmp, sjtu::vector<Value> &vec) {
+    void FindNode(const EleGroup &target, long &iter, const Compare &cmp, sjtu::vector<long> &vec) {
         int index = BinarySearch(current_node.key, 0, current_node.size - 1, target, cmp);
         if (index == -1) index = current_node.size - 1;
         iter = current_node.key[index].address;
@@ -521,7 +409,7 @@ private:
         FindNode(target, iter, cmp, vec);
     }
 
-    void FindNode(const KeyGroup &target, long &iter, sjtu::vector<Value> &vec) {
+    void FindNode(const EleGroup &target, long &iter, sjtu::vector<long> &vec) {
         int index = BinarySearch(current_node.key, 0, current_node.size - 1, target, cmp2);
         if (index == -1) index = current_node.size - 1;
         iter = current_node.key[index].address;
@@ -570,8 +458,8 @@ private:
             new_block.storage[i] = current_block.storage[new_block.size + i];
         }
         new_block.next_block_address = current_block.next_block_address;
-        r_w_list.seekp(0, std::ios::end);//the end of the file
-        current_block.next_block_address = r_w_list.tellp();
+        r_w_tree.seekp(0, std::ios::end);//the end of the file
+        current_block.next_block_address = r_w_tree.tellp();
         WriteBlock(new_block, current_block.next_block_address);
         WriteBlock(current_block, father.key[index].address);
         for (int i = father.size; i > index + 1; --i) {
@@ -584,8 +472,10 @@ private:
     }
 
 
-    void InsertInNode(const Key &key, const KeyGroup &target, const Value &value, Node &current, long iter = -1) {
+    bool InsertInNode(const Key &key, const EleGroup &target, const Value &value, Node &current,
+                      FileManager<Value> &r_w_value, long iter = -1) {
         bool write_current_flag = false;//if current is changed and is not root or son_of_root
+        bool flag;
         int index = BinarySearch(current.key, 0, current.size - 1, target);
         if (index == -1) {
             current.key[current.size - 1].key = key;
@@ -594,21 +484,21 @@ private:
         }
         if (current.son_is_block) {
             ReadBlock(current_block, current.key[index].address);
-            InsertInBlock(key, value);
+            flag = InsertInBlock(key, target, value, r_w_value);
             if (current_block.size == block_size) {
                 BreakBlock(current, index);
                 if (current.node_type < 0) write_current_flag = true;
             } else WriteBlock(current_block, current.key[index].address);
         } else {
             if (!current.node_type) {//is root
-                InsertInNode(key, target, value, son_of_root[index]);
+                flag = InsertInNode(key, target, value, son_of_root[index], r_w_value);
                 if (son_of_root[index].size == node_size) {
                     BreakNode(son_of_root[index], current, index);
                 }
             } else {
                 Node next_node;
                 ReadNode(next_node, current.key[index].address);
-                InsertInNode(key, target, value, next_node, current.key[index].address);
+                flag = InsertInNode(key, target, value, next_node, r_w_value, current.key[index].address);
                 if (next_node.size == node_size) {
                     BreakNode(next_node, current, index);
                     if (current.node_type < 0) write_current_flag = true;
@@ -616,18 +506,20 @@ private:
             }
         }
         if (write_current_flag && current.node_type < 0)WriteNode(current, iter);
+        return flag;
     }
 
-    void InsertInBlock(const Key &key, const Value &value) {
-        ValueType target(key, value);
+    bool InsertInBlock(const Key &key, EleGroup target, const Value &value, FileManager<Value> &r_w_value) {
         int index_in_block = BinarySearch(current_block.storage, 0, current_block.size - 1, target);
         if (index_in_block == -1)index_in_block = current_block.size;
-        else if (current_block.storage[index_in_block].key == key) return;
+        else if (current_block.storage[index_in_block].key == key) return false;
+        target.address = r_w_value.WriteEle(value);
         for (int i = current_block.size; i > index_in_block; --i) {
             current_block.storage[i] = current_block.storage[i - 1];
         }
         current_block.storage[index_in_block] = target;
         ++current_block.size;
+        return true;
     }
 
     void AdjustRemoveInNode(Node &current, Node &father, int index, bool &adjust_flag) {
@@ -834,7 +726,7 @@ private:
      * adjust_flag==true:adjust upwards
      *              false:"stop"(node remain unchanged)
      */
-    bool RemoveInNode(const Key &key, const KeyGroup &target, long &iter, Node &current, bool &adjust_flag) {
+    bool RemoveInNode(const Key &key, const EleGroup &target, long &iter, Node &current, bool &adjust_flag) {
         if (current.key[current.size - 1].GetKey() < key) {//exceed
             return false;
         }
@@ -867,7 +759,7 @@ private:
 
     bool RemoveInBlock(const Key &key, long &iter, bool &adjust_flag) {
         ReadBlock(current_block, iter);
-        ValueType target(key);
+        EleGroup target(key);
         int index_in_block = BinarySearch(current_block.storage, 0, current_block.size - 1, target);
         if (current_block.storage[index_in_block].key == key) {//the ele to be removed
             --current_block.size;

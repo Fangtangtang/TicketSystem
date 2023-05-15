@@ -121,11 +121,7 @@ TransactionDetail::TransactionDetail(const TrainID &trainID_, char *from_, char 
  * including add ,query, modify
  */
 class TransactionSystem {
-    BPlusTree<Transaction, TransactionDetail, CompareTrans1, CompareTrans2, CompareTrans2> TransactionTree{
-            "nodeTree_of_transaction",
-            "list_of_transaction"};
-
-    FileManager<TransactionDetail> TransactionInformation{"transaction_information"};
+    BPlusTree<Transaction, TransactionDetail, CompareTrans1, CompareTrans2, CompareTrans2> TransactionTree{"transaction_tree"};
 
     friend TrainSystem;
 public:

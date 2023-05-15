@@ -94,9 +94,7 @@ WaitingTransaction::WaitingTransaction(const int &timestamp_, const long &addr) 
  */                                                                                  transaction_addr(addr) {}
 
 class WaitingList {
-    BPlusTree<WaitingOrder, WaitingTransaction, CompareWaiting1, CompareWaiting2, CompareWaiting3> waitingListTree{"nodeTree_of_waiting",
-                                                                                              "list_of_waiting"};
-    FileManager<WaitingTransaction> waitingListInformation{"waiting_information"};
+    BPlusTree<WaitingOrder, WaitingTransaction, CompareWaiting1, CompareWaiting2, CompareWaiting3> waitingListTree{"waiting_list_tree"};
 
 public:
     /*

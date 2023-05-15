@@ -72,10 +72,7 @@ User::User(char *password_, char *name_, char *mailAddr_, int privilege_ = 10) :
  */
 class UserSystem {
 private:
-    BPlusTree<Username, long, CompareUsername, CompareUsername, CompareUsername> userTree{"nodeTree_of_user",
-                                                                                          "list_of_user"};
-
-    FileManager<User> userInformation{"user_file"};
+    BPlusTree<Username, long, CompareUsername, CompareUsername, CompareUsername> userTree{"user_tree"};
 
     static const char empty_str[1];
 
@@ -85,9 +82,11 @@ public:
      * return 0 if succeed
      *      new username, lower privilege
      * return -1 if failed
-     * special case: add the first user
+     * special case: add the first user(overloaded)
      */
-    int AddUser(const Parameter &parameter, const int &cur_privilege);
+    int AddUser(const Parameter &parameter);
+
+    int AddUser(const Parameter &parameter, LoginList &loginList);
 
     /*
      * query_profile
@@ -113,7 +112,7 @@ public:
      * add into loginList
      * (need to check if user has logged in)
      */
-    int Login(const Parameter &parameter,LoginList &loginList);
+    int Login(const Parameter &parameter, LoginList &loginList);
 
     /*
      * login
@@ -128,5 +127,28 @@ public:
 };
 
 const char UserSystem::empty_str[1] = {'\0'};
+
+int UserSystem::AddUser(const Parameter &parameter) {
+    std::string str;
+    //construct Username
+    if (!parameter.GetParameter('u', str))  return -1;
+    //construct User
+    char password[30], name[16], mailAddr[30];
+    if (!parameter.GetParameter('p', password) ||
+        !parameter.GetParameter('n', name) ||
+        !parameter.GetParameter('m', mailAddr))
+        return -1;
+//    bool flag=userTree.Insert(Username(str),User(password,name,mailAddr));
+}
+
+/*
+ * SAMPLE:
+ *   [3] add_user -g 10 -p aws -u I_am_the_admin -m foo@bar.com -n 奥斯卡 -c cur
+ *
+ */
+int UserSystem::AddUser(const Parameter &parameter, LoginList &loginList) {
+
+}
+
 
 #endif //TICKETSYSTEM_USER_HPP
