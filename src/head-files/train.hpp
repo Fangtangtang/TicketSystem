@@ -40,13 +40,13 @@ public:
      * add_train
      * return address of Station storing information of the first one
      */
-    long AddStation(const Parameter &parameter);
+    long AddStation(const std::string &stations);
 
     /*
      * add_train
      * return address of first seat(int)
      */
-    long AddSeat(const Parameter &parameter);
+    long AddSeat(const std::string &seats);
 
     /*
      * release_train & query_train
@@ -62,7 +62,8 @@ public:
      * return 0 if succeed
      * return -1 if failed
      */
-    int AddTrain(const Parameter &parameter);
+    int AddTrain(const Parameter &parameter,
+                 FileManager<Train> &trainFile, FileManager<Station> &stationFile, FileManager<Seat> &seatFile);
 
     /*
      * delete_train
@@ -86,9 +87,32 @@ public:
      */
     void QueryTrain(const Parameter &parameter);
 
-    void BuyTicket(const Parameter &parameter, LoginList &loginList, TransactionSystem &transactionSystem,WaitingList&waitingList);
+    void BuyTicket(const Parameter &parameter, LoginList &loginList, TransactionSystem &transactionSystem,
+                   WaitingList &waitingList);
 
 
 };
+
+int TrainSystem::AddTrain(const Parameter &parameter, FileManager<Train> &trainFile, FileManager<Station> &stationFile,
+                          FileManager<Seat> &seatFile) {
+    //check parameter
+    std::string trainID, stations, prices, stopover_times, travel_times, start_time_, sale_date_;
+    int station_num, seat_num;
+    char type;
+    if (!parameter.GetParameter('i', trainID) ||
+        !parameter.GetParameter('n', station_num) ||
+        !parameter.GetParameter('m', seat_num) ||
+        !parameter.GetParameter('s', stations) ||
+        !parameter.GetParameter('p', prices) ||
+        !parameter.GetParameter('x', start_time_) ||
+        !parameter.GetParameter('t', travel_times) ||
+        !parameter.GetParameter('o', stopover_times) ||
+        !parameter.GetParameter('d', sale_date_) ||
+        !parameter.GetParameter('y', type))
+        return -1;
+    //construct Time
+//    if (trainTree.Insert(TrainID(trainID), Train(station_num,)))
+}
+
 
 #endif //TICKETSYSTEM_TRAIN_HPP

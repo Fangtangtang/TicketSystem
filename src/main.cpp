@@ -98,11 +98,7 @@ void ProcessLine(Parameter parameter,
                  FileManager<WaitingTransaction> &waitingListFile,
                  bool &flag) {
     std::string cmd = parameter.ReadLine();
-    /*
-     * user in LoginList
-     * try to add user in UserSystem
-     * special case: add the first user(flag==true)
-     */
+    std::cout << '[' << parameter.GetTimestamp() << "] ";
     if (cmd == "add_user") {
         if (flag)std::cout << userSystem.AddUser(parameter, userFile);//add first
         else std::cout << userSystem.AddUser(parameter, loginList, userFile);
@@ -115,7 +111,7 @@ void ProcessLine(Parameter parameter,
     } else if (cmd == "modify_profile") {
         userSystem.ModifyProfile(parameter, loginList, userFile);
     } else if (cmd == "add_train") {
-        std::cout << trainSystem.AddTrain(parameter);
+        std::cout << trainSystem.AddTrain(parameter,trainFile,stationFile,seatFile);
     } else if (cmd == "delete_train") {
         std::cout << trainSystem.DeleteTrain(parameter);
     } else if (cmd == "release_train") {

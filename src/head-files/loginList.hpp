@@ -63,7 +63,6 @@ public:
      * login
      * add user to list
      */
-    void Login(const Parameter &parameter);
 
     void Login(const Username &username, const short &privilege);
 
