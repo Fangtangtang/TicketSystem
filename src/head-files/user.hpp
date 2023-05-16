@@ -19,16 +19,18 @@
 #include "parameter.hpp"
 #include "loginList.hpp"
 
+class UserSystem;
+
 class User {
     char password[30] = {'\0'};
     char name[16] = {'\0'};
     char mailAddr[30] = {'\0'};
-    int privilege = 10;
-
+    short privilege = 10;
+    friend UserSystem;
 public:
     User() = default;
 
-    User(char *password_, char *name_, char *mailAddr_, int privilege_);
+    User(char *password_, char *name_, char *mailAddr_, short privilege_);
 
     friend std::ostream &operator<<(std::ostream &os, const User &information) {
         os << information.name << ' ' << information.mailAddr << ' ' << information.privilege << '\n';
@@ -50,13 +52,13 @@ public:
         strcpy(mailAddr, mailAddr_);
     }
 
-    void ModifyPrivilege(const int privilege_) {
+    void ModifyPrivilege(const short privilege_) {
         privilege = privilege_;
     }
 };
 
 
-User::User(char *password_, char *name_, char *mailAddr_, int privilege_ = 10) :
+User::User(char *password_, char *name_, char *mailAddr_, short privilege_ = 10) :
         privilege(privilege_) {
     memset(password, 0, sizeof(password));
     strcpy(password, password_);
@@ -74,6 +76,8 @@ class UserSystem {
 private:
     BPlusTree<Username, User, CompareUsername, CompareUsername, CompareUsername> userTree{"user_tree"};
 
+    User user;
+
     static const char empty_str[1];
 
 public:
@@ -84,9 +88,9 @@ public:
      * return -1 if failed
      * special case: add the first user(overloaded)
      */
-    int AddUser(const Parameter &parameter);
+    int AddUser(const Parameter &parameter, FileManager<User> &userFile);
 
-    int AddUser(const Parameter &parameter, LoginList &loginList);
+    int AddUser(const Parameter &parameter, LoginList &loginList, FileManager<User> &userFile);
 
     /*
      * query_profile
@@ -94,7 +98,7 @@ public:
      *     "username name mailAddr privilege"
      * print -1 if failed
      */
-    void QueryProfile(const Parameter &parameter, const int &cur_privilege);
+    void QueryProfile(const Parameter &parameter, LoginList &loginList, FileManager<User> &userFile);
 
     /*
      * modify_profile
@@ -104,7 +108,7 @@ public:
      *     "username name mailAddr privilege"
      * print -1 if failed
      */
-    void ModifyProfile(const Parameter &parameter, const int &cur_privilege);
+    void ModifyProfile(const Parameter &parameter, LoginList &loginList, FileManager<User> &userFile);
 
     /*
      * login
@@ -128,26 +132,102 @@ public:
 
 const char UserSystem::empty_str[1] = {'\0'};
 
-int UserSystem::AddUser(const Parameter &parameter) {
-    std::string str;
-    //construct Username
-    if (!parameter.GetParameter('u', str))  return -1;
-    //construct User
+int UserSystem::AddUser(const Parameter &parameter, FileManager<User> &userFile) {
+    //check parameter
+    std::string username;
     char password[30], name[16], mailAddr[30];
-    if (!parameter.GetParameter('p', password) ||
+    if (!parameter.GetParameter('u', username) ||
+        !parameter.GetParameter('p', password) ||
         !parameter.GetParameter('n', name) ||
         !parameter.GetParameter('m', mailAddr))
         return -1;
-//    bool flag=userTree.Insert(Username(str),User(password,name,mailAddr));
+    if (userTree.Insert(Username(username), User(password, name, mailAddr), userFile)) return 0;
+    return -1;
 }
 
 /*
  * SAMPLE:
  *   [3] add_user -g 10 -p aws -u I_am_the_admin -m foo@bar.com -n 奥斯卡 -c cur
- *
  */
-int UserSystem::AddUser(const Parameter &parameter, LoginList &loginList) {
+int UserSystem::AddUser(const Parameter &parameter, LoginList &loginList, FileManager<User> &userFile) {
+    //check parameter
+    short privilege;
+    std::string username;
+    char password[30], name[16], mailAddr[30];
+    if (!parameter.GetParameter('g', privilege) ||
+        !parameter.GetParameter('u', username) ||
+        !parameter.GetParameter('p', password) ||
+        !parameter.GetParameter('n', name) ||
+        !parameter.GetParameter('m', mailAddr))
+        return -1;
+    //check privilege
+    short cur_privilege = loginList.CheckLoggedIn(parameter);
+    if (cur_privilege <= privilege) return -1;//permission exceeded
+    if (userTree.Insert(Username(username), User(password, name, mailAddr, privilege), userFile)) return 0;
+    return -1;
+}
 
+void UserSystem::QueryProfile(const Parameter &parameter, LoginList &loginList, FileManager<User> &userFile) {
+    short cur_privilege = loginList.CheckLoggedIn(parameter);
+    if (cur_privilege < 0) {//cur_username not in loginList
+        std::cout << -1;
+        return;
+    }
+    //check parameter
+    std::string username;
+    if (!parameter.GetParameter('u', username)) {
+        std::cout << -1;
+        return;
+    }
+    sjtu::vector<long> vec = userTree.StrictFind(Username(username));
+    if (vec.empty()) {//not exist
+        std::cout << -1;
+        return;
+    }
+    userFile.ReadEle(vec.front(), user);
+    if (user.privilege > cur_privilege) {
+        std::cout << -1;
+        return;
+    }
+    std::cout << username << ' ' << user;
+}
+
+void UserSystem::ModifyProfile(const Parameter &parameter, LoginList &loginList, FileManager<User> &userFile) {
+    std::string cur_username;
+    short cur_privilege = loginList.CheckLoggedIn(Username(cur_username));
+    //get privilege
+    short privilege = -1;
+    parameter.GetParameter('g', privilege);
+    if (cur_privilege <= privilege) {//cur_username not in loginList or permission exceeded
+        std::cout << -1;
+        return;
+    }
+    //check parameter
+    std::string username;
+    if (!parameter.GetParameter('u', username)) {
+        std::cout << -1;
+        return;
+    }
+    sjtu::vector<long> vec = userTree.StrictFind(Username(username));
+    if (vec.empty()) {//not exist
+        std::cout << -1;
+        return;
+    }
+    long address = vec.front();
+    userFile.ReadEle(address, user);
+    if (username != cur_username && user.privilege >= cur_privilege) {//permission exceeded
+        std::cout << -1;
+        return;
+    }
+    //try to get parameter and modify
+    if (privilege >= 0) user.privilege = privilege;
+    char password[30], name[16], mailAddr[30];
+    if (parameter.GetParameter('p', password)) strcpy(user.password, password);
+    if (parameter.GetParameter('n', name)) strcpy(user.name, name);
+    if (parameter.GetParameter('m', mailAddr)) strcpy(user.mailAddr, mailAddr);
+    //rewrite in file
+    userFile.WriteEle(address, user);
+    std::cout << username << ' ' << user;
 }
 
 

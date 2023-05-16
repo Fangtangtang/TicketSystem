@@ -22,6 +22,12 @@ void ProcessLine(Parameter parameter,
                  TicketSystem &ticketSystem,
                  WaitingList &waitingList,
                  LoginList &loginList,
+                 FileManager<User> &userFile,
+                 FileManager<TransactionDetail> &TransactionFile,
+                 FileManager<Train> &trainFile,
+                 FileManager<Station> &stationFile,
+                 FileManager<Seat> &seatFile,
+                 FileManager<WaitingTransaction> &waitingListFile,
                  bool &flag);
 
 int main() {
@@ -30,7 +36,7 @@ int main() {
     std::cout.tie(nullptr);
     //construct file_managers
     FileManager<User> userFile("user_information");
-    FileManager<TransactionDetail> TransactionFile{"transaction_information"};
+    FileManager<TransactionDetail> transactionFile{"transaction_information"};
     FileManager<Train> trainFile("train_information");
     FileManager<Station> stationFile{"station_information"};
     FileManager<Seat> seatFile{"seat_information"};
@@ -46,14 +52,20 @@ int main() {
     bool flag = Initialize();
     //process line in a loop
     while (std::cin) {
-    ProcessLine(parameter,
-                userSystem,
-                trainSystem,
-                transactionSystem,
-                ticketSystem,
-                waitingList,
-                loginList,
-                flag);
+        ProcessLine(parameter,
+                    userSystem,
+                    trainSystem,
+                    transactionSystem,
+                    ticketSystem,
+                    waitingList,
+                    loginList,
+                    userFile,
+                    transactionFile,
+                    trainFile,
+                    stationFile,
+                    seatFile,
+                    waitingListFile,
+                    flag);
         if (flag)break;
     }
     return 0;
@@ -78,6 +90,12 @@ void ProcessLine(Parameter parameter,
                  TicketSystem &ticketSystem,
                  WaitingList &waitingList,
                  LoginList &loginList,
+                 FileManager<User> &userFile,
+                 FileManager<TransactionDetail> &TransactionFile,
+                 FileManager<Train> &trainFile,
+                 FileManager<Station> &stationFile,
+                 FileManager<Seat> &seatFile,
+                 FileManager<WaitingTransaction> &waitingListFile,
                  bool &flag) {
     std::string cmd = parameter.ReadLine();
     /*
@@ -86,16 +104,16 @@ void ProcessLine(Parameter parameter,
      * special case: add the first user(flag==true)
      */
     if (cmd == "add_user") {
-        if (flag)std::cout << userSystem.AddUser(parameter);//add first
-        else std::cout << userSystem.AddUser(parameter, loginList);
+        if (flag)std::cout << userSystem.AddUser(parameter, userFile);//add first
+        else std::cout << userSystem.AddUser(parameter, loginList, userFile);
     } else if (cmd == "login") {
         std::cout << userSystem.Login(parameter, loginList);
     } else if (cmd == "logout") {
         std::cout << loginList.Logout(parameter);
     } else if (cmd == "query_profile") {
-        userSystem.QueryProfile(parameter, loginList.CheckLoggedIn(parameter));
+        userSystem.QueryProfile(parameter, loginList, userFile);
     } else if (cmd == "modify_profile") {
-        userSystem.ModifyProfile(parameter, loginList.CheckLoggedIn(parameter));
+        userSystem.ModifyProfile(parameter, loginList, userFile);
     } else if (cmd == "add_train") {
         std::cout << trainSystem.AddTrain(parameter);
     } else if (cmd == "delete_train") {

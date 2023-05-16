@@ -2,6 +2,7 @@
  * LOGIN
  * manage all the user login or logout
  * deal with cmd
+ *          add_user
  *          login
  *          logout
  *          query_profile
@@ -18,15 +19,15 @@
 #include "parameter.hpp"
 
 class UserShortcut {
-    int privilege = 10;
+    short privilege = 10;
     long addr = -1;
 public:
     UserShortcut() = default;
 
-    UserShortcut(const int &privilege_, const long &addr_);
+    UserShortcut(const short &privilege_, const long &addr_);
 };
 
-UserShortcut::UserShortcut(const int &privilege_, const long &addr_) : privilege(privilege_), addr(addr_) {}
+UserShortcut::UserShortcut(const short &privilege_, const long &addr_) : privilege(privilege_), addr(addr_) {}
 
 /*
  * manage operations about loginList
@@ -36,11 +37,26 @@ class LoginList {
     * Key:Username
     * Value:privilege
     */
-    sjtu::map<Username, int, CompareUsername> loginList;
+    sjtu::map<Username, short, CompareUsername> loginList;
 
     friend UserSystem;
     friend TrainSystem;
     friend TransactionSystem;
+
+    /*
+     * add_user\query_profile\modify_profile\buy_ticket\query_order\refund_ticket
+     * if user has Logged in return privilege
+     * else return -1
+     */
+    short CheckLoggedIn(const Parameter &parameter);
+
+    /*
+     * buy_ticket\query_order\refund_ticket
+     * if user has Logged in return privilege
+     * else return -1
+     */
+    short CheckLoggedIn(const Username &username);
+
 public:
 
     /*
@@ -60,21 +76,21 @@ public:
      */
     int Logout(const Parameter &parameter);
 
-    /*
-     * query_profile\modify_profile\buy_ticket\query_order\refund_ticket
-     * if user has Logged in return privilege
-     * else return -1
-     */
-    int CheckLoggedIn(const Parameter &parameter);
-
-    /*
-     * buy_ticket\query_order\refund_ticket
-     * if user has Logged in return privilege
-     * else return -1
-     */
-    int CheckLoggedIn(const Username &username);
-
 
 };
+
+short LoginList::CheckLoggedIn(const Parameter &parameter) {
+    std::string username;
+    if (!parameter.GetParameter('u', username)) return -1;//missing parameter
+    sjtu::map<Username, short, CompareUsername>::iterator iter = loginList.find(Username(username));
+    if (iter == loginList.end()) return -1;
+    return iter->second;//privilege
+}
+
+short LoginList::CheckLoggedIn(const Username &username) {
+    sjtu::map<Username, short, CompareUsername>::iterator iter = loginList.find(username);
+    if (iter == loginList.end()) return -1;
+    return iter->second;//privilege
+}
 
 #endif //TICKETSYSTEM_LOGINLIST_HPP

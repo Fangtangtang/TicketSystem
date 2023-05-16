@@ -8,8 +8,11 @@
 #include <iostream>
 
 class TrainSystem;
+
 class UserSystem;
+
 class TransactionSystem;
+
 /*
  * Username class
  * ----------------------------------------------------------------------------------------------------
@@ -29,6 +32,9 @@ public:
 
     explicit Username(const std::string &username_);
 
+    bool operator<(const Username &other) const;
+
+    bool operator==(const Username &other) const;
 };
 
 Username::Username(char *username_) {
@@ -39,6 +45,14 @@ Username::Username(char *username_) {
 Username::Username(const std::string &username_) {
     memset(username, 0, sizeof(username));
     strcpy(username, username_.c_str());
+}
+
+bool Username::operator<(const Username &other) const {
+    return strcmp(username, other.username) < 0;
+}
+
+bool Username::operator==(const Username &other) const {
+    return strcmp(username, other.username) == 0;
 }
 
 /*

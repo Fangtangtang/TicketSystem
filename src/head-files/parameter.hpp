@@ -32,6 +32,13 @@ public:
     /*
      * get parameter of key
      * return false if not exist
+     * short
+     */
+    bool GetParameter(const char &key, short &num) const;
+
+    /*
+     * get parameter of key
+     * return false if not exist
      * int
      */
     bool GetParameter(const char &key, int &num) const;
@@ -73,6 +80,18 @@ std::string Parameter::ReadLine() {
 bool Parameter::GetParameter(const char &key, std::string &str) const {
     if (para[key - 'a'].empty()) return false;
     str = para[key - 'a'];
+    return true;
+}
+
+bool Parameter::GetParameter(const char &key, short &num) const {
+    if (para[key - 'a'].empty()) return false;
+    num = 0;
+    size_t index = key - 'a', i = 0, len = para[index].size();
+    while (i < len) {
+        num *= 10;
+        num += short(para[index][i] - '0');
+        ++i;
+    }
     return true;
 }
 

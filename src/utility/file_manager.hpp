@@ -49,6 +49,13 @@ public:
         return addr;
     }
 
+    long WriteEle(const long &start_addr, ValueType valueType) {
+        r_w_file.seekp(start_addr);
+        long addr = r_w_file.tellp();
+        r_w_file.write(reinterpret_cast<char *> (&valueType), value_size);
+        return addr;
+    }
+
     long WriteEle(ValueType valueType) {
         r_w_file.seekp(0, std::ios::end);
         long addr = r_w_file.tellp();
