@@ -164,7 +164,12 @@ int UserSystem::AddUser(const Parameter &parameter, LoginList &loginList, FileMa
 }
 
 void UserSystem::QueryProfile(const Parameter &parameter, LoginList &loginList, FileManager<User> &userFile) {
-    short cur_privilege = loginList.CheckLoggedIn(parameter);
+    std::string cur_username;
+    if (!parameter.GetParameter('c', cur_username)) {
+        std::cout << -1;
+        return;
+    }
+    short cur_privilege = loginList.CheckLoggedIn(Username(cur_username));
     if (cur_privilege < 0) {//cur_username not in loginList
         std::cout << -1;
         return;
@@ -181,7 +186,7 @@ void UserSystem::QueryProfile(const Parameter &parameter, LoginList &loginList, 
         return;
     }
     userFile.ReadEle(vec.front(), user);
-    if (user.privilege > cur_privilege) {
+    if (username != cur_username && user.privilege >= cur_privilege) {
         std::cout << -1;
         return;
     }
