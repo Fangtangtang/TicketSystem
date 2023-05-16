@@ -23,7 +23,7 @@ class TransactionSystem;
 struct CompareUsername;
 
 class Username {
-    char username[20] = {'\0'};
+    char username[21] = {'\0'};
     friend CompareUsername;
 public:
     Username() = default;
@@ -78,7 +78,7 @@ struct CompareUsername {
 struct CompareTrainID;
 
 class TrainID {
-    char trainID[20] = {'\0'};
+    char trainID[21] = {'\0'};
     friend CompareTrainID;
 public:
     TrainID() = default;
@@ -347,8 +347,8 @@ bool Train::Release() {
  */
 
 class Station {
-    char from[30] = {'\0'};
-    char to[30] = {'\0'};
+    char from[31] = {'\0'};
+    char to[31] = {'\0'};
     int price = 0;
     Time leaving_time;
     Time arriving_time;
@@ -411,8 +411,8 @@ class CompareTicket;
 class CompareTicket2;
 
 class Ticket {
-    char from[30] = {'\0'};
-    char to[30] = {'\0'};
+    char from[31] = {'\0'};
+    char to[31] = {'\0'};
     //TODO 是否保留time或arriving_time
     Time start_sale;
     Time stop_sale;

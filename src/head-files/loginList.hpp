@@ -61,13 +61,11 @@ public:
 
     /*
      * login
-     * return 0 and add user to list if succeed
-     * return -1 if failed
-     *        in list\not exist\wrong password
+     * add user to list
      */
-    int Login(const Parameter &parameter);
+    void Login(const Parameter &parameter);
 
-    int Login(const Parameter &parameter, const Username &username);
+    void Login(const Username &username, const short &privilege);
 
     /*
      * logout
@@ -81,7 +79,7 @@ public:
 
 short LoginList::CheckLoggedIn(const Parameter &parameter) {
     std::string username;
-    if (!parameter.GetParameter('u', username)) return -1;//missing parameter
+    if (!parameter.GetParameter('c', username)) return -1;//missing parameter
     sjtu::map<Username, short, CompareUsername>::iterator iter = loginList.find(Username(username));
     if (iter == loginList.end()) return -1;
     return iter->second;//privilege
@@ -91,6 +89,19 @@ short LoginList::CheckLoggedIn(const Username &username) {
     sjtu::map<Username, short, CompareUsername>::iterator iter = loginList.find(username);
     if (iter == loginList.end()) return -1;
     return iter->second;//privilege
+}
+
+void LoginList::Login(const Username &username, const short &privilege) {
+    loginList.insert(sjtu::pair<Username, short>(username, privilege));
+}
+
+int LoginList::Logout(const Parameter &parameter) {
+    std::string username;
+    if (!parameter.GetParameter('u', username)) return -1;
+    sjtu::map<Username, short, CompareUsername>::iterator iter = loginList.find(Username(username));
+    if (iter == loginList.end()) return -1;
+    loginList.erase(iter);
+    return 0;
 }
 
 #endif //TICKETSYSTEM_LOGINLIST_HPP

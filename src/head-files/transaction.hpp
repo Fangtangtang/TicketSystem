@@ -63,8 +63,8 @@ enum STATUS {
 
 class TransactionDetail {
     TrainID trainID;
-    char from[30] = {'\0'};
-    char to[30] = {'\0'};
+    char from[31] = {'\0'};
+    char to[31] = {'\0'};
     Time leaving_time;
     Time arriving_time;
     int price = 0;

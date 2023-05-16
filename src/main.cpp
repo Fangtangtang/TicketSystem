@@ -107,7 +107,7 @@ void ProcessLine(Parameter parameter,
         if (flag)std::cout << userSystem.AddUser(parameter, userFile);//add first
         else std::cout << userSystem.AddUser(parameter, loginList, userFile);
     } else if (cmd == "login") {
-        std::cout << userSystem.Login(parameter, loginList);
+        std::cout << userSystem.Login(parameter, loginList, userFile);
     } else if (cmd == "logout") {
         std::cout << loginList.Logout(parameter);
     } else if (cmd == "query_profile") {

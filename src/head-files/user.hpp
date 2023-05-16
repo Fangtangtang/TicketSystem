@@ -22,9 +22,9 @@
 class UserSystem;
 
 class User {
-    char password[30] = {'\0'};
+    char password[31] = {'\0'};
     char name[16] = {'\0'};
-    char mailAddr[30] = {'\0'};
+    char mailAddr[31] = {'\0'};
     short privilege = 10;
     friend UserSystem;
 public:
@@ -33,7 +33,7 @@ public:
     User(char *password_, char *name_, char *mailAddr_, short privilege_);
 
     friend std::ostream &operator<<(std::ostream &os, const User &information) {
-        os << information.name << ' ' << information.mailAddr << ' ' << information.privilege << '\n';
+        os << information.name << ' ' << information.mailAddr << ' ' << information.privilege;
         return os;
     }
 
@@ -78,8 +78,6 @@ private:
 
     User user;
 
-    static const char empty_str[1];
-
 public:
     /*
      * add_user
@@ -116,7 +114,7 @@ public:
      * add into loginList
      * (need to check if user has logged in)
      */
-    int Login(const Parameter &parameter, LoginList &loginList);
+    int Login(const Parameter &parameter, LoginList &loginList, FileManager<User> &userFile);
 
     /*
      * login
@@ -130,12 +128,10 @@ public:
 
 };
 
-const char UserSystem::empty_str[1] = {'\0'};
-
 int UserSystem::AddUser(const Parameter &parameter, FileManager<User> &userFile) {
     //check parameter
     std::string username;
-    char password[30], name[16], mailAddr[30];
+    char password[31], name[16], mailAddr[31];
     if (!parameter.GetParameter('u', username) ||
         !parameter.GetParameter('p', password) ||
         !parameter.GetParameter('n', name) ||
@@ -153,7 +149,7 @@ int UserSystem::AddUser(const Parameter &parameter, LoginList &loginList, FileMa
     //check parameter
     short privilege;
     std::string username;
-    char password[30], name[16], mailAddr[30];
+    char password[31], name[16], mailAddr[31];
     if (!parameter.GetParameter('g', privilege) ||
         !parameter.GetParameter('u', username) ||
         !parameter.GetParameter('p', password) ||
@@ -194,6 +190,10 @@ void UserSystem::QueryProfile(const Parameter &parameter, LoginList &loginList, 
 
 void UserSystem::ModifyProfile(const Parameter &parameter, LoginList &loginList, FileManager<User> &userFile) {
     std::string cur_username;
+    if (!parameter.GetParameter('c', cur_username)) {
+        std::cout << -1;
+        return;
+    }
     short cur_privilege = loginList.CheckLoggedIn(Username(cur_username));
     //get privilege
     short privilege = -1;
@@ -221,13 +221,29 @@ void UserSystem::ModifyProfile(const Parameter &parameter, LoginList &loginList,
     }
     //try to get parameter and modify
     if (privilege >= 0) user.privilege = privilege;
-    char password[30], name[16], mailAddr[30];
+    char password[31], name[16], mailAddr[31];
     if (parameter.GetParameter('p', password)) strcpy(user.password, password);
     if (parameter.GetParameter('n', name)) strcpy(user.name, name);
     if (parameter.GetParameter('m', mailAddr)) strcpy(user.mailAddr, mailAddr);
     //rewrite in file
     userFile.WriteEle(address, user);
     std::cout << username << ' ' << user;
+}
+
+int UserSystem::Login(const Parameter &parameter, LoginList &loginList, FileManager<User> &userFile) {
+    std::string username;
+    char password[31];
+    if (!parameter.GetParameter('u', username) ||
+        !parameter.GetParameter('p', password))
+        return -1;
+    Username username1(username);
+    if (loginList.CheckLoggedIn(username1) >= 0) return -1;//logged in
+    sjtu::vector<long> vec = userTree.StrictFind(Username(username));
+    if (vec.empty()) return -1;//not exist
+    userFile.ReadEle(vec.front(), user);
+    if (strcmp(user.password, password)) return -1;//wrong password
+    loginList.Login(username1, user.privilege);
+    return 0;
 }
 
 
