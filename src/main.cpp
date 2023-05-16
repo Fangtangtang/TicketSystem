@@ -34,6 +34,7 @@ int main() {
     std::ios_base::sync_with_stdio(false);
     std::cin.tie(nullptr);
     std::cout.tie(nullptr);
+    bool flag = Initialize();
     //construct file_managers
     FileManager<User> userFile("user_information");
     FileManager<TransactionDetail> transactionFile{"transaction_information"};
@@ -49,7 +50,6 @@ int main() {
     WaitingList waitingList;
     LoginList loginList;
     Parameter parameter;
-    bool flag = Initialize();
     //process line in a loop
     while (std::cin) {
         ProcessLine(parameter,
@@ -73,7 +73,7 @@ int main() {
 
 bool Initialize() {
     std::fstream test;
-    test.open("user_file");
+    test.open("user_information");
     if (!test.good()) {
         test.close();
         return true;
@@ -137,6 +137,7 @@ void ProcessLine(Parameter parameter,
     } else if (cmd == "exit") {
         std::cout << "bye";
         flag = true;
+        return;
     }
     std::cout << '\n';
     flag = false;

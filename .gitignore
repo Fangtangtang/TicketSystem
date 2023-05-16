@@ -12,3 +12,7 @@ my_data/
 ./src/head-files/ticket.cpp
 ./src/head-files/releasedTrain.hpp
 PLAN.md
+clear.sh
+CLEAN.sh
+*_info*
+*_tree
