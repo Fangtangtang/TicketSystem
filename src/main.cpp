@@ -25,6 +25,9 @@ void ProcessLine(Parameter parameter,
                  bool &flag);
 
 int main() {
+    std::ios_base::sync_with_stdio(false);
+    std::cin.tie(nullptr);
+    std::cout.tie(nullptr);
     //construct file_managers
     FileManager<User> userFile("user_information");
     FileManager<TransactionDetail> TransactionFile{"transaction_information"};

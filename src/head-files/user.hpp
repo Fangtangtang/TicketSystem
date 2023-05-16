@@ -72,7 +72,7 @@ User::User(char *password_, char *name_, char *mailAddr_, int privilege_ = 10) :
  */
 class UserSystem {
 private:
-    BPlusTree<Username, long, CompareUsername, CompareUsername, CompareUsername> userTree{"user_tree"};
+    BPlusTree<Username, User, CompareUsername, CompareUsername, CompareUsername> userTree{"user_tree"};
 
     static const char empty_str[1];
 

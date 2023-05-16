@@ -87,14 +87,15 @@ public:
 };
 
 WaitingTransaction::WaitingTransaction(const int &timestamp_, const long &addr) : timestamp(timestamp_),
+                                                                                  transaction_addr(addr) {}
 
 /*
  * manage waiting
  * including add, find, delete
- */                                                                                  transaction_addr(addr) {}
-
+ */
 class WaitingList {
-    BPlusTree<WaitingOrder, WaitingTransaction, CompareWaiting1, CompareWaiting2, CompareWaiting3> waitingListTree{"waiting_list_tree"};
+    BPlusTree<WaitingOrder, WaitingTransaction, CompareWaiting1, CompareWaiting2, CompareWaiting3> waitingListTree{
+            "waiting_list_tree"};
 
 public:
     /*

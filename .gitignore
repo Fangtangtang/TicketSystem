@@ -11,3 +11,4 @@ data/
 my_data/
 ./src/head-files/ticket.cpp
 ./src/head-files/releasedTrain.hpp
+PLAN.md

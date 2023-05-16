@@ -32,9 +32,7 @@ class TrainSystem {
      * Value: Train
      * store basic information and some address
      */
-    BPlusTree<TrainID, long, CompareTrainID, CompareTrainID, CompareTrainID> trainTree{"train_tree"};
-
-    BPlusTree<TrainID, long, CompareTrainID, CompareTrainID, CompareTrainID> releasedTree{"released_train_tree"};
+    BPlusTree<TrainID, Train, CompareTrainID, CompareTrainID, CompareTrainID> trainTree{"train_tree"};
 
     friend TransactionSystem;
 public:

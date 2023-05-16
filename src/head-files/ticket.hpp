@@ -72,7 +72,7 @@ bool CostBased::operator()(const TicketDetail &a, const TicketDetail &b) {
  * including add, query
  */
 class TicketSystem {
-    BPlusTree<Ticket, long, CompareTicket, CompareTicket2, CompareTicket2> ticketTree{"ticket_tree"};
+    BPlusTree<Ticket, TicketDetail, CompareTicket, CompareTicket2, CompareTicket2> ticketTree{"ticket_tree"};
 
     friend TrainSystem;
 public:
