@@ -11,8 +11,6 @@
 #include "../utility/bpt.hpp"
 #include "../utility/file_manager.hpp"
 
-const CompareTrainID compareTrainID;
-
 class CompareWaiting1;
 
 class CompareWaiting2;
@@ -94,8 +92,7 @@ WaitingTransaction::WaitingTransaction(const int &timestamp_, const long &addr) 
  * including add, find, delete
  */
 class WaitingList {
-    BPlusTree<WaitingOrder, WaitingTransaction,
-            CompareWaiting1, CompareWaiting2, CompareWaiting3> waitingListTree{"waiting_list_tree"};
+    BPlusTree<WaitingOrder, WaitingTransaction> waitingListTree{"waiting_list_tree"};
 
 public:
     /*

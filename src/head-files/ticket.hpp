@@ -22,10 +22,12 @@ class TimeBased;
 
 class CostBased;
 
+class TicketSystem;
+
 class TicketDetail {
     TrainID trainID;
-    int station_num;//train's stationNum, used to cal move
-    int station_interval;//end-start
+    int station_num = 0;//train's stationNum, used to cal move
+    int station_interval = 0;//end-start
     int price = 0;
     int time = 0;
     Time leaving_time;//leaving time of the train set off on first day
@@ -33,6 +35,7 @@ class TicketDetail {
 
     friend TimeBased;
     friend CostBased;
+    friend TicketSystem;
 public:
     TicketDetail() = default;
 
@@ -55,30 +58,35 @@ TicketDetail::TicketDetail(const TrainID &trainID_,
         leaving_time(leaving_time_),
         seat_addr(seat_addr_) {}
 
+
 struct TimeBased {
-    bool operator()(const TicketDetail &a, const TicketDetail &b);
+    bool operator()(const TicketDetail &a, const TicketDetail &b) const;
 };
 
-bool TimeBased::operator()(const TicketDetail &a, const TicketDetail &b) {
+bool TimeBased::operator()(const TicketDetail &a, const TicketDetail &b) const {
     if (a.time != b.time) return a.time < b.time;
     return a.trainID < b.trainID;
 }
 
+const TimeBased timeBased;
+
 struct CostBased {
-    bool operator()(const TicketDetail &a, const TicketDetail &b);
+    bool operator()(const TicketDetail &a, const TicketDetail &b) const;
 };
 
-bool CostBased::operator()(const TicketDetail &a, const TicketDetail &b) {
+bool CostBased::operator()(const TicketDetail &a, const TicketDetail &b) const {
     if (a.price != b.price) return a.price < b.price;
     return a.trainID < b.trainID;
 }
+
+class CostBased costBased;
 
 /*
  * manage operations about ticket information
  * including add, query
  */
 class TicketSystem {
-    BPlusTree<Ticket, TicketDetail, CompareStationName, CompareTicket2, CompareTicket2> ticketTree{"ticket_tree"};
+    BPlusTree<Ticket, TicketDetail> ticketTree{"ticket_tree"};
 
     friend TrainSystem;
 
@@ -97,13 +105,18 @@ class TicketSystem {
     /*
      * query_ticket\query_transfer
      * read from file
-     * check if date is available
-     *
      */
-    void FindTicket(const sjtu::vector<long> &vec,
-                    FileManager<TicketDetail> &ticketFile,
-                    const Time &date,
-                    sjtu::vector<TicketDetail> &tickets);
+    static void FindTicket(const sjtu::vector<long> &vec, const int &size,
+                           FileManager<TicketDetail> &ticketFile,
+                           sjtu::vector<TicketDetail> &tickets);
+
+    /*
+     * query_ticket\query_transfer
+     * print ticket information
+     */
+    static void PrintTicket(const sjtu::vector<TicketDetail> &ticket_vec,
+                            const std::string &from, const std::string &to,
+                            const int &size, FileManager<Seat> &seatFile);
 
 public:
     /*
@@ -123,7 +136,9 @@ public:
      * given date from to
      * print based on time or cost
      */
-    void QueryTicket(const Parameter &parameter);
+    void QueryTicket(const Parameter &parameter,
+                     FileManager<TicketDetail> &ticketFile,
+                     FileManager<Seat> &seatFile);
 
     /*
      * query_transfer
@@ -151,7 +166,31 @@ void TicketSystem::AddTicket(const Station &from, const Station &to,
     ticketTree.Insert(Ticket(from.name, to.name, ticket_start_sale, ticket_stop_sale),
                       TicketDetail(trainID, station_num, station_interval,
                                    to.price - from.price, to.arriving_time - from.leaving_time,
-                                   ticket_start_sale, seat_addr), ticketFile);
+                                   ticket_start_sale, seat_addr),
+                      ticketFile, compareTicket);
+}
+
+void TicketSystem::FindTicket(const sjtu::vector<long> &vec, const int &size,
+                              FileManager<TicketDetail> &ticketFile,
+                              sjtu::vector<TicketDetail> &tickets) {
+    TicketDetail ticketDetail;
+    for (int i = 0; i < size; ++i) {
+        ticketFile.ReadEle(vec[i], ticketDetail);
+        tickets.push_back(ticketDetail);
+    }
+}
+
+void TicketSystem::PrintTicket(const sjtu::vector<TicketDetail> &ticket_vec,
+                               const std::string &from, const std::string &to,
+                               const int &size, FileManager<Seat> &seatFile) {
+    for (int i = 0; i < size; ++i) {
+        std::cout << '\n';
+        std::cout << ticket_vec[i].trainID << ' '
+                  << from << ' ' << ticket_vec[i].leaving_time << " -> "
+                  << to << ' ' << (ticket_vec[i].leaving_time + ticket_vec[i].time) << ' '
+                  << ticket_vec[i].price << ' '
+                  << seatFile.MinValue(ticket_vec[i].seat_addr, 0, ticket_vec[i].station_interval);
+    }
 }
 
 /*
@@ -183,7 +222,9 @@ void TicketSystem::ReleaseTrain(const TrainID &trainID,
     std::cout << 0;
 }
 
-void TicketSystem::QueryTicket(const Parameter &parameter) {
+void TicketSystem::QueryTicket(const Parameter &parameter,
+                               FileManager<TicketDetail> &ticketFile,
+                               FileManager<Seat> &seatFile) {
     //check parameter
     std::string from, to, date, keyword;
     if (!parameter.GetParameter('s', from) ||
@@ -194,9 +235,22 @@ void TicketSystem::QueryTicket(const Parameter &parameter) {
     Time time(date);//requested date
     bool flag = (keyword == "cost");//true if sort based on cost
     //find ticket from ... to ...
-    //TODO
-    sjtu::vector<long> vec = ticketTree.StrictFind(Ticket(from, to, time, time));
-
+    sjtu::vector<long> vec;
+    ticketTree.Find(Ticket(from, to, time, time),
+                    compareTicketStopSale, isAvailableTicket,
+                    vec);
+    sjtu::vector<TicketDetail> ticket_vec;
+    int number = vec.size();
+    FindTicket(vec, number, ticketFile, ticket_vec);
+    std::cout << number;
+    //sort
+    if (flag) {//sort based on cost
+        sjtu::Sort(ticket_vec, 0, number - 1, costBased);
+    } else {//sort based on time
+        sjtu::Sort(ticket_vec, 0, number - 1, timeBased);
+    }
+    //print
+    PrintTicket(ticket_vec, from, to, number, seatFile);
 }
 
 

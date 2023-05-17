@@ -18,15 +18,15 @@
 #include "parameter.hpp"
 #include "loginList.hpp"
 
-struct CompareTrans1;
-struct CompareTrans2;
+struct CompareTransStrict;
+struct CompareTransWeak;
 const CompareUsername compare_username;
 
 class Transaction {
     Username username;
     int timestamp = 0;
-    friend CompareTrans1;
-    friend CompareTrans2;
+    friend CompareTransStrict;
+    friend CompareTransWeak;
 public:
     Transaction() = default;
 
@@ -48,7 +48,7 @@ bool operator<(const Transaction &a, const Transaction &b) {
 /*
  * used when store in file and strictFind
  */
-struct CompareTrans1 {
+struct CompareTransStrict {
     bool operator()(const Transaction &a, const Transaction &b) const {
         int cmp = compare_username.CompareStr(a.username, b.username);
         if (cmp) {
@@ -58,15 +58,19 @@ struct CompareTrans1 {
     }
 };
 
+const CompareTransStrict compareTransStrict;
+
 /*
  * used in "index_based" find
  * use username as index
  */
-struct CompareTrans2 {
+struct CompareTransWeak {
     bool operator()(const Transaction &a, const Transaction &b) const {
         return compare_username(a.username, b.username);
     }
 };
+
+const CompareTransWeak compareTransWeak;
 
 class TransactionDetail {
     TrainID trainID;
@@ -128,7 +132,7 @@ TransactionDetail::TransactionDetail(const TrainID &trainID_, char *from_, char 
  * including add ,query, modify
  */
 class TransactionSystem {
-    BPlusTree<Transaction, TransactionDetail, CompareTrans1, CompareTrans2, CompareTrans2> transactionTree{
+    BPlusTree<Transaction, TransactionDetail> transactionTree{
             "transaction_tree"};
 
 public:
@@ -175,7 +179,8 @@ long TransactionSystem::AddTransaction(const Username &username_, const int &tim
                            TransactionDetail(trainID_, from, to,
                                              leaving_time_, arriving_time_,
                                              price_, num_,
-                                             status_, train_address_), transactionFile);
+                                             status_, train_address_),
+                           transactionFile, compareTransStrict);
     return addr;
 }
 
@@ -191,10 +196,11 @@ void TransactionSystem::QueryOrder(const Parameter &parameter, LoginList &loginL
         std::cout << -1;
         return;
     }
-    sjtu::vector<long> vec = transactionTree.WeakFind(Transaction(user, 0));
+    sjtu::vector<long> vec;
+    transactionTree.Find(Transaction(user, 0), compareTransWeak, vec);
     int size = vec.size();
     std::cout << size;
-    for (int i = 0; i < size; ++i) {
+    for (int i = size - 1; i >= 0; --i) {
         std::cout << '\n' << vec[i];
     }
 }

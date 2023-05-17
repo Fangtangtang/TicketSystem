@@ -109,6 +109,23 @@ public:
     long GetAddress(const long &start_addr, const int &interval) {
         return start_addr + interval * value_size;
     }
+
+    /*
+     * MinValue
+     * --------------------------------------------------------------------------------------------
+     * return min value of the queried space
+     */
+    ValueType MinValue(const long &start_addr, const int &start, const int &end) {
+        ValueType min_value, value;
+        r_w_file.seekg(start_addr + start * value_size);
+        r_w_file.read(reinterpret_cast<char *> (&min_value), value_size);
+        for (int i = start + 1; i <= end; ++i) {
+            r_w_file.seekg(start_addr + i * value_size);
+            r_w_file.read(reinterpret_cast<char *> (&value), value_size);
+            min_value = std::min(min_value, value);
+        }
+        return min_value;
+    }
 };
 
 #endif //TICKETSYSTEM_FILE_MANAGER_HPP

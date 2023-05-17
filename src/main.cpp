@@ -124,7 +124,7 @@ void ProcessLine(Parameter parameter,
     } else if (cmd == "query_train") {
         trainSystem.QueryTrain(parameter, trainFile, stationFile, seatFile);
     } else if (cmd == "query_ticket") {
-        ticketSystem.QueryTicket(parameter);
+        ticketSystem.QueryTicket(parameter, ticketFile,seatFile);
     } else if (cmd == "query_transfer") {
         ticketSystem.QueryTransfer(parameter);
     } else if (cmd == "buy_ticket") {

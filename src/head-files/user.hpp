@@ -74,7 +74,7 @@ User::User(char *password_, char *name_, char *mailAddr_, short privilege_ = 10)
  */
 class UserSystem {
 private:
-    BPlusTree<Username, User, CompareUsername, CompareUsername, CompareUsername> userTree{"user_tree"};
+    BPlusTree<Username, User> userTree{"user_tree"};
 
     User user;
 
@@ -137,7 +137,7 @@ int UserSystem::AddUser(const Parameter &parameter, FileManager<User> &userFile)
         !parameter.GetParameter('n', name) ||
         !parameter.GetParameter('m', mailAddr))
         return -1;
-    if (userTree.Insert(Username(username), User(password, name, mailAddr), userFile)) return 0;
+    if (userTree.Insert(Username(username), User(password, name, mailAddr), userFile, compareUsername)) return 0;
     return -1;
 }
 
@@ -155,7 +155,9 @@ int UserSystem::AddUser(const Parameter &parameter, LoginList &loginList, FileMa
     //check privilege
     short cur_privilege = loginList.CheckLoggedIn(parameter);
     if (cur_privilege <= privilege) return -1;//permission exceeded
-    if (userTree.Insert(Username(username), User(password, name, mailAddr, privilege), userFile)) return 0;
+    if (userTree.Insert(Username(username), User(password, name, mailAddr, privilege),
+                        userFile, compareUsername))
+        return 0;
     return -1;
 }
 
@@ -176,7 +178,8 @@ void UserSystem::QueryProfile(const Parameter &parameter, LoginList &loginList, 
         std::cout << -1;
         return;
     }
-    sjtu::vector<long> vec = userTree.StrictFind(Username(username));
+    sjtu::vector<long> vec;
+    userTree.Find(Username(username), compareUsername, vec);
     if (vec.empty()) {//not exist
         std::cout << -1;
         return;
@@ -209,7 +212,8 @@ void UserSystem::ModifyProfile(const Parameter &parameter, LoginList &loginList,
         std::cout << -1;
         return;
     }
-    sjtu::vector<long> vec = userTree.StrictFind(Username(username));
+    sjtu::vector<long> vec;
+    userTree.Find(Username(username), compareUsername, vec);
     if (vec.empty()) {//not exist
         std::cout << -1;
         return;
@@ -239,7 +243,8 @@ int UserSystem::Login(const Parameter &parameter, LoginList &loginList, FileMana
         return -1;
     Username username1(username);
     if (loginList.CheckLoggedIn(username1) >= 0) return -1;//logged in
-    sjtu::vector<long> vec = userTree.StrictFind(Username(username));
+    sjtu::vector<long> vec;
+    userTree.Find(Username(username), compareUsername, vec);
     if (vec.empty()) return -1;//not exist
     userFile.ReadEle(vec.front(), user);
     if (strcmp(user.password, password)) return -1;//wrong password

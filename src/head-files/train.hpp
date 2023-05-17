@@ -55,10 +55,12 @@ bool operator==(const TrainIndex &a, const TrainIndex &b) {
 }
 
 struct CompareTrainIndex {
-    bool operator()(const TrainIndex &a, const TrainIndex &b) {
+    bool operator()(const TrainIndex &a, const TrainIndex &b) const {
         return a.ID < b.ID;
     }
 };
+
+const CompareTrainIndex compareTrainIndex;
 
 /*
  * manage operations about train information
@@ -70,7 +72,7 @@ class TrainSystem {
      * Value: Train
      * store basic information and some address
      */
-    BPlusTree<TrainIndex, Train, CompareTrainIndex, CompareTrainIndex, CompareTrainIndex> trainTree{"train_tree"};
+    BPlusTree<TrainIndex, Train> trainTree{"train_tree"};
 
     friend TransactionSystem;
 
@@ -420,7 +422,7 @@ int TrainSystem::AddTrain(const Parameter &parameter,
     if (trainTree.Insert(TrainIndex(TrainID(trainID)),
                          Train(station_num, start_sale, stop_sale,
                                type, stationFile.GetAddress(), seatFile.GetAddress()),
-                         trainFile)) {
+                         trainFile, compareTrainIndex)) {
         //if succeeded, write in stationFile and seatFile
         AddStation(stations, prices, travel_times, stopover_times, station_num, Interval(start_time), stationFile);
         AddSeat(seat_num, station_num, stop_sale - start_sale, seatFile);
@@ -446,13 +448,13 @@ int TrainSystem::ReleaseTrain(const Parameter &parameter,
     int ele_index = 0;
     TrainID ID(trainID);
     TrainIndex train_index(ID);
-    long train_addr = trainTree.StrictFind(train_index, block_addr, ele_index);
+    long train_addr = trainTree.Find(train_index, block_addr, ele_index);
     if (train_addr < 0) return -1;//not exist or released
     //update on bpt
     train_index.released = true;
     trainTree.RewriteKey(train_index, block_addr, ele_index);
     //release
-    ticketSystem.ReleaseTrain(ID, train_addr, trainFile, stationFile, seatFile);
+    ticketSystem.ReleaseTrain(ID, train_addr, trainFile, stationFile, seatFile, ticketFile);
 }
 
 void TrainSystem::QueryTrain(const Parameter &parameter,
@@ -466,7 +468,8 @@ void TrainSystem::QueryTrain(const Parameter &parameter,
         return;
     }
     TrainIndex train_index((TrainID(trainID)));
-    sjtu::vector<long> vec = trainTree.StrictFind(train_index);
+    sjtu::vector<long> vec;
+    trainTree.Find(train_index, compareTrainIndex, vec);
     if (vec.empty()) {//not exist
         std::cout << -1;
         return;
@@ -508,7 +511,8 @@ void TrainSystem::BuyTicket(const Parameter &parameter,
     //check if released
     TrainID ID(trainID);
     TrainIndex train_index(ID, true);
-    sjtu::vector<long> vec = trainTree.StrictFind(train_index);
+    sjtu::vector<long> vec;
+    trainTree.Find(train_index, compareTrainIndex, vec);
     if (vec.empty()) {//not exist or not released
         std::cout << -1;
         return;
