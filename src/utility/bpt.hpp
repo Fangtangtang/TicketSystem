@@ -264,11 +264,11 @@ public:
         return vec;
     }
 
-    void RewriteKey(const Key&key,const long &block_addr,const int &ele_index){
-        current_block.storage[ele_index].key=key;
-        WriteBlock(current_block,block_addr);
+    void RewriteKey(const Key &key, const long &block_addr, const int &ele_index) {
+        current_block.storage[ele_index].key = key;
+        WriteBlock(current_block, block_addr);
     }
-    
+
 private:
 
     template<class Array>
@@ -361,6 +361,7 @@ private:
             ReadBlock(current_block, current_block.next_block_address);
             index_in_block = BinarySearch(current_block.storage, 0, current_block.size - 1, target, cmp);
         }
+        if (index_in_block == -1)return;
         if (!(cmp(current_block.storage[index_in_block], target) ||
               cmp(target, current_block.storage[index_in_block]))) {
             //print from current, along the linked blocks
@@ -371,15 +372,14 @@ private:
     long FindFirstEle(const Key &key, long &block_addr, int &ele_index) {
         ReadBlock(current_block, block_addr);
         EleGroup target(key);
-        ele_index = BinarySearch(current_block.storage, 0, current_block.size - 1, target, cmp1);
+        ele_index = BinarySearch(current_block.storage, 0, current_block.size - 1, target);
         while (ele_index == -1 && current_block.next_block_address != -1) {
             block_addr = current_block.next_block_address;
             ReadBlock(current_block, block_addr);
-            ele_index = BinarySearch(current_block.storage, 0, current_block.size - 1, target, cmp1);
+            ele_index = BinarySearch(current_block.storage, 0, current_block.size - 1, target);
         }
-        if (!(cmp1(current_block.storage[ele_index], target) ||
-              cmp1(target, current_block.storage[ele_index]))) {
-            //print from current, along the linked blocks
+        if (ele_index == -1)return -1;
+        if (current_block.storage[ele_index] == target) {
             return current_block.storage[ele_index].address;
         } else return -1;
     }
@@ -392,10 +392,10 @@ private:
             ReadBlock(current_block, current_block.next_block_address);
             index_in_block = BinarySearch(current_block.storage, 0, current_block.size - 1, target, cmp2);
         }
+        if (index_in_block == -1)return;
         if (!(cmp2(current_block.storage[index_in_block], target) ||
               cmp2(target, current_block.storage[index_in_block])) &&
             cmp3(current_block.storage[index_in_block], target)) {
-            //print from current, along the linked blocks
             GetEle(target, index_in_block, vec);
         } else return;
     }
@@ -408,7 +408,7 @@ private:
         FindNode(target, iter, cmp, vec);
     }
 
-    //cmp1
+    //<
     long Find(const Key &key, long &block_addr, int &ele_index) {
         current_node = root_node;//start from root
         EleGroup target(key);
@@ -445,7 +445,7 @@ private:
     }
 
     long FindNode(const EleGroup &target, long &block_addr, int &ele_index) {
-        int index = BinarySearch(current_node.key, 0, current_node.size - 1, target, cmp1);
+        int index = BinarySearch(current_node.key, 0, current_node.size - 1, target);
         if (index == -1) index = current_node.size - 1;
         block_addr = current_node.key[index].address;
         //end of recursion

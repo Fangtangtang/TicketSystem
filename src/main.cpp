@@ -117,13 +117,14 @@ void ProcessLine(Parameter parameter,
     } else if (cmd == "release_train") {
         std::cout << trainSystem.ReleaseTrain(parameter, ticketSystem, trainFile, stationFile, seatFile);
     } else if (cmd == "query_train") {
-        trainSystem.QueryTrain(parameter);
+        trainSystem.QueryTrain(parameter, trainFile, stationFile, seatFile);
     } else if (cmd == "query_ticket") {
         ticketSystem.QueryTicket(parameter);
     } else if (cmd == "query_transfer") {
         ticketSystem.QueryTransfer(parameter);
     } else if (cmd == "buy_ticket") {
-        trainSystem.BuyTicket(parameter, loginList, transactionSystem, waitingList);
+        trainSystem.BuyTicket(parameter, loginList, transactionSystem, waitingList,
+                              trainFile, stationFile, seatFile, waitingListFile);
     } else if (cmd == "query_order") {
         transactionSystem.QueryOrder(parameter, loginList);
     } else if (cmd == "refund_ticket") {

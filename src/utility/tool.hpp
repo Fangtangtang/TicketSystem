@@ -203,11 +203,11 @@ public:
     }
 
     friend bool operator<(const Time &a, const Time &b) {
-        return a.minutes < b.minutes;
+        return (a.minutes / 1440) < (b.minutes / 1440);
     }
 
     friend bool operator==(const Time &a, const Time &b) {
-        return a.minutes == b.minutes;
+        return (a.minutes / 1440) == (b.minutes / 1440);
     }
 
     friend int operator-(const Time &a, const Time &b) {
@@ -372,7 +372,7 @@ class Train {
     long seat_addr = 0;
     char type = '\0';
     bool released = false;
-
+    friend TrainSystem;
 public:
     Train() = default;
 
@@ -408,7 +408,7 @@ class Station {
     int price = 0;
     Interval arriving_time;
     Interval leaving_time;
-
+    friend TrainSystem;
 public:
     Station() = default;
 
@@ -416,7 +416,6 @@ public:
 
     Station(const std::string &name_, const int &price, const Interval &arriving_time_,
             const Interval &leaving_time);
-
 };
 
 Station::Station(char *name_, const int &price_, const Interval &arriving_time_,
@@ -443,10 +442,11 @@ Station::Station(const std::string &name_, const int &price_, const Interval &ar
 class Seat {
     int num = 0;
     long waiting = -1;
+    friend TrainSystem;
 public:
-    Seat()=default;
+    Seat() = default;
 
-    explicit Seat(const int & seat_num):num(seat_num){}
+    explicit Seat(const int &seat_num) : num(seat_num) {}
 };
 
 /*
