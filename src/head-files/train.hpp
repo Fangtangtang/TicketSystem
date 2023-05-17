@@ -184,7 +184,8 @@ public:
                      TicketSystem &ticketSystem,
                      FileManager<Train> &trainFile,
                      FileManager<Station> &stationFile,
-                     FileManager<Seat> &seatFile);
+                     FileManager<Seat> &seatFile,
+                     FileManager<TicketDetail> &ticketFile);
 
     /*
      * query_train
@@ -331,7 +332,7 @@ int TrainSystem::GetStationIndex(char *from, char *to,
         if (strcmp(station.name, to) == 0) break;
     }
     if (i == station_num) return -1;
-    price+=station.price;
+    price += station.price;
     end = i;
     arriving_time = station.arriving_time;
     return price;
@@ -437,7 +438,8 @@ int TrainSystem::ReleaseTrain(const Parameter &parameter,
                               TicketSystem &ticketSystem,
                               FileManager<Train> &trainFile,
                               FileManager<Station> &stationFile,
-                              FileManager<Seat> &seatFile) {
+                              FileManager<Seat> &seatFile,
+                              FileManager<TicketDetail> &ticketFile) {
     std::string trainID;
     if (!parameter.GetParameter('i', trainID)) return -1;
     long block_addr = 0;
@@ -450,7 +452,7 @@ int TrainSystem::ReleaseTrain(const Parameter &parameter,
     train_index.released = true;
     trainTree.RewriteKey(train_index, block_addr, ele_index);
     //release
-    ticketSystem.ReleaseTrain(ID,train_addr, trainFile, stationFile, seatFile);
+    ticketSystem.ReleaseTrain(ID, train_addr, trainFile, stationFile, seatFile);
 }
 
 void TrainSystem::QueryTrain(const Parameter &parameter,

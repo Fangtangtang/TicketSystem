@@ -27,8 +27,10 @@ void ProcessLine(Parameter parameter,
                  FileManager<Train> &trainFile,
                  FileManager<Station> &stationFile,
                  FileManager<Seat> &seatFile,
+                 FileManager<TicketDetail> &ticketFile,
                  FileManager<WaitingTransaction> &waitingListFile,
-                 bool &flag);
+                 bool &flag
+);
 
 int main() {
     std::ios_base::sync_with_stdio(false);
@@ -42,6 +44,7 @@ int main() {
     FileManager<Station> stationFile{"station_information"};
     FileManager<Seat> seatFile{"seat_information"};
     FileManager<WaitingTransaction> waitingListFile{"waiting_information"};
+    FileManager<TicketDetail> ticketFile{"ticket_information"};
     //construct System
     UserSystem userSystem;
     TrainSystem trainSystem;
@@ -64,6 +67,7 @@ int main() {
                     trainFile,
                     stationFile,
                     seatFile,
+                    ticketFile,
                     waitingListFile,
                     flag);
         if (flag)break;
@@ -95,6 +99,7 @@ void ProcessLine(Parameter parameter,
                  FileManager<Train> &trainFile,
                  FileManager<Station> &stationFile,
                  FileManager<Seat> &seatFile,
+                 FileManager<TicketDetail> &ticketFile,
                  FileManager<WaitingTransaction> &waitingListFile,
                  bool &flag) {
     std::string cmd = parameter.ReadLine();
@@ -115,7 +120,7 @@ void ProcessLine(Parameter parameter,
     } else if (cmd == "delete_train") {
         std::cout << trainSystem.DeleteTrain(parameter);
     } else if (cmd == "release_train") {
-        std::cout << trainSystem.ReleaseTrain(parameter, ticketSystem, trainFile, stationFile, seatFile);
+        std::cout << trainSystem.ReleaseTrain(parameter, ticketSystem, trainFile, stationFile, seatFile, ticketFile);
     } else if (cmd == "query_train") {
         trainSystem.QueryTrain(parameter, trainFile, stationFile, seatFile);
     } else if (cmd == "query_ticket") {
@@ -126,7 +131,7 @@ void ProcessLine(Parameter parameter,
         trainSystem.BuyTicket(parameter, loginList, transactionSystem, waitingList,
                               trainFile, stationFile, seatFile, transactionFile, waitingListFile);
     } else if (cmd == "query_order") {
-        transactionSystem.QueryOrder(parameter, loginList,transactionFile);
+        transactionSystem.QueryOrder(parameter, loginList, transactionFile);
     } else if (cmd == "refund_ticket") {
         transactionSystem.RefundTicket(parameter, loginList, trainSystem, waitingList);
     } else if (cmd == "clean") {

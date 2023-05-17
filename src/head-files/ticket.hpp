@@ -29,7 +29,7 @@ class TicketDetail {
     int price = 0;
     int time = 0;
     Time leaving_time;//leaving time of the train set off on first day
-    long seat_addr = 0;
+    long seat_addr = 0;//start_addr of the first station's seat on start_sale day
 
     friend TimeBased;
     friend CostBased;
@@ -78,13 +78,32 @@ bool CostBased::operator()(const TicketDetail &a, const TicketDetail &b) {
  * including add, query
  */
 class TicketSystem {
-    BPlusTree<Ticket, TicketDetail, CompareTicket, CompareTicket2, CompareTicket2> ticketTree{"ticket_tree"};
+    BPlusTree<Ticket, TicketDetail, CompareStationName, CompareTicket2, CompareTicket2> ticketTree{"ticket_tree"};
 
     friend TrainSystem;
 
+    /*
+     * release_train
+     * provide from and to
+     * calculate start_sale and stop_sale of the station
+     * (given start_sale and stop_sale of train)
+     */
     void AddTicket(const Station &from, const Station &to,
                    const Time &start_sale, const Time &stop_sale,
-                   const TrainID &trainID, const int &station_num, const int &station_interval, const long &seat_addr);
+                   const TrainID &trainID, const int &station_num,
+                   const int &station_interval, const long &seat_addr,
+                   FileManager<TicketDetail> &ticketFile);
+
+    /*
+     * query_ticket\query_transfer
+     * read from file
+     * check if date is available
+     *
+     */
+    void FindTicket(const sjtu::vector<long> &vec,
+                    FileManager<TicketDetail> &ticketFile,
+                    const Time &date,
+                    sjtu::vector<TicketDetail> &tickets);
 
 public:
     /*
@@ -96,7 +115,8 @@ public:
                       const long &train_addr,
                       FileManager<Train> &trainFile,
                       FileManager<Station> &stationFile,
-                      FileManager<Seat> &seatFile);
+                      FileManager<Seat> &seatFile,
+                      FileManager<TicketDetail> &ticketFile);
 
     /*
      * query_ticket
@@ -116,11 +136,34 @@ public:
 
 };
 
+/*
+ * PRIVATE
+ * -----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ */
+void TicketSystem::AddTicket(const Station &from, const Station &to,
+                             const Time &start_sale, const Time &stop_sale,
+                             const TrainID &trainID, const int &station_num,
+                             const int &station_interval, const long &seat_addr,
+                             FileManager<TicketDetail> &ticketFile) {
+    //cal ticket_start_sale ticket_stop_sale
+    Time ticket_start_sale = start_sale + from.leaving_time;
+    Time ticket_stop_sale = stop_sale + from.leaving_time;
+    ticketTree.Insert(Ticket(from.name, to.name, ticket_start_sale, ticket_stop_sale),
+                      TicketDetail(trainID, station_num, station_interval,
+                                   to.price - from.price, to.arriving_time - from.leaving_time,
+                                   ticket_start_sale, seat_addr), ticketFile);
+}
+
+/*
+ * PUBLIC
+ * -----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ */
 void TicketSystem::ReleaseTrain(const TrainID &trainID,
                                 const long &train_addr,
                                 FileManager<Train> &trainFile,
                                 FileManager<Station> &stationFile,
-                                FileManager<Seat> &seatFile) {
+                                FileManager<Seat> &seatFile,
+                                FileManager<TicketDetail> &ticketFile) {
     //read train
     Train train;
     trainFile.ReadEle(train_addr, train);
@@ -133,10 +176,28 @@ void TicketSystem::ReleaseTrain(const TrainID &trainID,
             AddTicket(station_vec[start], station_vec[end],
                       train.start_sale, train.stop_sale,
                       trainID, train.stationNum, end - start,
-                      seatFile.GetAddress(train.seat_addr, end - start));
+                      seatFile.GetAddress(train.seat_addr, end - start),
+                      ticketFile);
         }
     }
     std::cout << 0;
 }
+
+void TicketSystem::QueryTicket(const Parameter &parameter) {
+    //check parameter
+    std::string from, to, date, keyword;
+    if (!parameter.GetParameter('s', from) ||
+        !parameter.GetParameter('t', to) ||
+        !parameter.GetParameter('d', date))
+        return;
+    parameter.GetParameter('p', keyword);
+    Time time(date);//requested date
+    bool flag = (keyword == "cost");//true if sort based on cost
+    //find ticket from ... to ...
+    //TODO
+    sjtu::vector<long> vec = ticketTree.StrictFind(Ticket(from, to, time, time));
+
+}
+
 
 #endif //TICKETSYSTEM_TICKET_HPP

@@ -36,12 +36,12 @@ namespace sjtu {
             return l + rand() % (r - l + 1);
         }
 
-        template <typename U>
-        friend void bubSort(vector<U> &vec, int l, int r, bool (*cmp)(U, U));
+        template<typename U, typename Compare>
+        friend void bubSort(vector<U> &vec, int l, int r, const Compare &cmp);
 
         //sort the array based on cmp
-        template <typename U>
-        friend void Sort(vector<U> &vec, int l, int r, bool (*cmp)(U, U));
+        template<typename U, typename Compare>
+        friend void Sort(vector<U> &vec, int l, int r, const Compare &cmp);
 
     public:
         /**
@@ -604,16 +604,16 @@ namespace sjtu {
         }
     }
 
-    template<class T>
-    void bubSort(vector<T> &vec, int l, int r, bool (*cmp)(T, T)) {
+    template<class T, class Compare>
+    void bubSort(vector<T> &vec, int l, int r, const Compare &cmp) {
         for (int i = l + 1; i <= r; ++i) {
             for (int j = i; j > 0 && cmp(*vec.storage[j], *vec.storage[j - 1]); j--)
                 std::swap(vec.storage[j], vec.storage[j - 1]);
         }
     }
 
-    template<class T>
-    void Sort(vector<T> &vec, int l, int r, bool (*cmp)(T, T)) {
+    template<class T, class Compare>
+    void Sort(vector<T> &vec, int l, int r, const Compare &cmp) {
         if (l >= r) return;
         if (r - l < 10) {
             bubSort(vec, l, r, cmp);

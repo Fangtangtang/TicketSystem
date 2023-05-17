@@ -170,9 +170,7 @@ public:
         }
     }
 
-    //insert downwards
-    //change key when getting down
-    //break upwards
+    //insert based on cmp1
     bool Insert(const Key &key, const Value &value, FileManager<Value> &r_w_value) {
         if (!root_node.size) {//empty
             Block new_block(key, r_w_value.WriteEle(value));
@@ -216,7 +214,7 @@ public:
         return flag;
     }
 
-    //delete and adjust upwards
+    //based on ==
     bool Delete(const Key &key) {
         long iter = 0;
         bool adjust_flag = true;
@@ -250,13 +248,6 @@ public:
         return Find(key, block_addr, ele_index);
     }
 
-    //TODO
-    sjtu::vector<long> ModerateFind(const Key &key) {
-        sjtu::vector<long> vec;
-        Find(key, cmp1, vec);
-        return vec;
-    }
-
     //based on cmp2
     sjtu::vector<long> WeakFind(const Key &key) {
         sjtu::vector<long> vec;
@@ -264,6 +255,14 @@ public:
         return vec;
     }
 
+    //TODO
+    //find first ele based on cmpA
+    //find == based on cmpB
+    sjtu::vector<long> ModerateFind(const Key &key) {
+        sjtu::vector<long> vec;
+        Find(key, cmp1, vec);
+        return vec;
+    }
     void RewriteKey(const Key &key, const long &block_addr, const int &ele_index) {
         current_block.storage[ele_index].key = key;
         WriteBlock(current_block, block_addr);

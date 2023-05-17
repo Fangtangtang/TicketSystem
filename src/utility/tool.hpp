@@ -172,6 +172,10 @@ public:
         minutes += delta;
         return *this;
     }
+
+    int operator-(const Interval &other) const {
+        return minutes - other.minutes;
+    }
 };
 
 /*
@@ -415,6 +419,7 @@ class Station {
     Interval arriving_time;
     Interval leaving_time;
     friend TrainSystem;
+    friend TicketSystem;
 public:
     Station() = default;
 
@@ -476,14 +481,17 @@ class Ticket {
 public:
     Ticket() = default;
 
-    Ticket(char *from_, char *to_, const Time &start_sale_, const Time &stop_sale_);
+    Ticket(const char *from_, const char *to_, const Time &start_sale_, const Time &stop_sale_);
 
-    Ticket(const std::string &from_, const std::string *to_, const Time &start_sale_, const Time &stop_sale_);
+    Ticket(const std::string &from_, const std::string &to_);
 
+    Ticket(const std::string &from_, const std::string &to_, const Time &start_sale_, const Time &stop_sale_);
+
+    bool operator<(const Ticket &a) const;
 };
 
 
-Ticket::Ticket(char *from_, char *to_, const Time &start_sale_, const Time &stop_sale_) :
+Ticket::Ticket(const char *from_, const char *to_, const Time &start_sale_, const Time &stop_sale_) :
         start_sale(start_sale_), stop_sale(stop_sale_) {
     memset(from, 0, sizeof(from));
     strcpy(from, from_);
@@ -491,17 +499,38 @@ Ticket::Ticket(char *from_, char *to_, const Time &start_sale_, const Time &stop
     strcpy(to, to_);
 }
 
-Ticket::Ticket(const std::string &from_, const std::string *to_, const Time &start_sale_, const Time &stop_sale_) :
+Ticket::Ticket(const std::string &from_, const std::string &to_) {
+    memset(from, 0, sizeof(from));
+    strcpy(from, from_.c_str());
+    memset(to, 0, sizeof(to));
+    strcpy(to, to_.c_str());
+}
+
+Ticket::Ticket(const std::string &from_, const std::string &to_, const Time &start_sale_, const Time &stop_sale_) :
         start_sale(start_sale_), stop_sale(stop_sale_) {
     memset(from, 0, sizeof(from));
     strcpy(from, from_.c_str());
     memset(to, 0, sizeof(to));
-    strcpy(to, to_->c_str());
+    strcpy(to, to_.c_str());
+}
+
+bool Ticket::operator<(const Ticket &a) const {
+    int cmp = strcmp(from, a.from);
+    if (cmp) return cmp < 0;
+    cmp = strcmp(to, a.to);
+    if (cmp) return cmp < 0;
+    if (!(stop_sale == a.stop_sale)) return stop_sale < a.stop_sale;
+    return start_sale < a.start_sale;
+
 }
 
 /*
  * Compare class for Ticket
  * ===============================================================================
+ * CompareTicket:
+ *     strict compare 
+ *     same from and to
+ *     
  */
 struct CompareTicket {
     bool operator()(const Ticket &a, const Ticket &b);
@@ -512,8 +541,8 @@ bool CompareTicket::operator()(const Ticket &a, const Ticket &b) {
     if (cmp) return cmp < 0;
     cmp = strcmp(a.to, b.to);
     if (cmp) return cmp < 0;
-    if (!(a.start_sale == b.start_sale)) return a.start_sale < b.start_sale;
-    return a.stop_sale < b.stop_sale;
+    if (!(a.stop_sale == b.stop_sale)) return a.stop_sale < b.stop_sale;
+    return a.start_sale < b.start_sale;
 }
 
 struct CompareTicket2 {
