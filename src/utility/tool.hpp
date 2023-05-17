@@ -6,6 +6,7 @@
 
 #include <cstring>
 #include <iostream>
+#include <utility>
 
 class TrainSystem;
 
@@ -134,6 +135,29 @@ struct CompareTrainID {
 };
 
 /*
+ * Interval class
+ * -------------------------------------------------------------------------------------------------------------
+ * manage relevant time
+ */
+class Time;
+
+class Interval {
+    int minutes = 0;
+    friend Time;
+public:
+    Interval() = default;
+
+    explicit Interval(const int &a) : minutes(a) {}
+
+    explicit Interval(const std::string &str) {
+        int para1 = (str[0] - '0') * 10 + str[1] - '0';
+        int para2 = (str[3] - '0') * 10 + str[4] - '0';
+        minutes = para1 * 60 + para2;
+    }
+
+};
+
+/*
  * Time class
  * -------------------------------------------------------------------------------------------------------------
  * manage date and time from June 1st to August 31st
@@ -144,6 +168,17 @@ class Time {
 public:
     Time() = default;
 
+    explicit Time(const int &a) : minutes(a) {}
+
+    explicit Time(const std::string &str) {
+        int para1 = (str[0] - '0') * 10 + str[1] - '0';
+        int para2 = (str[3] - '0') * 10 + str[4] - '0';
+        if (para1 == 8) para2 += 61;
+        else if (para1 == 7) para2 += 30;
+        --para2;
+        minutes = para2 * 24 * 60;
+    }
+
     Time(int hour, int minute, int month = 6, int day = 1) {
         if (month == 8)day += 61;
         if (month == 7)day += 30;
@@ -152,12 +187,20 @@ public:
         minutes = minute + hour * 60;
     }
 
+    Time operator+(const Interval &interval) const {
+        return Time(minutes + interval.minutes);
+    }
+
     friend bool operator<(const Time &a, const Time &b) {
         return a.minutes < b.minutes;
     }
 
     friend bool operator==(const Time &a, const Time &b) {
         return a.minutes == b.minutes;
+    }
+
+    friend int operator-(const Time &a, const Time &b) {
+        return 1 + (a.minutes - b.minutes) / 1440;
     }
 
     friend std::ostream &operator<<(std::ostream &os, const Time &time_) {
@@ -344,50 +387,41 @@ bool Train::Release() {
  * TODO
  * modify station class to convert name of station to index faster
  * -------------------------------------------------------------------------------------------------------------
+ * name of the station, 
+ * price of ticket from the current station to next station,
+ * arriving time and leaving time
  */
 
 class Station {
-    char from[31] = {'\0'};
-    char to[31] = {'\0'};
+    char name[31] = {'\0'};
     int price = 0;
-    Time leaving_time;
-    Time arriving_time;
+    Interval arriving_time;
+    Interval leaving_time;
 
 public:
     Station() = default;
 
-    Station(char *from_, char *to_, const int &price, const Time &leaving_time_, const Time &arriving_time);
+    Station(char *name_, const int &price, const Interval &arriving_time_, const Interval &leaving_time);
 
-    Station(const std::string &from_, const std::string *to_, const int &price, const Time &leaving_time_,
-            const Time &arriving_time);
+    Station(const std::string &name_, const int &price, const Interval &arriving_time_,
+            const Interval &leaving_time);
 
-    void PrintInformation(const int &interval);
 };
 
-Station::Station(char *from_, char *to_, const int &price_, const Time &leaving_time_, const Time &arriving_time) :
-        price(price_), leaving_time(leaving_time_), arriving_time(arriving_time) {
-    memset(from, 0, sizeof(from));
-    strcpy(from, from_);
-    memset(to, 0, sizeof(to));
-    strcpy(to, to_);
+Station::Station(char *name_, const int &price_, const Interval &arriving_time_,
+                 const Interval &leaving_time) :
+        price(price_), arriving_time(arriving_time_), leaving_time(leaving_time) {
+    memset(name, 0, sizeof(name));
+    strcpy(name, name_);
 }
 
-Station::Station(const std::string &from_, const std::string *to_, const int &price_, const Time &leaving_time_,
-                 const Time &arriving_time) :
-        price(price_), leaving_time(leaving_time_), arriving_time(arriving_time) {
-    memset(from, 0, sizeof(from));
-    strcpy(from, from_.c_str());
-    memset(to, 0, sizeof(to));
-    strcpy(to, to_->c_str());
+Station::Station(const std::string &name_, const int &price_, const Interval &arriving_time_,
+                 const Interval &leaving_time) :
+        price(price_), arriving_time(arriving_time_), leaving_time(leaving_time) {
+    memset(name, 0, sizeof(name));
+    strcpy(name, name_.c_str());
 }
 
-void Station::PrintInformation(const int &interval) {
-    std::cout << from << ' ';
-    leaving_time.PrintInformation(interval);
-    std::cout << " -> ";
-    arriving_time.PrintInformation(interval);
-    std::cout << ' ' << price;
-}
 
 /*
  * Seat class
@@ -413,7 +447,7 @@ class CompareTicket2;
 class Ticket {
     char from[31] = {'\0'};
     char to[31] = {'\0'};
-    //TODO 是否保留time或arriving_time
+    //TODO 是否保留time或Leaving_time
     Time start_sale;
     Time stop_sale;
 
@@ -447,7 +481,7 @@ Ticket::Ticket(const std::string &from_, const std::string *to_, const Time &sta
 
 /*
  * Compare class for Ticket
- * =============================================================================
+ * ===============================================================================
  */
 struct CompareTicket {
     bool operator()(const Ticket &a, const Ticket &b);
@@ -473,5 +507,70 @@ bool CompareTicket2::operator()(const Ticket &a, const Ticket &b) {
     if (cmp) return cmp < 0;
     if (!(a.start_sale == b.start_sale)) return a.start_sale < b.start_sale;
 }
+
+/*
+ * class Scanner
+ * ======================================================================================
+ * deal with a|b|c
+ */
+template<class Type>
+class Scanner;
+
+template<>
+class Scanner<std::string> {
+    std::string input;
+    int length = 0;
+    int tokenStart = 0, tokenEnd = 0;
+
+    void Update() {
+        ++tokenEnd;
+        tokenStart = tokenEnd;
+    }
+
+public:
+    explicit Scanner(std::string str) : input(std::move(str)) {
+        length = input.length();
+    }
+
+    void GetStr(std::string &string) {
+        while (input[tokenEnd] != '|') {
+            ++tokenEnd;
+            if (tokenEnd == length) break;
+        }
+        string = input.substr(tokenStart, tokenEnd - tokenStart);
+        Update();
+    }
+
+};
+
+
+template<>
+class Scanner<int> {
+    std::string input;
+    int length = 0;
+    int tokenStart = 0, tokenEnd = 0;
+
+    void Update() {
+        ++tokenEnd;
+        tokenStart = tokenEnd;
+    }
+
+public:
+    explicit Scanner(std::string str) : input(std::move(str)) {
+        length = input.length();
+    }
+
+    void GetNum(int &intNum) {
+        intNum = 0;
+        while (input[tokenEnd] != '|') {
+            intNum *= 10;
+            intNum += (input[tokenEnd] - '0');
+            ++tokenEnd;
+            if (tokenEnd == length) break;
+        }
+        Update();
+    }
+
+};
 
 #endif //TICKETSYSTEM_TOOL_HPP
