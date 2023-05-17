@@ -77,9 +77,11 @@ public:
         return addr;
     }
 
-    void WriteEle(const long &start_addr, ValueType valueType, const int &num) {
+    void WriteEle(ValueType valueType, const int &num) {
+        r_w_file.seekp(0, std::ios::end);
+        long addr = r_w_file.tellp();
         for (int i = 0; i < num; ++i) {
-            r_w_file.seekp(start_addr + i * value_size);
+            r_w_file.seekp(addr + i * value_size);
             r_w_file.write(reinterpret_cast<char *> (&valueType), value_size);
         }
     }

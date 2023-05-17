@@ -155,6 +155,17 @@ public:
         minutes = para1 * 60 + para2;
     }
 
+    //return added
+    //this added
+    Interval operator+(const int &delta) {
+        minutes += delta;
+        return *this;
+    }
+
+    Interval operator+=(const int &delta) {
+        minutes += delta;
+        return *this;
+    }
 };
 
 /*
@@ -432,6 +443,10 @@ Station::Station(const std::string &name_, const int &price_, const Interval &ar
 class Seat {
     int num = 0;
     long waiting = -1;
+public:
+    Seat()=default;
+
+    explicit Seat(const int & seat_num):num(seat_num){}
 };
 
 /*

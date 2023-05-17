@@ -49,13 +49,16 @@ class TrainSystem {
     long AddStation(const std::string &stations,
                     const std::string &prices,
                     const std::string &travel_times,
-                    const std::string &stop_over_times);
+                    const std::string &stop_over_times,
+                    const int &station_num,
+                    const Interval &start_time,
+                    FileManager<Station> &stationFile);
 
     /*
      * add_train
      * return address of first seat(int)
      */
-    long AddSeat(const int &seat_num, const int &station_num, const int &day);
+    long AddSeat(const int &seat_num, const int &station_num, const int &day, FileManager<Seat> &seatFile);
 
     /*
      * release_train & query_train
@@ -125,6 +128,44 @@ Time TrainSystem::SecondTime(const std::string &sale_date) {
     return Time(para2 * 1440);
 }
 
+long TrainSystem::AddStation(const std::string &stations,
+                             const std::string &prices,
+                             const std::string &travel_times,
+                             const std::string &stop_over_times,
+                             const int &station_num,
+                             const Interval &start_time,
+                             FileManager<Station> &stationFile) {
+    Scanner<std::string> scan_station(stations);
+    Scanner<int> scan_price(prices);
+    Scanner<int> scan_travel_time(travel_times);
+    Scanner<int> scan_stop_over_time(stop_over_times);
+    std::string name;
+    int price, travel_time, stop_over_time;
+    Interval arriving_time(start_time), leaving_time(start_time);
+    //the first station
+    scan_station.GetStr(name);
+    stationFile.WriteEle(Station(name, 0, arriving_time, leaving_time));
+    for (int i = 2; i < station_num; ++i) {
+        scan_station.GetStr(name);
+        scan_price.GetNum(price);
+        scan_travel_time.GetNum(travel_time);
+        scan_stop_over_time.GetNum(stop_over_time);
+        arriving_time = leaving_time + travel_time;
+        leaving_time += stop_over_time;
+        stationFile.WriteEle(Station(name, price, arriving_time, leaving_time));
+    }
+    //the last station
+    scan_station.GetStr(name);
+    scan_price.GetNum(price);
+    scan_travel_time.GetNum(travel_time);
+    arriving_time = leaving_time + travel_time;
+    stationFile.WriteEle(Station(name, price, arriving_time, leaving_time));
+}
+
+long TrainSystem::AddSeat(const int &seat_num, const int &station_num, const int &day, FileManager<Seat> &seatFile) {
+    seatFile.WriteEle(Seat(seat_num), day * station_num);
+}
+
 /*
  * PUBLIC
  * -----------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -154,8 +195,8 @@ int TrainSystem::AddTrain(const Parameter &parameter, FileManager<Train> &trainF
                                type, stationFile.GetAddress(), seatFile.GetAddress()),
                          trainFile)) {
         //if succeeded, write in stationFile and seatFile
-        AddStation(stations, prices, travel_times, stopover_times);
-        AddSeat(seat_num, station_num, stop_sale - start_sale);
+        AddStation(stations, prices, travel_times, stopover_times, station_num, Interval(start_time), stationFile);
+        AddSeat(seat_num, station_num, stop_sale - start_sale, seatFile);
     } else return -1;
 }
 

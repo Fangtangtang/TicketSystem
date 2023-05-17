@@ -141,10 +141,6 @@ int UserSystem::AddUser(const Parameter &parameter, FileManager<User> &userFile)
     return -1;
 }
 
-/*
- * SAMPLE:
- *   [3] add_user -g 10 -p aws -u I_am_the_admin -m foo@bar.com -n 奥斯卡 -c cur
- */
 int UserSystem::AddUser(const Parameter &parameter, LoginList &loginList, FileManager<User> &userFile) {
     //check parameter
     short privilege;
