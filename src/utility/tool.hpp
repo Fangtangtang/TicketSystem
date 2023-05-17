@@ -8,6 +8,10 @@
 #include <iostream>
 #include <utility>
 
+enum STATUS {
+    success, pending, refund
+};
+
 class TrainSystem;
 
 class UserSystem;
@@ -270,19 +274,17 @@ public:
         std::cout << minute;
     }
 
-    int GetInterval(const Time &other) const {
-        return minutes > other.minutes ? minutes - other.minutes : other.minutes - minutes;
+    int Lag(const Time &other) const {
+        return minutes > other.minutes ? (minutes / 1440 - other.minutes / 1440)
+                                       : (other.minutes / 1440 - minutes / 1440);
     }
 
     void AddMinute(const int &delta) {
         minutes += delta;
     }
 
-    void AddDay(int month, int day) {
-        if (month == 8)day += 61;
-        if (month == 7)day += 30;
-        --day;
-        minutes += day * 24 * 60;
+    void AddDay(const int &day) {
+        minutes += day * 1440;
     }
 };
 

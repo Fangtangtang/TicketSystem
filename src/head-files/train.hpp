@@ -114,37 +114,48 @@ class TrainSystem {
      * in stationFile
      * find index of station by traverse
      * return price_sum if succeed
+     * leaving_time and arriving_time needed(Internal)
      * return -1 if station not exist
      */
-    int GetStationIndex(char *from, char *to, int &start, int &end);
+    static int GetStationIndex(char *from, char *to,
+                               int &start, int &end,
+                               Interval &leaving_time, Interval &arriving_time,
+                               const int &station_num,
+                               const long &station_addr, FileManager<Station> &stationFile);
+
+    /*
+     * buy_ticket
+     * get vector of Seat intending to buy
+     * return vector and min seat_num
+     * if the same day, day == 0 -> move_base==0
+     */
+    static void GetSeat(long address, const long &move_base, const int &start, const int &end,
+                 sjtu::vector<Seat> &vec, int &min_num,
+                 FileManager<Seat> &seatFile);
 
     /*
      * buy_ticket
      * in seatFile
      * buy ticket from station A to B on given date
-     * if succeed return number of ticket
-     * if failed
-     *     enqueue(to waitingList and modify seatFile) or fail
      */
-
+    void BuyTicket(long address, const long &move_base, const int &start, const int &end,
+                   const sjtu::vector<Seat> &vec, const int &number,
+                   FileManager<Seat> &seatFile);
 
     /*
      * buy_ticket
-     * check if date is valid
      * find station
      * find ticket
-     * try t buy ticket
+     * try to buy ticket
+     * return true if in need of waiting
      */
-    void BuyTicket(const Train &train,
-                   const Time &time,
+    bool BuyTicket(const Train &train,
+                   const int &lag,
                    const int &number,
-                   char *from, char *to,
+                   const int &start, const int &end, const int &price,
                    const bool &flag,
-                   TransactionSystem &transactionSystem,
-                   WaitingList &waitingList,
-                   FileManager<Station> &stationFile,
-                   FileManager<Seat> &seatFile,
-                   FileManager<WaitingTransaction> &waitingListFile);
+                   STATUS &status,
+                   FileManager<Seat> &seatFile);
 
 public:
     /*
@@ -299,6 +310,83 @@ bool TrainSystem::PrintTrainInformation(const long &train_addr,
     return true;
 }
 
+int TrainSystem::GetStationIndex(char *from, char *to,
+                                 int &start, int &end,
+                                 Interval &leaving_time, Interval &arriving_time,
+                                 const int &station_num,
+                                 const long &station_addr, FileManager<Station> &stationFile) {
+    Station station;
+    int i = 0;
+    for (; i < station_num; ++i) {
+        stationFile.ReadEle(station_addr, i, station);
+        if (strcmp(station.name, from) == 0) break;
+    }
+    start=i;
+    leaving_time = station.leaving_time;
+    int price = 0;
+    for (; i < station_num; ++i) {
+        stationFile.ReadEle(station_addr, i, station);
+        price += station.price;
+        if (strcmp(station.name, to) == 0) break;
+    }
+    if (i == station_num) return -1;
+    end=i;
+    arriving_time = station.arriving_time;
+    return price;
+}
+
+void TrainSystem::GetSeat(long address, const long &move_base, const int &start, const int &end,
+                          sjtu::vector<Seat> &vec, int &min_num,
+                          FileManager<Seat> &seatFile) {
+    Seat seat;
+    address += move_base * sizeof(Seat);
+    for (int i = start; i <=end ; ++i) {
+        seatFile.ReadEle(address,i,seat);
+        min_num= std::min(min_num,seat.num);
+        vec.push_back(seat);
+    }
+}
+
+void TrainSystem::BuyTicket(long address, const long &move_base,  const int &start, const int &end,
+                            const sjtu::vector<Seat> &vec,
+                            const int &number, FileManager<Seat> &seatFile) {
+    address += move_base * sizeof(Seat);
+    Seat seat;
+    int iter=0;
+    for (int i = start; i <=end ; --i) {
+        seat=vec[iter];
+        seat.num-=number;
+        seatFile.WriteEle(address,i,seat);
+        ++iter;
+    }
+}
+bool TrainSystem::BuyTicket(const Train &train, const int &lag, const int &number,
+                            const int &start, const int &end, const int &price,
+                            const bool &flag, STATUS &status,
+                            FileManager<Seat> &seatFile) {
+    //find seat intending to buy
+    sjtu::vector<Seat> vec;
+    int min_num = number;
+    GetSeat(train.seat_addr, lag * train.stationNum, start, end, vec, min_num, seatFile);
+    //try to buy
+    if (min_num < number) {
+        if (flag) {//waiting
+            std::cout << "queue";
+            status = pending;
+            return true;
+        } else {
+            std::cout << -1;
+            return false;
+        }
+    } else {//buy ticket
+        BuyTicket(train.seat_addr, lag * train.stationNum, start, end, vec, number, seatFile);
+        std::cout << number * price;
+        status = success;
+        return true;
+    }
+    //record transaction
+}
+
 /*
  * PUBLIC
  * -----------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -405,12 +493,14 @@ void TrainSystem::BuyTicket(const Parameter &parameter,
     parameter.GetParameter('q', flag);
     bool enqueue_flag = (flag == "true");
     //check if logged in
-    if (loginList.CheckLoggedIn(Username(username)) < 0) {
+    Username user(username);
+    if (loginList.CheckLoggedIn(user) < 0) {
         std::cout << -1;
         return;
     }
     //check if released
-    TrainIndex train_index(TrainID(trainID), true);
+    TrainID ID(trainID);
+    TrainIndex train_index(ID, true);
     sjtu::vector<long> vec = trainTree.StrictFind(train_index);
     if (vec.empty()) {//not exist or not released
         std::cout << -1;
@@ -419,10 +509,40 @@ void TrainSystem::BuyTicket(const Parameter &parameter,
     //read train
     Train train;
     trainFile.ReadEle(vec.front(), train);
+    //check date
     Time date_(date);
-    BuyTicket(train, date_, number, from, to, enqueue_flag,
-              transactionSystem, waitingList, stationFile, seatFile, waitingListFile);
+    Interval leaving_time, arriving_time;
+    int start, end;
+    int price = GetStationIndex(from, to, start, end, leaving_time, arriving_time,
+                                train.stationNum, train.station_addr, stationFile);
+    if (price < 0) {//invalid station
+        std::cout << -1;
+        return;
+    }
+    //check date
+    Time leaving = train.start_sale + leaving_time;
+    if (date_ < leaving || (train.stop_sale + leaving_time) < date_) {
+        std::cout << -1;
+        return;
+    }
+    //time lag between the leaving and date
+    int lag = date_.Lag(leaving);
+    leaving.AddDay(lag);
+    Time arriving = train.stop_sale + arriving_time;
+    arriving.AddDay(lag);
+    //really need to enqueue or not
+    STATUS status;
+    if (!BuyTicket(train, lag, number, start, end, price, enqueue_flag, status, seatFile)) return;
+    //record transaction
+    long transaction_addr = transactionSystem.AddTransaction(user, parameter.GetTimestamp(),
+                                                             ID, from, to, leaving, arriving,
+                                                             price, number, status, vec.front());
+    //enqueue
+    if (status == pending) {
+        waitingList.StartWaiting(ID, start, end, number, parameter.GetTimestamp(), transaction_addr);
+    }
 }
+
 
 
 #endif //TICKETSYSTEM_TRAIN_HPP

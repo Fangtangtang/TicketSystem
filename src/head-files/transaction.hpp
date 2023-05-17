@@ -14,8 +14,9 @@
 #include "../utility/pair.hpp"
 #include "../utility/tool.hpp"
 #include "../utility/file_manager.hpp"
+#include "waitingList.hpp"
 #include "parameter.hpp"
-#include "train.hpp"
+
 
 struct CompareTrans1;
 struct CompareTrans2;
@@ -55,10 +56,6 @@ struct CompareTrans2 {
     bool operator()(const Transaction &a, const Transaction &b) const {
         return compare_username(a.username, b.username);
     }
-};
-
-enum STATUS {
-    success, pending, refund
 };
 
 class TransactionDetail {
@@ -123,14 +120,14 @@ TransactionDetail::TransactionDetail(const TrainID &trainID_, char *from_, char 
 class TransactionSystem {
     BPlusTree<Transaction, TransactionDetail, CompareTrans1, CompareTrans2, CompareTrans2> TransactionTree{"transaction_tree"};
 
-    friend TrainSystem;
 public:
 
     /*
      * buy_ticket
      * add transaction if valid
+     * return addr of transaction
      */
-    void AddTransaction(const Username &username_, const int &timestamp_,
+    long AddTransaction(const Username &username_, const int &timestamp_,
                         const TrainID &trainID_, char *from, char *to,
                         const Time &leaving_time_, const Time &arriving_time_,
                         const int &price_, const int &num_, const STATUS &status_, const long &train_address_);
