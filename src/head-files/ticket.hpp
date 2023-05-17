@@ -81,7 +81,10 @@ public:
      * store ticket information of the train to file
      * cout<<0 in the end
      */
-    void ReleaseTrain(const Train &train);
+    void ReleaseTrain(const long &train_addr,
+                      FileManager<Train> &trainFile,
+                      FileManager<Station> &stationFile,
+                      FileManager<Seat> &seatFile);
 
     /*
      * query_ticket

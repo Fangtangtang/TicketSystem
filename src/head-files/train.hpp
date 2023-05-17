@@ -22,6 +22,41 @@
 #include "loginList.hpp"
 #include "waitingList.hpp"
 
+class TrainSystem;
+
+struct CompareTrainIndex;
+
+class TrainIndex {
+    TrainID ID;
+    bool released = false;
+    friend TrainSystem;
+    friend CompareTrainIndex;
+public:
+    TrainIndex() = default;
+
+    explicit TrainIndex(const TrainID &trainID) : ID(trainID) {}
+
+    friend bool operator<(const TrainIndex &a, const TrainIndex &b);
+
+    friend bool operator==(const TrainIndex &a, const TrainIndex &b);
+
+};
+
+
+bool operator<(const TrainIndex &a, const TrainIndex &b) {
+    return a.ID < b.ID;
+}
+
+bool operator==(const TrainIndex &a, const TrainIndex &b) {
+    return (a.ID == b.ID) && (a.released == b.released);
+}
+
+struct CompareTrainIndex {
+    bool operator()(const TrainIndex &a, const TrainIndex &b) {
+        return a.ID < b.ID;
+    }
+};
+
 /*
  * manage operations about train information
  * including add, query, modify, delete
@@ -32,7 +67,7 @@ class TrainSystem {
      * Value: Train
      * store basic information and some address
      */
-    BPlusTree<TrainID, Train, CompareTrainID, CompareTrainID, CompareTrainID> trainTree{"train_tree"};
+    BPlusTree<TrainIndex, Train, CompareTrainIndex, CompareTrainIndex, CompareTrainIndex> trainTree{"train_tree"};
 
     friend TransactionSystem;
 
@@ -46,19 +81,19 @@ class TrainSystem {
      * add_train
      * return address of Station storing information of the first one
      */
-    long AddStation(const std::string &stations,
-                    const std::string &prices,
-                    const std::string &travel_times,
-                    const std::string &stop_over_times,
-                    const int &station_num,
-                    const Interval &start_time,
-                    FileManager<Station> &stationFile);
+    static long AddStation(const std::string &stations,
+                           const std::string &prices,
+                           const std::string &travel_times,
+                           const std::string &stop_over_times,
+                           const int &station_num,
+                           const Interval &start_time,
+                           FileManager<Station> &stationFile);
 
     /*
      * add_train
      * return address of first seat(int)
      */
-    long AddSeat(const int &seat_num, const int &station_num, const int &day, FileManager<Seat> &seatFile);
+    static long AddSeat(const int &seat_num, const int &station_num, const int &day, FileManager<Seat> &seatFile);
 
     /*
      * release_train & query_train
@@ -90,7 +125,11 @@ public:
      * if not found or invalid return -1
      * else modify train.released, add into releasedTree, add tickets to ticketSystem return 0
      */
-    int ReleaseTrain(const Parameter &parameter, TicketSystem &ticketSystem);
+    int ReleaseTrain(const Parameter &parameter,
+                     TicketSystem &ticketSystem,
+                     FileManager<Train> &trainFile,
+                     FileManager<Station> &stationFile,
+                     FileManager<Seat> &seatFile);
 
     /*
      * query_train
@@ -170,7 +209,9 @@ long TrainSystem::AddSeat(const int &seat_num, const int &station_num, const int
  * PUBLIC
  * -----------------------------------------------------------------------------------------------------------------------------------------------------------------
  */
-int TrainSystem::AddTrain(const Parameter &parameter, FileManager<Train> &trainFile, FileManager<Station> &stationFile,
+int TrainSystem::AddTrain(const Parameter &parameter,
+                          FileManager<Train> &trainFile,
+                          FileManager<Station> &stationFile,
                           FileManager<Seat> &seatFile) {
     //check parameter
     std::string trainID, stations, prices, stopover_times, travel_times, start_time, sale_date;
@@ -190,7 +231,7 @@ int TrainSystem::AddTrain(const Parameter &parameter, FileManager<Train> &trainF
     //try to insert
     Time start_sale = FirstTime(sale_date);
     Time stop_sale = SecondTime(sale_date);
-    if (trainTree.Insert(TrainID(trainID),
+    if (trainTree.Insert(TrainIndex(TrainID(trainID)),
                          Train(station_num, start_sale, stop_sale,
                                type, stationFile.GetAddress(), seatFile.GetAddress()),
                          trainFile)) {
@@ -198,6 +239,27 @@ int TrainSystem::AddTrain(const Parameter &parameter, FileManager<Train> &trainF
         AddStation(stations, prices, travel_times, stopover_times, station_num, Interval(start_time), stationFile);
         AddSeat(seat_num, station_num, stop_sale - start_sale, seatFile);
     } else return -1;
+}
+
+int TrainSystem::DeleteTrain(const Parameter &parameter) {
+    std::string trainID;
+    if (!parameter.GetParameter('i', trainID)) return -1;
+    if (trainTree.Delete(TrainIndex(TrainID(trainID)))) return 0;//if released key!=
+    return -1;
+}
+
+int TrainSystem::ReleaseTrain(const Parameter &parameter,
+                              TicketSystem &ticketSystem,
+                              FileManager<Train> &trainFile,
+                              FileManager<Station> &stationFile,
+                              FileManager<Seat> &seatFile) {
+    std::string trainID;
+    if (!parameter.GetParameter('i', trainID)) return -1;
+    long block_addr=0;
+    int ele_index=0;
+    long train_addr=trainTree.StrictFind(TrainIndex(TrainID(trainID)),block_addr,ele_index);
+    if(train_addr<0) return -1;
+
 }
 
 

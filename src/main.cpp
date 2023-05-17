@@ -111,11 +111,11 @@ void ProcessLine(Parameter parameter,
     } else if (cmd == "modify_profile") {
         userSystem.ModifyProfile(parameter, loginList, userFile);
     } else if (cmd == "add_train") {
-        std::cout << trainSystem.AddTrain(parameter,trainFile,stationFile,seatFile);
+        std::cout << trainSystem.AddTrain(parameter, trainFile, stationFile, seatFile);
     } else if (cmd == "delete_train") {
         std::cout << trainSystem.DeleteTrain(parameter);
     } else if (cmd == "release_train") {
-        std::cout << trainSystem.ReleaseTrain(parameter, ticketSystem);
+        std::cout << trainSystem.ReleaseTrain(parameter, ticketSystem, trainFile, stationFile, seatFile);
     } else if (cmd == "query_train") {
         trainSystem.QueryTrain(parameter);
     } else if (cmd == "query_ticket") {

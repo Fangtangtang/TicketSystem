@@ -28,6 +28,7 @@ private:
             return a.key == b.key;
         }
 
+//        friend BPlusTree<Key, Value, Compare1, Compare2, Compare3>;
     public:
         EleGroup() = default;
 
@@ -238,10 +239,15 @@ public:
         return flag;
     }
 
+    //based on cmp1
     sjtu::vector<long> StrictFind(const Key &key) {
         sjtu::vector<long> vec;
         Find(key, cmp1, vec);
         return vec;
+    }
+
+    long StrictFind(const Key &key, long &block_addr, int &ele_index) {
+        return Find(key, block_addr, ele_index);
     }
 
     //TODO
@@ -251,13 +257,18 @@ public:
         return vec;
     }
 
+    //based on cmp2
     sjtu::vector<long> WeakFind(const Key &key) {
         sjtu::vector<long> vec;
         Find(key, cmp2, vec);
         return vec;
     }
 
-
+    void RewriteKey(const Key&key,const long &block_addr,const int &ele_index){
+        current_block.storage[ele_index].key=key;
+        WriteBlock(current_block,block_addr);
+    }
+    
 private:
 
     template<class Array>
@@ -310,6 +321,7 @@ private:
         r_w_tree.write(reinterpret_cast<char *> (&current), sizeof(Block));
     }
 
+
     template<class Compare>
     void GetEle(const EleGroup &target, int index_in_block, const Compare &cmp, sjtu::vector<long> &vec) {
         while (index_in_block < current_block.size &&
@@ -356,6 +368,22 @@ private:
         } else return;
     }
 
+    long FindFirstEle(const Key &key, long &block_addr, int &ele_index) {
+        ReadBlock(current_block, block_addr);
+        EleGroup target(key);
+        ele_index = BinarySearch(current_block.storage, 0, current_block.size - 1, target, cmp1);
+        while (ele_index == -1 && current_block.next_block_address != -1) {
+            block_addr = current_block.next_block_address;
+            ReadBlock(current_block, block_addr);
+            ele_index = BinarySearch(current_block.storage, 0, current_block.size - 1, target, cmp1);
+        }
+        if (!(cmp1(current_block.storage[ele_index], target) ||
+              cmp1(target, current_block.storage[ele_index]))) {
+            //print from current, along the linked blocks
+            return current_block.storage[ele_index].address;
+        } else return -1;
+    }
+
     void FindFirstEle(const Key &key, long &iter, sjtu::vector<long> &vec) {
         ReadBlock(current_block, iter);
         EleGroup target(key);
@@ -378,6 +406,13 @@ private:
         long iter;
         EleGroup target(key);
         FindNode(target, iter, cmp, vec);
+    }
+
+    //cmp1
+    long Find(const Key &key, long &block_addr, int &ele_index) {
+        current_node = root_node;//start from root
+        EleGroup target(key);
+        return FindNode(target, block_addr, ele_index);
     }
 
     void Find(const Key &key) {
@@ -407,6 +442,20 @@ private:
             current_node = son_of_root[index];
         } else ReadNode(current_node, iter);
         FindNode(target, iter, cmp, vec);
+    }
+
+    long FindNode(const EleGroup &target, long &block_addr, int &ele_index) {
+        int index = BinarySearch(current_node.key, 0, current_node.size - 1, target, cmp1);
+        if (index == -1) index = current_node.size - 1;
+        block_addr = current_node.key[index].address;
+        //end of recursion
+        if (current_node.son_is_block) {
+            return FindFirstEle(target.key, block_addr, ele_index);
+        }
+        if (!current_node.node_type) {//is_root
+            current_node = son_of_root[index];
+        } else ReadNode(current_node, block_addr);
+        FindNode(target, block_addr, ele_index);
     }
 
     void FindNode(const EleGroup &target, long &iter, sjtu::vector<long> &vec) {
@@ -512,7 +561,9 @@ private:
     bool InsertInBlock(const Key &key, EleGroup target, const Value &value, FileManager<Value> &r_w_value) {
         int index_in_block = BinarySearch(current_block.storage, 0, current_block.size - 1, target);
         if (index_in_block == -1)index_in_block = current_block.size;
-        else if (current_block.storage[index_in_block].key == key) return false;
+        else if (!(cmp1(current_block.storage[index_in_block], target) ||
+                   cmp1(target, current_block.storage[index_in_block])))
+            return false;
         target.address = r_w_value.WriteEle(value);
         for (int i = current_block.size; i > index_in_block; --i) {
             current_block.storage[i] = current_block.storage[i - 1];

@@ -26,7 +26,7 @@ add_executable(code
         src/head-files/loginList.hpp
         src/head-files/parameter.hpp
 
-#        src/main.cpp
+        src/main.cpp
 
         #try
 #        my_data/tryTime.cpp
@@ -34,4 +34,5 @@ add_executable(code
         #my_data/tryFileManager.cpp
         #my_data/tryParameter.cpp
 #        my_data/User/try1.cpp
-        my_data/tryScanner.cpp)
+#        my_data/tryScanner.cpp
+        )
