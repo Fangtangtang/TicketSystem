@@ -91,7 +91,7 @@ void ProcessLine(Parameter parameter,
                  WaitingList &waitingList,
                  LoginList &loginList,
                  FileManager<User> &userFile,
-                 FileManager<TransactionDetail> &TransactionFile,
+                 FileManager<TransactionDetail> &transactionFile,
                  FileManager<Train> &trainFile,
                  FileManager<Station> &stationFile,
                  FileManager<Seat> &seatFile,
@@ -124,9 +124,9 @@ void ProcessLine(Parameter parameter,
         ticketSystem.QueryTransfer(parameter);
     } else if (cmd == "buy_ticket") {
         trainSystem.BuyTicket(parameter, loginList, transactionSystem, waitingList,
-                              trainFile, stationFile, seatFile, waitingListFile);
+                              trainFile, stationFile, seatFile, transactionFile, waitingListFile);
     } else if (cmd == "query_order") {
-        transactionSystem.QueryOrder(parameter, loginList);
+        transactionSystem.QueryOrder(parameter, loginList,transactionFile);
     } else if (cmd == "refund_ticket") {
         transactionSystem.RefundTicket(parameter, loginList, trainSystem, waitingList);
     } else if (cmd == "clean") {

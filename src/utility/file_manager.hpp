@@ -11,6 +11,7 @@
 
 #include <fstream>
 #include <string>
+#include "vector.hpp"
 
 template<class ValueType>
 class FileManager {
@@ -46,6 +47,15 @@ public:
     void ReadEle(const long &start_addr, const int &move_num, ValueType &valueType) {
         r_w_file.seekg(start_addr + move_num * value_size);
         r_w_file.read(reinterpret_cast<char *> (&valueType), value_size);
+    }
+
+    void ReadEle(const long &start_addr, const int &num, sjtu::vector<ValueType> &vec) {
+        ValueType valueType;
+        for (int i = 0; i < num; ++i) {
+            r_w_file.seekg(start_addr + i * value_size);
+            r_w_file.read(reinterpret_cast<char *> (&valueType), value_size);
+            vec.push_back(valueType);
+        }
     }
 
     /*
@@ -94,6 +104,10 @@ public:
     long GetAddress() {
         r_w_file.seekp(0, std::ios::end);
         return r_w_file.tellp();
+    }
+
+    long GetAddress(const long &start_addr, const int &interval) {
+        return start_addr + interval * value_size;
     }
 };
 

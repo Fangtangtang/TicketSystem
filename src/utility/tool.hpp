@@ -14,6 +14,8 @@ enum STATUS {
 
 class TrainSystem;
 
+class TicketSystem;
+
 class UserSystem;
 
 class TransactionSystem;
@@ -279,8 +281,9 @@ public:
                                        : (other.minutes / 1440 - minutes / 1440);
     }
 
-    void AddMinute(const int &delta) {
-        minutes += delta;
+    //time in day
+    Interval CalTime() const {
+        return Interval(minutes % 1440);
     }
 
     void AddDay(const int &day) {
@@ -375,6 +378,7 @@ class Train {
     char type = '\0';
     bool released = false;
     friend TrainSystem;
+    friend TicketSystem;
 public:
     Train() = default;
 
@@ -464,8 +468,7 @@ class CompareTicket2;
 class Ticket {
     char from[31] = {'\0'};
     char to[31] = {'\0'};
-    //TODO 是否保留time或Leaving_time
-    Time start_sale;
+    Time start_sale;//leaving date
     Time stop_sale;
 
     friend CompareTicket;

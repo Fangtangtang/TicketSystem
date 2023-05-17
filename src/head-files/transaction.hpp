@@ -16,7 +16,7 @@
 #include "../utility/file_manager.hpp"
 #include "waitingList.hpp"
 #include "parameter.hpp"
-
+#include "loginList.hpp"
 
 struct CompareTrans1;
 struct CompareTrans2;
@@ -31,9 +31,19 @@ public:
     Transaction() = default;
 
     Transaction(Username username_, int timestamp_);
+
+    friend bool operator<(const Transaction &a, const Transaction &b);
 };
 
 Transaction::Transaction(Username username_, int timestamp_) : username(username_), timestamp(timestamp_) {}
+
+bool operator<(const Transaction &a, const Transaction &b) {
+    int cmp = compare_username.CompareStr(a.username, b.username);
+    if (cmp) {
+        return cmp < 0;
+    }
+    return a.timestamp < b.timestamp;
+}
 
 /*
  * used when store in file and strictFind
@@ -118,7 +128,8 @@ TransactionDetail::TransactionDetail(const TrainID &trainID_, char *from_, char 
  * including add ,query, modify
  */
 class TransactionSystem {
-    BPlusTree<Transaction, TransactionDetail, CompareTrans1, CompareTrans2, CompareTrans2> TransactionTree{"transaction_tree"};
+    BPlusTree<Transaction, TransactionDetail, CompareTrans1, CompareTrans2, CompareTrans2> transactionTree{
+            "transaction_tree"};
 
 public:
 
@@ -130,7 +141,8 @@ public:
     long AddTransaction(const Username &username_, const int &timestamp_,
                         const TrainID &trainID_, char *from, char *to,
                         const Time &leaving_time_, const Time &arriving_time_,
-                        const int &price_, const int &num_, const STATUS &status_, const long &train_address_);
+                        const int &price_, const int &num_, const STATUS &status_, const long &train_address_,
+                        FileManager<TransactionDetail> &transactionFile);
 
     /*
      * query_order
@@ -138,7 +150,8 @@ public:
      * print number of orders and information if succeed
      * print -1 if failed
      */
-    void QueryOrder(const Parameter &parameter, LoginList &loginList);
+    void QueryOrder(const Parameter &parameter, LoginList &loginList,
+                    FileManager<TransactionDetail> &transactionFile);
 
     /*
      * refund_ticket
@@ -150,5 +163,40 @@ public:
                      TrainSystem &trainSystem, WaitingList &waitingList);
 
 };
+
+long TransactionSystem::AddTransaction(const Username &username_, const int &timestamp_,
+                                       const TrainID &trainID_, char *from, char *to,
+                                       const Time &leaving_time_, const Time &arriving_time_,
+                                       const int &price_, const int &num_,
+                                       const STATUS &status_, const long &train_address_,
+                                       FileManager<TransactionDetail> &transactionFile) {
+    long addr = transactionFile.GetAddress();
+    transactionTree.Insert(Transaction(username_, timestamp_),
+                           TransactionDetail(trainID_, from, to,
+                                             leaving_time_, arriving_time_,
+                                             price_, num_,
+                                             status_, train_address_), transactionFile);
+    return addr;
+}
+
+void TransactionSystem::QueryOrder(const Parameter &parameter, LoginList &loginList,
+                                   FileManager<TransactionDetail> &transactionFile) {
+    std::string username;
+    if (!parameter.GetParameter('u', username)) {
+        std::cout << -1;
+        return;
+    }
+    Username user(username);
+    if (loginList.CheckLoggedIn(user) < 0) {
+        std::cout << -1;
+        return;
+    }
+    sjtu::vector<long> vec = transactionTree.WeakFind(Transaction(user, 0));
+    int size = vec.size();
+    std::cout << size;
+    for (int i = 0; i < size; ++i) {
+        std::cout << '\n' << vec[i];
+    }
+}
 
 #endif //TICKETSYSTEM_TRANSACTION_HPP

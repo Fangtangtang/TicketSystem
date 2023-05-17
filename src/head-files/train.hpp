@@ -21,6 +21,7 @@
 #include "ticket.hpp"
 #include "loginList.hpp"
 #include "waitingList.hpp"
+#include "transaction.hpp"
 
 class TrainSystem;
 
@@ -130,17 +131,17 @@ class TrainSystem {
      * if the same day, day == 0 -> move_base==0
      */
     static void GetSeat(long address, const long &move_base, const int &start, const int &end,
-                 sjtu::vector<Seat> &vec, int &min_num,
-                 FileManager<Seat> &seatFile);
+                        sjtu::vector<Seat> &vec, int &min_num,
+                        FileManager<Seat> &seatFile);
 
     /*
      * buy_ticket
      * in seatFile
      * buy ticket from station A to B on given date
      */
-    void BuyTicket(long address, const long &move_base, const int &start, const int &end,
-                   const sjtu::vector<Seat> &vec, const int &number,
-                   FileManager<Seat> &seatFile);
+    static void BuyTicket(long address, const long &move_base, const int &start, const int &end,
+                          const sjtu::vector<Seat> &vec, const int &number,
+                          FileManager<Seat> &seatFile);
 
     /*
      * buy_ticket
@@ -206,6 +207,7 @@ public:
                    FileManager<Train> &trainFile,
                    FileManager<Station> &stationFile,
                    FileManager<Seat> &seatFile,
+                   FileManager<TransactionDetail> &transactionFile,
                    FileManager<WaitingTransaction> &waitingListFile);
 
 };
@@ -245,26 +247,28 @@ long TrainSystem::AddStation(const std::string &stations,
     Scanner<int> scan_travel_time(travel_times);
     Scanner<int> scan_stop_over_time(stop_over_times);
     std::string name;
-    int price, travel_time, stop_over_time;
+    int price, sum = 0, travel_time, stop_over_time;
     Interval arriving_time(start_time), leaving_time(start_time);
     //the first station
     scan_station.GetStr(name);
-    stationFile.WriteEle(Station(name, 0, arriving_time, leaving_time));
+    stationFile.WriteEle(Station(name, sum, arriving_time, leaving_time));
     for (int i = 2; i < station_num; ++i) {
         scan_station.GetStr(name);
         scan_price.GetNum(price);
+        sum += price;
         scan_travel_time.GetNum(travel_time);
         scan_stop_over_time.GetNum(stop_over_time);
         arriving_time = leaving_time + travel_time;
         leaving_time += stop_over_time;
-        stationFile.WriteEle(Station(name, price, arriving_time, leaving_time));
+        stationFile.WriteEle(Station(name, sum, arriving_time, leaving_time));
     }
     //the last station
     scan_station.GetStr(name);
     scan_price.GetNum(price);
+    sum += price;
     scan_travel_time.GetNum(travel_time);
     arriving_time = leaving_time + travel_time;
-    stationFile.WriteEle(Station(name, price, arriving_time, leaving_time));
+    stationFile.WriteEle(Station(name, sum, arriving_time, leaving_time));
 }
 
 long TrainSystem::AddSeat(const int &seat_num, const int &station_num, const int &day, FileManager<Seat> &seatFile) {
@@ -286,27 +290,25 @@ bool TrainSystem::PrintTrainInformation(const long &train_addr,
     Station station;
     Seat seat;
     long station_address = train.station_addr, seat_address = train.seat_addr;
-    int price_sum = 0;
+//    int price_sum = 0;
     //first station
     std::cout << '\n';
     stationFile.ReadEle(station_address, station);
-    std::cout << station.name << " xx-xx xx:xx -> " << (date + station.leaving_time) << ' ' << price_sum << ' ';
+    std::cout << station.name << " xx-xx xx:xx -> " << (date + station.leaving_time) << ' ' << 0 << ' ';
     seatFile.ReadEle(seat_address, seat);
     std::cout << seat.num;
     for (int i = 1; i < train.stationNum - 1; ++i) {
         std::cout << '\n';
         stationFile.ReadEle(station_address, i, station);
-        price_sum += station.price;
         std::cout << station.name << ' ' << (date + station.arriving_time) << " -> " << (date + station.leaving_time)
-                  << ' ' << price_sum << ' ';
+                  << ' ' << station.price << ' ';
         seatFile.ReadEle(seat_address, i, seat);
         std::cout << seat.num;
     }
     //last station
     std::cout << '\n';
     stationFile.ReadEle(station_address, train.stationNum - 1, station);
-    price_sum += station.price;
-    std::cout << station.name << ' ' << (date + station.arriving_time) << " -> xx-xx xx:xx " << price_sum << " x";
+    std::cout << station.name << ' ' << (date + station.arriving_time) << " -> xx-xx xx:xx " << station.price << " x";
     return true;
 }
 
@@ -321,16 +323,16 @@ int TrainSystem::GetStationIndex(char *from, char *to,
         stationFile.ReadEle(station_addr, i, station);
         if (strcmp(station.name, from) == 0) break;
     }
-    start=i;
+    start = i;
     leaving_time = station.leaving_time;
-    int price = 0;
+    int price = -station.price;
     for (; i < station_num; ++i) {
         stationFile.ReadEle(station_addr, i, station);
-        price += station.price;
         if (strcmp(station.name, to) == 0) break;
     }
     if (i == station_num) return -1;
-    end=i;
+    price+=station.price;
+    end = i;
     arriving_time = station.arriving_time;
     return price;
 }
@@ -340,26 +342,27 @@ void TrainSystem::GetSeat(long address, const long &move_base, const int &start,
                           FileManager<Seat> &seatFile) {
     Seat seat;
     address += move_base * sizeof(Seat);
-    for (int i = start; i <=end ; ++i) {
-        seatFile.ReadEle(address,i,seat);
-        min_num= std::min(min_num,seat.num);
+    for (int i = start; i <= end; ++i) {
+        seatFile.ReadEle(address, i, seat);
+        min_num = std::min(min_num, seat.num);
         vec.push_back(seat);
     }
 }
 
-void TrainSystem::BuyTicket(long address, const long &move_base,  const int &start, const int &end,
+void TrainSystem::BuyTicket(long address, const long &move_base, const int &start, const int &end,
                             const sjtu::vector<Seat> &vec,
                             const int &number, FileManager<Seat> &seatFile) {
     address += move_base * sizeof(Seat);
     Seat seat;
-    int iter=0;
-    for (int i = start; i <=end ; --i) {
-        seat=vec[iter];
-        seat.num-=number;
-        seatFile.WriteEle(address,i,seat);
+    int iter = 0;
+    for (int i = start; i <= end; --i) {
+        seat = vec[iter];
+        seat.num -= number;
+        seatFile.WriteEle(address, i, seat);
         ++iter;
     }
 }
+
 bool TrainSystem::BuyTicket(const Train &train, const int &lag, const int &number,
                             const int &start, const int &end, const int &price,
                             const bool &flag, STATUS &status,
@@ -439,14 +442,15 @@ int TrainSystem::ReleaseTrain(const Parameter &parameter,
     if (!parameter.GetParameter('i', trainID)) return -1;
     long block_addr = 0;
     int ele_index = 0;
-    TrainIndex train_index((TrainID(trainID)));
+    TrainID ID(trainID);
+    TrainIndex train_index(ID);
     long train_addr = trainTree.StrictFind(train_index, block_addr, ele_index);
     if (train_addr < 0) return -1;//not exist or released
     //update on bpt
     train_index.released = true;
     trainTree.RewriteKey(train_index, block_addr, ele_index);
     //release
-    ticketSystem.ReleaseTrain(train_addr, trainFile, stationFile, seatFile);
+    ticketSystem.ReleaseTrain(ID,train_addr, trainFile, stationFile, seatFile);
 }
 
 void TrainSystem::QueryTrain(const Parameter &parameter,
@@ -476,6 +480,7 @@ void TrainSystem::BuyTicket(const Parameter &parameter,
                             FileManager<Train> &trainFile,
                             FileManager<Station> &stationFile,
                             FileManager<Seat> &seatFile,
+                            FileManager<TransactionDetail> &transactionFile,
                             FileManager<WaitingTransaction> &waitingListFile) {
     //check parameter
     std::string username, trainID, date, flag;
@@ -536,13 +541,13 @@ void TrainSystem::BuyTicket(const Parameter &parameter,
     //record transaction
     long transaction_addr = transactionSystem.AddTransaction(user, parameter.GetTimestamp(),
                                                              ID, from, to, leaving, arriving,
-                                                             price, number, status, vec.front());
+                                                             price, number, status, vec.front(),
+                                                             transactionFile);
     //enqueue
     if (status == pending) {
         waitingList.StartWaiting(ID, start, end, number, parameter.GetTimestamp(), transaction_addr);
     }
 }
-
 
 
 #endif //TICKETSYSTEM_TRAIN_HPP
