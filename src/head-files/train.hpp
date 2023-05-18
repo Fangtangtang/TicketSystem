@@ -72,7 +72,7 @@ class TrainSystem {
      * Value: Train
      * store basic information and some address
      */
-    BPlusTree<TrainIndex, Train> trainTree{"train_tree"};
+    BPlusIndexTree<TrainIndex, Train> trainTree{"train_tree"};
 
     friend TransactionSystem;
 

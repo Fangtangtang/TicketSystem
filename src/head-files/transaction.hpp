@@ -132,7 +132,7 @@ TransactionDetail::TransactionDetail(const TrainID &trainID_, char *from_, char 
  * including add ,query, modify
  */
 class TransactionSystem {
-    BPlusTree<Transaction, TransactionDetail> transactionTree{
+    BPlusIndexTree<Transaction, TransactionDetail> transactionTree{
             "transaction_tree"};
 
 public:

@@ -74,7 +74,7 @@ User::User(char *password_, char *name_, char *mailAddr_, short privilege_ = 10)
  */
 class UserSystem {
 private:
-    BPlusTree<Username, User> userTree{"user_tree"};
+    BPlusIndexTree<Username, User> userTree{"user_tree"};
 
     User user;
 

@@ -11,6 +11,8 @@
 #define TICKETSYSTEM_TICKET_HPP
 
 #include "../utility/bpt.hpp"
+#include "../utility/BPlusTree.hpp"
+#include "../utility/map.hpp"
 #include "../utility/vector.hpp"
 #include "../utility/pair.hpp"
 #include "../utility/tool.hpp"
@@ -86,7 +88,10 @@ class CostBased costBased;
  * including add, query
  */
 class TicketSystem {
-    BPlusTree<Ticket, TicketDetail> ticketTree{"ticket_tree"};
+    BPlusIndexTree<Ticket, TicketDetail> ticketTree{"ticket_tree"};
+
+    BPlusTree<Ticket, long> fromTicketTree{"from_ticket_tree", "from_ticket_list"};//real BPT
+    BPlusTree<Ticket, long> toTicketTree{"to_ticket_tree", "to_ticket_list"};//real BPT
 
     friend TrainSystem;
 
@@ -95,6 +100,7 @@ class TicketSystem {
      * provide from and to
      * calculate start_sale and stop_sale of the station
      * (given start_sale and stop_sale of train)
+     * add into two bpt
      */
     void AddTicket(const Station &from, const Station &to,
                    const Time &start_sale, const Time &stop_sale,
@@ -116,6 +122,7 @@ class TicketSystem {
      */
     static void PrintTicket(const sjtu::vector<TicketDetail> &ticket_vec,
                             const std::string &from, const std::string &to,
+                            const Time &date,
                             const int &size, FileManager<Seat> &seatFile);
 
 public:
@@ -163,11 +170,14 @@ void TicketSystem::AddTicket(const Station &from, const Station &to,
     //cal ticket_start_sale ticket_stop_sale
     Time ticket_start_sale = start_sale + from.leaving_time;
     Time ticket_stop_sale = stop_sale + from.leaving_time;
-    ticketTree.Insert(Ticket(from.name, to.name, ticket_start_sale, ticket_stop_sale),
+    Ticket key(from.name, to.name, ticket_start_sale, ticket_stop_sale);
+    ticketTree.Insert(key,
                       TicketDetail(trainID, station_num, station_interval,
                                    to.price - from.price, to.arriving_time - from.leaving_time,
                                    ticket_start_sale, seat_addr),
                       ticketFile, compareTicket);
+    fromTicketTree.Insert(key, ticketFile.GetPreAddress(), compareFrom);
+    toTicketTree.Insert(key, ticketFile.GetPreAddress(), compareTo);
 }
 
 void TicketSystem::FindTicket(const sjtu::vector<long> &vec, const int &size,
@@ -182,14 +192,18 @@ void TicketSystem::FindTicket(const sjtu::vector<long> &vec, const int &size,
 
 void TicketSystem::PrintTicket(const sjtu::vector<TicketDetail> &ticket_vec,
                                const std::string &from, const std::string &to,
+                               const Time &date,
                                const int &size, FileManager<Seat> &seatFile) {
+    long address;
     for (int i = 0; i < size; ++i) {
         std::cout << '\n';
+        address = ticket_vec[i].seat_addr +
+                  ticket_vec[i].station_num * (date - ticket_vec[i].leaving_time) * sizeof(Seat);
         std::cout << ticket_vec[i].trainID << ' '
                   << from << ' ' << ticket_vec[i].leaving_time << " -> "
                   << to << ' ' << (ticket_vec[i].leaving_time + ticket_vec[i].time) << ' '
                   << ticket_vec[i].price << ' '
-                  << seatFile.MinValue(ticket_vec[i].seat_addr, 0, ticket_vec[i].station_interval);
+                  << seatFile.MinValue(address, 0, ticket_vec[i].station_interval);
     }
 }
 
@@ -250,7 +264,7 @@ void TicketSystem::QueryTicket(const Parameter &parameter,
         sjtu::Sort(ticket_vec, 0, number - 1, timeBased);
     }
     //print
-    PrintTicket(ticket_vec, from, to, number, seatFile);
+    PrintTicket(ticket_vec, from, to, time, number, seatFile);
 }
 
 

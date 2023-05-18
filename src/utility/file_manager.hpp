@@ -18,6 +18,7 @@ class FileManager {
     static constexpr size_t value_size = sizeof(ValueType);
     std::fstream r_w_file;
     std::string file;
+    long pre_addr = 0;//previous writen address
 public:
     explicit FileManager(const std::string &file_name) : file(file_name) {
         r_w_file.open(file_name);
@@ -68,23 +69,23 @@ public:
      */
     long WriteEle(const long &start_addr, ValueType valueType) {
         r_w_file.seekp(start_addr);
-        long addr = r_w_file.tellp();
+        pre_addr = r_w_file.tellp();
         r_w_file.write(reinterpret_cast<char *> (&valueType), value_size);
-        return addr;
+        return pre_addr;
     }
 
     long WriteEle(ValueType valueType) {
         r_w_file.seekp(0, std::ios::end);
-        long addr = r_w_file.tellp();
+        pre_addr = r_w_file.tellp();
         r_w_file.write(reinterpret_cast<char *> (&valueType), value_size);
-        return addr;
+        return pre_addr;
     }
 
     long WriteEle(const long &start_addr, const int &move_num, ValueType valueType) {
         r_w_file.seekp(start_addr + move_num * value_size);
-        long addr = r_w_file.tellp();
+        pre_addr = r_w_file.tellp();
         r_w_file.write(reinterpret_cast<char *> (&valueType), value_size);
-        return addr;
+        return pre_addr;
     }
 
     void WriteEle(ValueType valueType, const int &num) {
@@ -108,6 +109,10 @@ public:
 
     long GetAddress(const long &start_addr, const int &interval) {
         return start_addr + interval * value_size;
+    }
+
+    long GetPreAddress() {
+        return pre_addr;
     }
 
     /*

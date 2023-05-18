@@ -92,7 +92,7 @@ WaitingTransaction::WaitingTransaction(const int &timestamp_, const long &addr) 
  * including add, find, delete
  */
 class WaitingList {
-    BPlusTree<WaitingOrder, WaitingTransaction> waitingListTree{"waiting_list_tree"};
+    BPlusIndexTree<WaitingOrder, WaitingTransaction> waitingListTree{"waiting_list_tree"};
 
 public:
     /*
