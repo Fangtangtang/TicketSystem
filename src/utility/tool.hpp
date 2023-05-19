@@ -9,7 +9,7 @@
 #include <utility>
 
 enum STATUS {
-    success, pending, refund
+    success, pending, refunded
 };
 
 class TrainSystem;
@@ -475,7 +475,6 @@ Station::Station(const std::string &name_, const int &price_, const Interval &ar
  */
 class Seat {
     int num = 0;
-    long waiting = -1;
     friend TrainSystem;
 public:
     Seat() = default;
@@ -483,6 +482,8 @@ public:
     explicit Seat(const int &seat_num) : num(seat_num) {}
 
     bool operator<(const Seat &a) const;
+
+    Seat operator+=(const int &delta);
 
     friend std::ostream &operator<<(std::ostream &os, const Seat &information);
 
@@ -492,10 +493,16 @@ bool Seat::operator<(const Seat &a) const {
     return num < a.num;
 }
 
+Seat Seat::operator+=(const int &delta) {
+    num += delta;
+    return *this;
+}
+
 std::ostream &operator<<(std::ostream &os, const Seat &information) {
     os << information.num;
     return os;
 }
+
 
 /*
  * Ticket class

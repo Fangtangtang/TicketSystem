@@ -132,7 +132,8 @@ class TrainSystem {
      * return vector and min seat_num
      * if the same day, day == 0 -> move_base==0
      */
-    static void GetSeat(long address, const long &move_base, const int &start, const int &end,
+    static void GetSeat(const long &address, const long &move_base, const int &start, const int &end,
+                        long &start_addr, long &end_addr,
                         sjtu::vector<Seat> &vec, int &min_num,
                         FileManager<Seat> &seatFile);
 
@@ -157,7 +158,7 @@ class TrainSystem {
                    const int &number,
                    const int &start, const int &end, const int &price,
                    const bool &flag,
-                   STATUS &status,
+                   STATUS &status, long &start_addr, long &end_addr,
                    FileManager<Seat> &seatFile);
 
 public:
@@ -211,7 +212,7 @@ public:
                    FileManager<Station> &stationFile,
                    FileManager<Seat> &seatFile,
                    FileManager<TransactionDetail> &transactionFile,
-                   FileManager<WaitingTransaction> &waitingListFile);
+                   FileManager<WaitingOrder> &waitingListFile);
 
 };
 
@@ -340,16 +341,19 @@ int TrainSystem::GetStationIndex(char *from, char *to,
     return price;
 }
 
-void TrainSystem::GetSeat(long address, const long &move_base, const int &start, const int &end,
+void TrainSystem::GetSeat(const long &address, const long &move_base, const int &start, const int &end,
+                          long &start_addr, long &end_addr,
                           sjtu::vector<Seat> &vec, int &min_num,
                           FileManager<Seat> &seatFile) {
     Seat seat;
-    address += move_base * sizeof(Seat);
+    start_addr = address + move_base * sizeof(Seat);
     for (int i = start; i <= end; ++i) {
-        seatFile.ReadEle(address, i, seat);
+        seatFile.ReadEle(start_addr, i, seat);
         min_num = std::min(min_num, seat.num);
         vec.push_back(seat);
     }
+    start_addr += start * sizeof(Seat);
+    end_addr = seatFile.GetPreAddress();
 }
 
 void TrainSystem::BuyTicket(long address, const long &move_base, const int &start, const int &end,
@@ -368,12 +372,12 @@ void TrainSystem::BuyTicket(long address, const long &move_base, const int &star
 
 bool TrainSystem::BuyTicket(const Train &train, const int &lag, const int &number,
                             const int &start, const int &end, const int &price,
-                            const bool &flag, STATUS &status,
+                            const bool &flag, STATUS &status, long &start_addr, long &end_addr,
                             FileManager<Seat> &seatFile) {
     //find seat intending to buy
     sjtu::vector<Seat> vec;
     int min_num = number;
-    GetSeat(train.seat_addr, lag * train.stationNum, start, end, vec, min_num, seatFile);
+    GetSeat(train.seat_addr, lag * train.stationNum, start, end, start_addr, end_addr, vec, min_num, seatFile);
     //try to buy
     if (min_num < number) {
         if (flag) {//waiting
@@ -486,7 +490,7 @@ void TrainSystem::BuyTicket(const Parameter &parameter,
                             FileManager<Station> &stationFile,
                             FileManager<Seat> &seatFile,
                             FileManager<TransactionDetail> &transactionFile,
-                            FileManager<WaitingTransaction> &waitingListFile) {
+                            FileManager<WaitingOrder> &waitingListFile) {
     //check parameter
     std::string username, trainID, date, flag;
     char from[31], to[31];
@@ -543,15 +547,21 @@ void TrainSystem::BuyTicket(const Parameter &parameter,
     arriving.AddDay(lag);
     //really need to enqueue or not
     STATUS status;
-    if (!BuyTicket(train, lag, number, start, end, price, enqueue_flag, status, seatFile)) return;
+    long start_addr, end_addr;
+    if (!BuyTicket(train, lag, number, start, end,
+                   price, enqueue_flag,
+                   status, start_addr, end_addr, seatFile))
+        return;
     //record transaction
     long transaction_addr = transactionSystem.AddTransaction(user, parameter.GetTimestamp(),
                                                              ID, from, to, leaving, arriving,
-                                                             price, number, status, vec.front(),
+                                                             price, number, status, start_addr,
+                                                             start, end,
                                                              transactionFile);
     //enqueue
     if (status == pending) {
-        waitingList.StartWaiting(ID, start, end, number, parameter.GetTimestamp(), transaction_addr);
+        waitingList.StartWaiting(ID, start, end, number, parameter.GetTimestamp(),
+                                 start_addr, end_addr, transaction_addr, waitingListFile);
     }
 }
 

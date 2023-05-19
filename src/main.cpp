@@ -28,7 +28,7 @@ void ProcessLine(Parameter parameter,
                  FileManager<Station> &stationFile,
                  FileManager<Seat> &seatFile,
                  FileManager<TicketDetail> &ticketFile,
-                 FileManager<WaitingTransaction> &waitingListFile,
+                 FileManager<WaitingOrder> &waitingListFile,
                  bool &flag
 );
 
@@ -43,7 +43,7 @@ int main() {
     FileManager<Train> trainFile("train_information");
     FileManager<Station> stationFile{"station_information"};
     FileManager<Seat> seatFile{"seat_information"};
-    FileManager<WaitingTransaction> waitingListFile{"waiting_information"};
+    FileManager<WaitingOrder> waitingListFile{"waiting_information"};
     FileManager<TicketDetail> ticketFile{"ticket_information"};
     //construct System
     UserSystem userSystem;
@@ -100,7 +100,7 @@ void ProcessLine(Parameter parameter,
                  FileManager<Station> &stationFile,
                  FileManager<Seat> &seatFile,
                  FileManager<TicketDetail> &ticketFile,
-                 FileManager<WaitingTransaction> &waitingListFile,
+                 FileManager<WaitingOrder> &waitingListFile,
                  bool &flag) {
     std::string cmd = parameter.ReadLine();
     std::cout << '[' << parameter.GetTimestamp() << "] ";
@@ -124,9 +124,9 @@ void ProcessLine(Parameter parameter,
     } else if (cmd == "query_train") {
         trainSystem.QueryTrain(parameter, trainFile, stationFile, seatFile);
     } else if (cmd == "query_ticket") {
-        ticketSystem.QueryTicket(parameter, ticketFile,seatFile);
+        ticketSystem.QueryTicket(parameter, ticketFile, seatFile);
     } else if (cmd == "query_transfer") {
-        ticketSystem.QueryTransfer(parameter);
+        ticketSystem.QueryTransfer(parameter, ticketFile, seatFile);
     } else if (cmd == "buy_ticket") {
         trainSystem.BuyTicket(parameter, loginList, transactionSystem, waitingList,
                               trainFile, stationFile, seatFile, transactionFile, waitingListFile);

@@ -15,6 +15,7 @@ add_executable(code
         src/utility/map.hpp
         src/utility/tool.hpp
         src/utility/file_manager.hpp
+        src/utility/BPlusTree.hpp
 
         #headFile
         src/head-files/tokenScanner.hpp
@@ -26,13 +27,13 @@ add_executable(code
         src/head-files/loginList.hpp
         src/head-files/parameter.hpp
 
-#        src/main.cpp
+        src/main.cpp
 
         #try
-        my_data/tryTime.cpp
+#        my_data/tryTime.cpp
         #my_data/tryTransaction.cpp
         #my_data/tryFileManager.cpp
         #my_data/tryParameter.cpp
 #        my_data/User/try1.cpp
 #        my_data/tryScanner.cpp
-        src/utility/BPlusTree.hpp)
+      )

@@ -11,101 +11,138 @@
 #include "../utility/bpt.hpp"
 #include "../utility/file_manager.hpp"
 
-class CompareWaiting1;
+/*
+ * Key of waiting
+ * ----------------------------
+ * waiting list for seat, use seat_addr as key to identify
+ * in timestamp order
+ */
+class CompareWaiting;
 
-class CompareWaiting2;
+class CompareWaitingList;
 
-class CompareWaiting3;
+class IsToBeModified;
+
+class Waiting {
+    long start_seat_addr = -1;
+    long end_seat_addr = -1;
+    int timestamp = 0;
+
+    friend CompareWaiting;
+    friend CompareWaitingList;
+    friend IsToBeModified;
+public:
+    Waiting() = default;
+
+    Waiting(const long &start_addr, const long &end_addr, const int &time) : start_seat_addr(start_addr),
+                                                                             end_seat_addr(end_addr), timestamp(time) {}
+
+    bool operator<(const Waiting &other) const;
+};
+
+bool Waiting::operator<(const Waiting &other) const {
+    if (end_seat_addr != other.end_seat_addr) return end_seat_addr < other.end_seat_addr;
+    if (start_seat_addr != other.start_seat_addr) return start_seat_addr < other.start_seat_addr;
+    return timestamp < other.timestamp;
+}
 
 /*
- * key to identify different transaction
+ * Compare class for Waiting
+ * ----------------------------------
+ * CompareWaiting:
+ *     used to insert
+ *
+ * CompareWaitingList:
+ *     used to find
+ */
+struct CompareWaiting {
+    bool operator()(const Waiting &a, const Waiting &b) const;
+};
+
+bool CompareWaiting::operator()(const Waiting &a, const Waiting &b) const {
+    if (a.end_seat_addr != b.end_seat_addr) return a.end_seat_addr < b.end_seat_addr;
+    if (a.start_seat_addr != b.start_seat_addr) return a.start_seat_addr < b.start_seat_addr;
+    return a.timestamp < b.timestamp;
+}
+
+const CompareWaiting compareWaiting;
+
+struct CompareWaitingList {
+    bool operator()(const Waiting &a, const Waiting &b) const;
+};
+
+bool CompareWaitingList::operator()(const Waiting &a, const Waiting &b) const {
+    return a.end_seat_addr < b.end_seat_addr;
+}
+
+const CompareWaitingList compareWaitingList;
+
+struct IsToBeModified {
+    bool operator()(const Waiting &a, const Waiting &b) const;
+};
+
+//a:target ==
+bool IsToBeModified::operator()(const Waiting &a, const Waiting &b) const {
+    if (a.end_seat_addr <= b.end_seat_addr && a.start_seat_addr >= b.start_seat_addr)return true;
+    return false;
+}
+
+/*
+ * WaitingOrder class
+ * vale of bpt
+ * if rollback, change status in transaction
  */
 class WaitingOrder {
-    TrainID trainID;
-    int from = 0;//the num 'from' station
+    int from = 0;//the index 'from' station
     int to = 0;
-    int num = 0;
-    friend CompareWaiting1;
-    friend CompareWaiting2;
-    friend CompareWaiting3;
+    int num = 0;//num of ticket
+    long transaction_addr = -1;
 
     friend TrainSystem;
     friend TransactionSystem;
 public:
     WaitingOrder() = default;
 
-    WaitingOrder(const TrainID &trainID_, const int &from_, const int &to_, const int &num_);
+    WaitingOrder(const int &from_, const int &to_,
+                 const int &num_, const long &addr) : from(from_), to(to_), num(num_), transaction_addr(addr) {}
 };
 
-WaitingOrder::WaitingOrder(const TrainID &trainID_, const int &from_, const int &to_, const int &num_) :
-        trainID(trainID_), from(from_), to(to_), num(num_) {
-}
-
-class CompareWaiting1 {
-    bool operator()(const WaitingOrder &a, const WaitingOrder &b);
-};
-
-bool CompareWaiting1::operator()(const WaitingOrder &a, const WaitingOrder &b) {
-    int cmp = compareTrainID.CompareStr(a.trainID, b.trainID);
-    if (cmp) return cmp < 0;
-    if (a.from != b.from) return a.from < b.from;
-    if (a.to != b.to) return a.to < b.to;
-    return a.num < b.num;
-}
-
-class CompareWaiting2 {
-    bool operator()(const WaitingOrder &a, const WaitingOrder &b);
-};
-
-bool CompareWaiting2::operator()(const WaitingOrder &a, const WaitingOrder &b) {
-    return a.to <= b.from;
-}
-
-class CompareWaiting3 {
-    bool operator()(const WaitingOrder &a, const WaitingOrder &b);
-};
-
-bool CompareWaiting3::operator()(const WaitingOrder &a, const WaitingOrder &b) {
-    return a.num <= b.num;
-}
-
-/*
- * Value
- * read from file, return a vec
- * sort based on timestamp
- */
-class WaitingTransaction {
-    int timestamp = 0;
-    long transaction_addr = -1;
-
-public:
-    WaitingTransaction() = default;
-
-    WaitingTransaction(const int &timestamp_, const long &addr);
-};
-
-WaitingTransaction::WaitingTransaction(const int &timestamp_, const long &addr) : timestamp(timestamp_),
-                                                                                  transaction_addr(addr) {}
 
 /*
  * manage waiting
  * including add, find, delete
  */
 class WaitingList {
-    BPlusIndexTree<WaitingOrder, WaitingTransaction> waitingListTree{"waiting_list_tree"};
+    BPlusIndexTree<Waiting, WaitingOrder> waitingListTree{"waiting_list_tree"};
 
 public:
     /*
      * buy_ticket
      * add into waitingList
+     * key based on seat_addr and timestamp
      */
     void StartWaiting(const TrainID &trainId, const int &from, const int &to, const int &num,
-                      const int &timestamp, const long &addr);
+                      const int &timestamp, const long &start_seat_addr, const long &end_seat_addr,
+                      const long &transaction_addr, FileManager<WaitingOrder> &waitingListFile);
 
     /*
      * refund_ticket
+     * when refund ticket, able to get seat_addr
+     * use seat_addr to find all waitingList of the seat (a vec, in timestamp order)
+     * read all the seat of the train set off the same day
+     * traverse the vec to rollback
+     * if transaction refunded or rollback, delete from tree
      */
-    void Rollback(const Train &train, const int &from, const int &to, const int &minimal_num);
+    void Rollback(const long &start_seat_addr, const long &end_seat_addr, const Seat &minimal_num);
 };
+
+void WaitingList::StartWaiting(const TrainID &trainId, const int &from, const int &to,
+                               const int &num, const int &timestamp,
+                               const long &start_seat_addr, const long &end_seat_addr,
+                               const long &transaction_addr,
+                               FileManager<WaitingOrder> &waitingListFile) {
+    waitingListTree.Insert(Waiting(start_seat_addr, end_seat_addr, timestamp),
+                           WaitingOrder(from, to, num, transaction_addr), waitingListFile, compareWaiting);
+}
 
 #endif //TICKETSYSTEM_WAITINGLIST_HPP
