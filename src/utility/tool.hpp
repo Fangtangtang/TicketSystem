@@ -301,6 +301,10 @@ public:
     void AddDay(const int &day) {
         minutes += day * 1440;
     }
+
+    Time Add(const int &day, const int &minute) const {
+        return Time(minutes + day * 1440 + minutes);
+    }
 };
 
 
@@ -511,12 +515,11 @@ class IsAvailableTo;
 
 class IsAvailableTime;
 
-class SameFrom;
 
 class Ticket {
     char from[31] = {'\0'};
     char to[31] = {'\0'};
-    Time start_sale;//leaving date
+    Time start_sale;//leaving date(exact time)
     Time stop_sale;
 
     friend TicketSystem;
@@ -532,7 +535,6 @@ class Ticket {
     friend IsAvailableFrom;
     friend IsAvailableTo;
     friend IsAvailableTime;
-    friend SameFrom;
 public:
     Ticket() = default;
 
@@ -594,51 +596,51 @@ bool Ticket::operator<(const Ticket &a) const {
  * CompareFrom:
  *     used to insert in real from bpt
  *     ---------------------
- *     this tree is used to find where can go 
- *     at the given day from the given place 
+ *     this tree is used to find where can go
+ *     at the given day from the given place
  *     ---------------------
  *     from stop_sale start_sale to
  *
  * CompareTo:
  *     used to insert in real to bpt
  *     ---------------------
- *     this tree is used to find where can from 
- *     after the given day to the given place
+ *     this tree is used to find where can from
+ *     at the given day to the given place
  *     ---------------------
  *     to stop_sale start_sale from
- *     
+ *
  * CompareTime:
  *     used to insert in real time bpt
  *     ---------------------
- *     this tree is used to find 
+ *     this tree is used to find
  *     which tickets are available on the given day
  *     ---------------------
- *     stop_sale start_sale to from *     
- *     
+ *     stop_sale start_sale to from *
+ *
  * CompareTicketStopSale:
  *     from to stop_sale(cmp1 of query_ticket)
  *
  * CompareFromTicket:
  *     from stop_sale(cmp1 of fromTicketTree)
- *     
+ *
  * CompareToTicket:
  *     to stop_sale(cmp1 of toTicketTree)
- *     
+ *
  * CompareToTicket:
  *     stop_sale(cmp1 of timeTicketTree)
- *     
+ *
  * IsAvailableTicket:
  *     == (cmp2 of query_ticket)
  *     
  * IsAvailableFrom:
  *     == (cmp2 of fromTicketTree)
- * 
+ *
  * IsAvailableTo:
  *     == (cmp2 of to/ticketTree)
- *     
+ *
  * IsAvailableTime:
- *     == (cmp2 of to/ticketTree)    
- *     
+ *     == (cmp2 of to/ticketTree)
+ *
  */
 struct CompareTicket {
     bool operator()(const Ticket &a, const Ticket &b) const;
@@ -655,47 +657,47 @@ bool CompareTicket::operator()(const Ticket &a, const Ticket &b) const {
 
 const CompareTicket compareTicket;
 
-struct CompareFrom {
-    bool operator()(const Ticket &a, const Ticket &b) const;
-};
-
-bool CompareFrom::operator()(const Ticket &a, const Ticket &b) const {
-    int cmp = strcmp(a.from, b.from);
-    if (cmp) return cmp < 0;
-    if (!(a.stop_sale == b.stop_sale)) return a.stop_sale < b.stop_sale;
-    if (!(a.start_sale == b.start_sale))return a.start_sale < b.start_sale;
-    return strcmp(a.to, b.to);
-}
-
-const CompareFrom compareFrom;
-
-struct CompareTo {
-    bool operator()(const Ticket &a, const Ticket &b) const;
-};
-
-bool CompareTo::operator()(const Ticket &a, const Ticket &b) const {
-    int cmp = strcmp(a.to, b.to);
-    if (cmp) return cmp < 0;
-    if (!(a.stop_sale == b.stop_sale)) return a.stop_sale < b.stop_sale;
-    if (!(a.start_sale == b.start_sale))return a.start_sale < b.start_sale;
-    return strcmp(a.from, b.from);
-}
-
-const CompareTo compareTo;
-
-struct CompareTime {
-    bool operator()(const Ticket &a, const Ticket &b) const;
-};
-
-bool CompareTime::operator()(const Ticket &a, const Ticket &b) const {
-    if (!(a.stop_sale == b.stop_sale)) return a.stop_sale < b.stop_sale;
-    if (!(a.start_sale == b.start_sale))return a.start_sale < b.start_sale;
-    int cmp = strcmp(a.to, b.to);
-    if (cmp) return cmp < 0;
-    return strcmp(a.from, b.from);
-}
-
-const CompareTime compareTime;
+//struct CompareFrom {
+//    bool operator()(const Ticket &a, const Ticket &b) const;
+//};
+//
+//bool CompareFrom::operator()(const Ticket &a, const Ticket &b) const {
+//    int cmp = strcmp(a.from, b.from);
+//    if (cmp) return cmp < 0;
+//    if (!(a.stop_sale == b.stop_sale)) return a.stop_sale < b.stop_sale;
+//    if (!(a.start_sale == b.start_sale))return a.start_sale < b.start_sale;
+//    return strcmp(a.to, b.to);
+//}
+//
+//const CompareFrom compareFrom;
+//
+//struct CompareTo {
+//    bool operator()(const Ticket &a, const Ticket &b) const;
+//};
+//
+//bool CompareTo::operator()(const Ticket &a, const Ticket &b) const {
+//    int cmp = strcmp(a.to, b.to);
+//    if (cmp) return cmp < 0;
+//    if (!(a.stop_sale == b.stop_sale)) return a.stop_sale < b.stop_sale;
+//    if (!(a.start_sale == b.start_sale))return a.start_sale < b.start_sale;
+//    return strcmp(a.from, b.from);
+//}
+//
+//const CompareTo compareTo;
+//
+//struct CompareTime {
+//    bool operator()(const Ticket &a, const Ticket &b) const;
+//};
+//
+//bool CompareTime::operator()(const Ticket &a, const Ticket &b) const {
+//    if (!(a.stop_sale == b.stop_sale)) return a.stop_sale < b.stop_sale;
+//    if (!(a.start_sale == b.start_sale))return a.start_sale < b.start_sale;
+//    int cmp = strcmp(a.to, b.to);
+//    if (cmp) return cmp < 0;
+//    return strcmp(a.from, b.from);
+//}
+//
+//const CompareTime compareTime;
 
 struct CompareTicketStopSale {
     bool operator()(const Ticket &a, const Ticket &b) const;
@@ -711,40 +713,40 @@ bool CompareTicketStopSale::operator()(const Ticket &a, const Ticket &b) const {
 
 const CompareTicketStopSale compareTicketStopSale;
 
-struct CompareFromTicket {
-    bool operator()(const Ticket &a, const Ticket &b) const;
-};
+//struct CompareFromTicket {
+//    bool operator()(const Ticket &a, const Ticket &b) const;
+//};
+//
+//bool CompareFromTicket::operator()(const Ticket &a, const Ticket &b) const {
+//    int cmp = strcmp(a.from, b.from);
+//    if (cmp) return cmp < 0;
+//    return a.stop_sale < b.stop_sale;
+//}
+//
+//const CompareFromTicket compareFromTicket;
+//
 
-bool CompareFromTicket::operator()(const Ticket &a, const Ticket &b) const {
-    int cmp = strcmp(a.from, b.from);
-    if (cmp) return cmp < 0;
-    return a.stop_sale < b.stop_sale;
-}
-
-const CompareFromTicket compareFromTicket;
-
-
-struct CompareToTicket {
-    bool operator()(const Ticket &a, const Ticket &b) const;
-};
-
-bool CompareToTicket::operator()(const Ticket &a, const Ticket &b) const {
-    int cmp = strcmp(a.to, b.to);
-    if (cmp) return cmp < 0;
-    return a.stop_sale < b.stop_sale;
-}
-
-const CompareToTicket compareToTicket;
-
-struct CompareTimeTicket {
-    bool operator()(const Ticket &a, const Ticket &b) const;
-};
-
-bool CompareTimeTicket::operator()(const Ticket &a, const Ticket &b) const {
-    return a.stop_sale < b.stop_sale;
-}
-
-const CompareTimeTicket compareTimeTicket;
+//struct CompareToTicket {
+//    bool operator()(const Ticket &a, const Ticket &b) const;
+//};
+//
+//bool CompareToTicket::operator()(const Ticket &a, const Ticket &b) const {
+//    int cmp = strcmp(a.to, b.to);
+//    if (cmp) return cmp < 0;
+//    return a.stop_sale < b.stop_sale;
+//}
+//
+//const CompareToTicket compareToTicket;
+//
+//struct CompareTimeTicket {
+//    bool operator()(const Ticket &a, const Ticket &b) const;
+//};
+//
+//bool CompareTimeTicket::operator()(const Ticket &a, const Ticket &b) const {
+//    return a.stop_sale < b.stop_sale;
+//}
+//
+//const CompareTimeTicket compareTimeTicket;
 
 struct IsAvailableTicket {
     bool operator()(const Ticket &a, const Ticket &b) const;
@@ -760,53 +762,53 @@ bool IsAvailableTicket::operator()(const Ticket &a, const Ticket &b) const {
 
 const IsAvailableTicket isAvailableTicket;
 
-struct IsAvailableFrom {
-    bool operator()(const Ticket &a, const Ticket &b) const;
-};
+//struct IsAvailableFrom {
+//    bool operator()(const Ticket &a, const Ticket &b) const;
+//};
+//
+////a:target
+//bool IsAvailableFrom::operator()(const Ticket &a, const Ticket &b) const {
+//    if (strcmp(a.from, b.from)) return false;
+//    if (a.stop_sale < b.start_sale) return false;
+//    return true;
+//}
+//
+//const IsAvailableFrom isAvailableFrom;
+//
+//struct IsAvailableTo {
+//    bool operator()(const Ticket &a, const Ticket &b) const;
+//};
 
 //a:target
-bool IsAvailableFrom::operator()(const Ticket &a, const Ticket &b) const {
-    if (strcmp(a.from, b.from)) return false;
-    if (a.stop_sale < b.start_sale) return false;
-    return true;
-}
-
-const IsAvailableFrom isAvailableFrom;
-
-struct IsAvailableTo {
-    bool operator()(const Ticket &a, const Ticket &b) const;
-};
-
-//a:target
-bool IsAvailableTo::operator()(const Ticket &a, const Ticket &b) const {
-    if (strcmp(a.to, b.to)) return false;
-    if (a.stop_sale < b.start_sale) return false;
-    return true;
-}
-
-const IsAvailableTo isAvailableTo;
-
-struct IsAvailableTime {
-    bool operator()(const Ticket &a, const Ticket &b) const;
-};
-
-//a:target
-bool IsAvailableTime::operator()(const Ticket &a, const Ticket &b) const {
-    if (a.stop_sale < b.start_sale) return false;
-    return true;
-}
-
-const IsAvailableTime isAvailableTime;
-
-struct SameFrom {
-    bool operator()(const Ticket &a, const Ticket &b) const;
-};
-
-bool SameFrom::operator()(const Ticket &a, const Ticket &b) const {
-    return strcmp(a.from, b.from) == 0;
-}
-
-const SameFrom sameFrom;
+//bool IsAvailableTo::operator()(const Ticket &a, const Ticket &b) const {
+//    if (strcmp(a.to, b.to)) return false;
+//    if (a.stop_sale < b.start_sale) return false;
+//    return true;
+//}
+//
+//const IsAvailableTo isAvailableTo;
+//
+//struct IsAvailableTime {
+//    bool operator()(const Ticket &a, const Ticket &b) const;
+//};
+//
+////a:target
+//bool IsAvailableTime::operator()(const Ticket &a, const Ticket &b) const {
+//    if (a.stop_sale < b.start_sale) return false;
+//    return true;
+//}
+//
+//const IsAvailableTime isAvailableTime;
+//
+//struct SameFrom {
+//    bool operator()(const Ticket &a, const Ticket &b) const;
+//};
+//
+//bool SameFrom::operator()(const Ticket &a, const Ticket &b) const {
+//    return strcmp(a.from, b.from) == 0;
+//}
+//
+//const SameFrom sameFrom;
 /*
  * class Scanner
  * ======================================================================================
