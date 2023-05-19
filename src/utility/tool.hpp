@@ -187,9 +187,11 @@ public:
  * -------------------------------------------------------------------------------------------------------------
  * manage date and time from June 1st to August 31st
  */
+class CompareExactTime;
+
 class Time {
     int minutes = 0;
-
+    friend CompareExactTime;
 public:
     Time() = default;
 
@@ -305,8 +307,19 @@ public:
     Time Add(const int &day, const int &minute) const {
         return Time(minutes + day * 1440 + minutes);
     }
+
+    int IntervalMinutes(const Time &other) const {
+        return minutes > other.minutes ? minutes - other.minutes : other.minutes - minutes;
+    }
 };
 
+struct CompareExactTime {
+    bool operator()(const Time &a, const Time &b) const {
+        return a.minutes < b.minutes;
+    }
+};
+
+const CompareExactTime compareExactTime;
 
 class MyTime {
     short month = 0;
