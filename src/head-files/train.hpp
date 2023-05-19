@@ -86,7 +86,7 @@ class TrainSystem {
      * add_train
      * return address of Station storing information of the first one
      */
-    static long AddStation(const std::string &stations,
+    static void AddStation(const std::string &stations,
                            const std::string &prices,
                            const std::string &travel_times,
                            const std::string &stop_over_times,
@@ -98,7 +98,7 @@ class TrainSystem {
      * add_train
      * return address of first seat(int)
      */
-    static long AddSeat(const int &seat_num, const int &station_num, const int &day, FileManager<Seat> &seatFile);
+    static void AddSeat(const int &seat_num, const int &station_num, const int &day, FileManager<Seat> &seatFile);
 
     /*
      * query_train
@@ -239,7 +239,7 @@ Time TrainSystem::SecondTime(const std::string &sale_date) {
     return Time(para2 * 1440);
 }
 
-long TrainSystem::AddStation(const std::string &stations,
+void TrainSystem::AddStation(const std::string &stations,
                              const std::string &prices,
                              const std::string &travel_times,
                              const std::string &stop_over_times,
@@ -275,7 +275,7 @@ long TrainSystem::AddStation(const std::string &stations,
     stationFile.WriteEle(Station(name, sum, arriving_time, leaving_time));
 }
 
-long TrainSystem::AddSeat(const int &seat_num, const int &station_num, const int &day, FileManager<Seat> &seatFile) {
+void TrainSystem::AddSeat(const int &seat_num, const int &station_num, const int &day, FileManager<Seat> &seatFile) {
     seatFile.WriteEle(Seat(seat_num), day * (station_num - 1));
 }
 
@@ -430,6 +430,7 @@ int TrainSystem::AddTrain(const Parameter &parameter,
         //if succeeded, write in stationFile and seatFile
         AddStation(stations, prices, travel_times, stopover_times, station_num, Interval(start_time), stationFile);
         AddSeat(seat_num, station_num, stop_sale - start_sale, seatFile);
+        return 0;
     } else return -1;
 }
 
@@ -459,6 +460,7 @@ int TrainSystem::ReleaseTrain(const Parameter &parameter,
     trainTree.RewriteKey(train_index, block_addr, ele_index);
     //release
     ticketSystem.ReleaseTrain(ID, train_addr, trainFile, stationFile, seatFile, ticketFile);
+    return 0;
 }
 
 void TrainSystem::QueryTrain(const Parameter &parameter,

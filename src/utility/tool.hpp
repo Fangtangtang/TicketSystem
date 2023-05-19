@@ -11,6 +11,7 @@
 enum STATUS {
     success, pending, refunded
 };
+class TransactionDetail;
 
 class TrainSystem;
 
@@ -19,6 +20,8 @@ class TicketSystem;
 class UserSystem;
 
 class TransactionSystem;
+
+class WaitingList;
 
 /*
  * Username class
@@ -476,6 +479,7 @@ Station::Station(const std::string &name_, const int &price_, const Interval &ar
 class Seat {
     int num = 0;
     friend TrainSystem;
+    friend WaitingList;
 public:
     Seat() = default;
 
@@ -484,6 +488,8 @@ public:
     bool operator<(const Seat &a) const;
 
     Seat operator+=(const int &delta);
+
+    Seat operator-=(const int &delta);
 
     friend std::ostream &operator<<(std::ostream &os, const Seat &information);
 
@@ -495,6 +501,11 @@ bool Seat::operator<(const Seat &a) const {
 
 Seat Seat::operator+=(const int &delta) {
     num += delta;
+    return *this;
+}
+
+Seat Seat::operator-=(const int &delta) {
+    num -= delta;
     return *this;
 }
 
@@ -829,6 +840,124 @@ const IsAvailableTicket isAvailableTicket;
 //}
 //
 //const SameFrom sameFrom;
+
+/*
+ * Transaction class
+ */
+struct CompareTransStrict;
+struct CompareTransWeak;
+const CompareUsername compare_username;
+
+class Transaction {
+    Username username;
+    int timestamp = 0;
+    friend CompareTransStrict;
+    friend CompareTransWeak;
+public:
+    Transaction() = default;
+
+    Transaction(Username username_, int timestamp_);
+
+    friend bool operator<(const Transaction &a, const Transaction &b);
+};
+
+Transaction::Transaction(Username username_, int timestamp_) : username(username_), timestamp(timestamp_) {}
+
+bool operator<(const Transaction &a, const Transaction &b) {
+    int cmp = compare_username.CompareStr(a.username, b.username);
+    if (cmp) {
+        return cmp < 0;
+    }
+    return a.timestamp < b.timestamp;
+}
+
+/*
+ * used when store in file and strictFind
+ */
+struct CompareTransStrict {
+    bool operator()(const Transaction &a, const Transaction &b) const {
+        int cmp = compare_username.CompareStr(a.username, b.username);
+        if (cmp) {
+            return cmp < 0;
+        }
+        return a.timestamp < b.timestamp;
+    }
+};
+
+const CompareTransStrict compareTransStrict;
+
+/*
+ * used in "index_based" find
+ * use username as index
+ */
+struct CompareTransWeak {
+    bool operator()(const Transaction &a, const Transaction &b) const {
+        return compare_username(a.username, b.username);
+    }
+};
+
+const CompareTransWeak compareTransWeak;
+
+class TransactionSystem;
+
+class TransactionDetail {
+    TrainID trainID;
+    char from[31] = {'\0'};
+    char to[31] = {'\0'};
+    Time leaving_time;
+    Time arriving_time;
+    int price = 0;
+    int num = 0;
+    STATUS status = success;
+    long seat_address = 0;//store train_address in train_information file for faster read
+    short start_seat{}, end_seat{};
+    friend TransactionSystem;
+public:
+    TransactionDetail() = default;
+
+    TransactionDetail(const TrainID &trainID_, const char *from_, const char *to_, const Time &leaving_time_,
+                      const Time &arriving_time_,
+                      const int &price_, const int &num_, const STATUS &status_, const long &seat_address_,
+                      const short &start_seat, const short &end_seat);
+
+    void ModifyStatus(const STATUS &status_) {
+        status = status_;
+    }
+
+    friend std::ostream &operator<<(std::ostream &os, const TransactionDetail &information) {
+        //status
+        if (information.status == success) os << "[success] ";
+        else if (information.status == pending) os << "[pending] ";
+        else os << "[refunded] ";
+        //stations
+        os << information.trainID << ' ';
+        os << information.from << ' ' << information.leaving_time;
+        os << " -> ";
+        os << information.to << ' ' << information.arriving_time << ' ';
+        os << information.price << ' ' << information.num << '\n';
+        return os;
+    }
+};
+
+TransactionDetail::TransactionDetail(const TrainID &trainID_, const char *from_, const char *to_,
+                                     const Time &leaving_time_, const Time &arriving_time_,
+                                     const int &price_, const int &num_, const STATUS &status_,
+                                     const long &seat_address_,
+                                     const short &start_seat, const short &end_seat) :
+        trainID(trainID_),
+        leaving_time(leaving_time_),
+        arriving_time(arriving_time_),
+        price(price_),
+        num(num_),
+        status(status_),
+        seat_address(seat_address_),
+        start_seat(start_seat), end_seat(end_seat) {
+    memset(from, 0, sizeof(from));
+    strcpy(from, from_);
+    memset(to, 0, sizeof(to));
+    strcpy(to, to_);
+}
+
 /*
  * class Scanner
  * ======================================================================================

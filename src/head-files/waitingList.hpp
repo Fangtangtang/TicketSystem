@@ -21,6 +21,8 @@ class CompareWaiting;
 
 class CompareWaitingList;
 
+class CompareTimestamp;
+
 class IsToBeModified;
 
 class Waiting {
@@ -30,7 +32,9 @@ class Waiting {
 
     friend CompareWaiting;
     friend CompareWaitingList;
+    friend CompareTimestamp;
     friend IsToBeModified;
+    friend WaitingList;
 public:
     Waiting() = default;
 
@@ -77,6 +81,23 @@ bool CompareWaitingList::operator()(const Waiting &a, const Waiting &b) const {
 
 const CompareWaitingList compareWaitingList;
 
+struct CompareTimestamp {
+    bool operator()(const Waiting &a, const Waiting &b) const;
+
+    bool operator()(const sjtu::pair<Waiting, long> &a, const sjtu::pair<Waiting, long> &b) const;
+
+};
+
+bool CompareTimestamp::operator()(const Waiting &a, const Waiting &b) const {
+    return a.timestamp < b.timestamp;
+}
+
+bool CompareTimestamp::operator()(const sjtu::pair<Waiting, long> &a, const sjtu::pair<Waiting, long> &b) const {
+    return a.first.timestamp < b.first.timestamp;
+}
+
+const CompareTimestamp compareTimestamp;
+
 struct IsToBeModified {
     bool operator()(const Waiting &a, const Waiting &b) const;
 };
@@ -86,6 +107,8 @@ bool IsToBeModified::operator()(const Waiting &a, const Waiting &b) const {
     if (a.end_seat_addr <= b.end_seat_addr && a.start_seat_addr >= b.start_seat_addr)return true;
     return false;
 }
+
+const IsToBeModified isToBeModified;
 
 /*
  * WaitingOrder class
@@ -100,6 +123,7 @@ class WaitingOrder {
 
     friend TrainSystem;
     friend TransactionSystem;
+    friend WaitingList;
 public:
     WaitingOrder() = default;
 
@@ -114,6 +138,11 @@ public:
  */
 class WaitingList {
     BPlusIndexTree<Waiting, WaitingOrder> waitingListTree{"waiting_list_tree"};
+
+    static void RollBack(const sjtu::pair<Waiting, long> &pair,
+                         sjtu::vector<Seat> &seat_vec, Seat &min_seat, long &addr,
+                         FileManager<WaitingOrder> &waitingListFile, FileManager<Seat> &seatFile,
+                         FileManager<TransactionDetail> &transactionFile);
 
 public:
     /*
@@ -133,9 +162,56 @@ public:
      * traverse the vec to rollback
      * if transaction refunded or rollback, delete from tree
      */
-    void Rollback(const long &start_seat_addr, const long &end_seat_addr, const Seat &minimal_num);
+    void Rollback(const long &start_seat_addr, const long &end_seat_addr,
+                  Seat &minimal_num, FileManager<WaitingOrder> &waitingListFile,
+                  FileManager<Seat> &seatFile,
+                  FileManager<TransactionDetail> &transactionFile);
 };
 
+/*
+ * PRIVATE
+ * -----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ */
+void WaitingList::RollBack(const sjtu::pair<Waiting, long> &pair,
+                           sjtu::vector<Seat> &seat_vec, Seat &min_seat, long &addr,
+                           FileManager<WaitingOrder> &waitingListFile, FileManager<Seat> &seatFile,
+                           FileManager<TransactionDetail> &transactionFile) {
+    WaitingOrder waitingOrder;
+    waitingListFile.ReadEle(pair.second, waitingOrder);
+    if (min_seat.num < waitingOrder.num)return;//exceed
+    Seat seat;
+    if (seat_vec.empty()) {
+        addr = seatFile.GetAddress(pair.first.end_seat_addr, -waitingOrder.from);
+        for (int i = 0; i <= waitingOrder.to; ++i) {
+            seatFile.ReadEle(addr, i, seat);
+            seat_vec.push_back(seat);
+        }
+    }
+    while (addr <= pair.first.end_seat_addr) {
+        addr = seatFile.GetAddress(addr, 1);
+        seatFile.ReadEle(addr, seat);
+        seat_vec.push_back(seat);
+    }
+    seat = seat_vec[waitingOrder.to];
+    for (int i = waitingOrder.from; i < waitingOrder.to; ++i) {
+        seat = seat_vec[i] < seat ? seat_vec[i] : seat;
+        if (seat.num < waitingOrder.num)return;
+    }
+    //succeed, modify seat and transaction status
+    for (int i = waitingOrder.from; i <= waitingOrder.to; ++i) {
+        seat_vec[i] -= waitingOrder.num;
+    }
+    TransactionDetail transactionDetail;
+    transactionFile.ReadEle(waitingOrder.transaction_addr, transactionDetail);
+    transactionDetail.ModifyStatus(success);
+    transactionFile.WriteEle(waitingOrder.transaction_addr, transactionDetail);
+    min_seat -= waitingOrder.num;
+}
+
+/*
+ * PUBLIC
+ * -----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ */
 void WaitingList::StartWaiting(const TrainID &trainId, const int &from, const int &to,
                                const int &num, const int &timestamp,
                                const long &start_seat_addr, const long &end_seat_addr,
@@ -144,5 +220,24 @@ void WaitingList::StartWaiting(const TrainID &trainId, const int &from, const in
     waitingListTree.Insert(Waiting(start_seat_addr, end_seat_addr, timestamp),
                            WaitingOrder(from, to, num, transaction_addr), waitingListFile, compareWaiting);
 }
+
+void WaitingList::Rollback(const long &start_seat_addr, const long &end_seat_addr,
+                           Seat &minimal_num,
+                           FileManager<WaitingOrder> &waitingListFile,
+                           FileManager<Seat> &seatFile,
+                           FileManager<TransactionDetail> &transactionFile) {
+    sjtu::vector<sjtu::pair<Waiting, long>> vec;
+    waitingListTree.Find(Waiting(start_seat_addr, end_seat_addr, 0), compareWaitingList, isToBeModified, vec);
+    sjtu::Sort(vec, 0, vec.size() - 1, compareTimestamp);//sort based on timestamp
+    //read all the seat information into a vector
+    sjtu::vector<Seat> seat_vec;
+    //traverse vec
+    long addr;
+    for (auto &i: vec) {
+        RollBack(i, seat_vec, minimal_num, addr, waitingListFile, seatFile, transactionFile);
+        if (minimal_num.num == 0) break;
+    }
+}
+
 
 #endif //TICKETSYSTEM_WAITINGLIST_HPP

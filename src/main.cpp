@@ -133,7 +133,8 @@ void ProcessLine(Parameter parameter,
     } else if (cmd == "query_order") {
         transactionSystem.QueryOrder(parameter, loginList, transactionFile);
     } else if (cmd == "refund_ticket") {
-        transactionSystem.RefundTicket(parameter, loginList, trainSystem, waitingList);
+        transactionSystem.RefundTicket(parameter, loginList, trainSystem, transactionFile, seatFile,
+                                       waitingList, waitingListFile);
     } else if (cmd == "clean") {
         //TODO
     } else if (cmd == "exit") {
