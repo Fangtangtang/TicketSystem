@@ -493,11 +493,15 @@ class CompareFrom;
 
 class CompareTo;
 
+class CompareTime;
+
 class CompareTicketStopSale;
 
 class CompareFromTicket;
 
 class CompareToTicket;
+
+class CompareTimeTicket;
 
 class IsAvailableTicket;
 
@@ -505,25 +509,36 @@ class IsAvailableFrom;
 
 class IsAvailableTo;
 
+class IsAvailableTime;
+
+class SameFrom;
+
 class Ticket {
     char from[31] = {'\0'};
     char to[31] = {'\0'};
     Time start_sale;//leaving date
     Time stop_sale;
 
+    friend TicketSystem;
     friend CompareTicket;
     friend CompareFrom;
     friend CompareTo;
+    friend CompareTime;
     friend CompareTicketStopSale;
     friend CompareFromTicket;
     friend CompareToTicket;
+    friend CompareTimeTicket;
     friend IsAvailableTicket;
     friend IsAvailableFrom;
     friend IsAvailableTo;
+    friend IsAvailableTime;
+    friend SameFrom;
 public:
     Ticket() = default;
 
     Ticket(const char *from_, const char *to_, const Time &start_sale_, const Time &stop_sale_);
+
+    Ticket(const Time &start_sale_, const Time &stop_sale_);
 
     Ticket(const std::string &from_, const std::string &to_);
 
@@ -540,6 +555,9 @@ Ticket::Ticket(const char *from_, const char *to_, const Time &start_sale_, cons
     memset(to, 0, sizeof(to));
     strcpy(to, to_);
 }
+
+Ticket::Ticket(const Time &start_sale_, const Time &stop_sale_) :
+        start_sale(start_sale_), stop_sale(stop_sale_) {}
 
 Ticket::Ticket(const std::string &from_, const std::string &to_) {
     memset(from, 0, sizeof(from));
@@ -585,9 +603,17 @@ bool Ticket::operator<(const Ticket &a) const {
  *     used to insert in real to bpt
  *     ---------------------
  *     this tree is used to find where can from 
- *     at the given day to the given place 
+ *     after the given day to the given place
  *     ---------------------
  *     to stop_sale start_sale from
+ *     
+ * CompareTime:
+ *     used to insert in real time bpt
+ *     ---------------------
+ *     this tree is used to find 
+ *     which tickets are available on the given day
+ *     ---------------------
+ *     stop_sale start_sale to from *     
  *     
  * CompareTicketStopSale:
  *     from to stop_sale(cmp1 of query_ticket)
@@ -598,6 +624,9 @@ bool Ticket::operator<(const Ticket &a) const {
  * CompareToTicket:
  *     to stop_sale(cmp1 of toTicketTree)
  *     
+ * CompareToTicket:
+ *     stop_sale(cmp1 of timeTicketTree)
+ *     
  * IsAvailableTicket:
  *     == (cmp2 of query_ticket)
  *     
@@ -606,6 +635,9 @@ bool Ticket::operator<(const Ticket &a) const {
  * 
  * IsAvailableTo:
  *     == (cmp2 of to/ticketTree)
+ *     
+ * IsAvailableTime:
+ *     == (cmp2 of to/ticketTree)    
  *     
  */
 struct CompareTicket {
@@ -651,6 +683,20 @@ bool CompareTo::operator()(const Ticket &a, const Ticket &b) const {
 
 const CompareTo compareTo;
 
+struct CompareTime {
+    bool operator()(const Ticket &a, const Ticket &b) const;
+};
+
+bool CompareTime::operator()(const Ticket &a, const Ticket &b) const {
+    if (!(a.stop_sale == b.stop_sale)) return a.stop_sale < b.stop_sale;
+    if (!(a.start_sale == b.start_sale))return a.start_sale < b.start_sale;
+    int cmp = strcmp(a.to, b.to);
+    if (cmp) return cmp < 0;
+    return strcmp(a.from, b.from);
+}
+
+const CompareTime compareTime;
+
 struct CompareTicketStopSale {
     bool operator()(const Ticket &a, const Ticket &b) const;
 };
@@ -689,6 +735,16 @@ bool CompareToTicket::operator()(const Ticket &a, const Ticket &b) const {
 }
 
 const CompareToTicket compareToTicket;
+
+struct CompareTimeTicket {
+    bool operator()(const Ticket &a, const Ticket &b) const;
+};
+
+bool CompareTimeTicket::operator()(const Ticket &a, const Ticket &b) const {
+    return a.stop_sale < b.stop_sale;
+}
+
+const CompareTimeTicket compareTimeTicket;
 
 struct IsAvailableTicket {
     bool operator()(const Ticket &a, const Ticket &b) const;
@@ -729,6 +785,28 @@ bool IsAvailableTo::operator()(const Ticket &a, const Ticket &b) const {
 }
 
 const IsAvailableTo isAvailableTo;
+
+struct IsAvailableTime {
+    bool operator()(const Ticket &a, const Ticket &b) const;
+};
+
+//a:target
+bool IsAvailableTime::operator()(const Ticket &a, const Ticket &b) const {
+    if (a.stop_sale < b.start_sale) return false;
+    return true;
+}
+
+const IsAvailableTime isAvailableTime;
+
+struct SameFrom {
+    bool operator()(const Ticket &a, const Ticket &b) const;
+};
+
+bool SameFrom::operator()(const Ticket &a, const Ticket &b) const {
+    return strcmp(a.from, b.from) == 0;
+}
+
+const SameFrom sameFrom;
 /*
  * class Scanner
  * ======================================================================================

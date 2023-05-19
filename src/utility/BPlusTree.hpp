@@ -5,6 +5,7 @@
 #include <iostream>
 #include <string>
 #include "vector.hpp"
+#include "pair.hpp"
 
 template<class Key, class Value>
 class BPlusTree {
@@ -28,7 +29,7 @@ private:
     public:
         KeyGroup() = default;
 
-        KeyGroup(const Key &key1, const long &address = 0) : key(key1), address(address) {}
+        explicit KeyGroup(const Key &key1, const long &address = 0) : key(key1), address(address) {}
 
         Key GetKey() const {
             return key;
@@ -51,15 +52,8 @@ private:
     public:
         ValueType() = default;
 
-        ValueType(const Key &key1, const Value &value1 = 0) : key(key1), value(value1) {}
+        explicit ValueType(const Key &key1, const Value &value1 = 0) : key(key1), value(value1) {}
 
-        Key GetKey() const {
-            return key;
-        }
-
-        Value GetValue() const {
-            return value;
-        }
     };
 
     struct Node {
@@ -250,6 +244,14 @@ public:
         FindNode(target, iter, cmp, vec);
     }
 
+    template<class Compare1, class Compare2>
+    void Find(const Key &key, const Compare1 &cmp1, const Compare2 &cmp2, sjtu::vector<sjtu::pair<Key, Value>> &vec) {
+        current_node = root_node;//start from root
+        long iter;
+        KeyGroup target(key);
+        FindNode(target, iter, cmp1, cmp2, vec);
+    }
+
     void Find(const Key &key) {
         current_node = root_node;//start from root
         long iter;
@@ -305,11 +307,6 @@ private:
         return ans;
     }
 
-    template<class T>
-    T Max(const T &a, const T &b) {
-        return b < a ? a : b;
-    }
-
     inline void ReadNode(Node &current, const long &iter) {
         r_w_tree.seekg(iter);
         r_w_tree.read(reinterpret_cast<char *> (&current), sizeof(Node));
@@ -346,6 +343,23 @@ private:
     }
 
     template<class Compare>
+    void GetEle(const ValueType &target, int index_in_block,
+                const Compare &cmp, sjtu::vector<sjtu::pair<Key, Value>> &vec) {
+        while (index_in_block < current_block.size &&
+               !(cmp(current_block.storage[index_in_block].key, target.key) ||
+                 cmp(target.key, current_block.storage[index_in_block].key))) {
+            vec.push_back(sjtu::pair<Key, Value>(current_block.storage[index_in_block].key,
+                                                 current_block.storage[index_in_block].value));
+            ++index_in_block;
+        }
+        if (index_in_block == current_block.size && current_block.next_block_address > 0) {
+            long iter = current_block.next_block_address;
+            ReadBlock(current_block, iter);
+            GetEle(target, 0, cmp, vec);
+        }
+    }
+
+    template<class Compare>
     void FindFirstEle(const Key &key, long &iter, const Compare &cmp, sjtu::vector<Value> &vec) {
         ReadBlock(current_block, iter);
         ValueType target(key);
@@ -357,6 +371,22 @@ private:
         if (!(cmp(current_block.storage[index_in_block].key, target.key) ||
               cmp(target.key, current_block.storage[index_in_block].key))) {
             GetEle(target, index_in_block, cmp, vec);
+        } else return;
+    }
+
+    template<class Compare1, class Compare2>
+    void FindFirstEle(const Key &key, long &iter,
+                      const Compare1 &cmp1, const Compare2 &cmp2, sjtu::vector<sjtu::pair<Key, Value>> &vec) {
+        ReadBlock(current_block, iter);
+        ValueType target(key);
+        int index_in_block = BinarySearch(current_block.storage, 0, current_block.size - 1, target, cmp1);
+        while (index_in_block == -1 && current_block.next_block_address != -1) {
+            ReadBlock(current_block, current_block.next_block_address);
+            index_in_block = BinarySearch(current_block.storage, 0, current_block.size - 1, target, cmp1);
+        }
+        if (!(cmp2(current_block.storage[index_in_block].key, target.key) ||
+              cmp2(target.key, current_block.storage[index_in_block].key))) {
+            GetEle(target, index_in_block, cmp2, vec);
         } else return;
     }
 
@@ -380,6 +410,23 @@ private:
             current_node = son_of_root[index];
         } else ReadNode(current_node, iter);
         FindNode(target, iter, cmp, vec);
+    }
+
+    template<class Compare1, class Compare2>
+    void FindNode(const KeyGroup &target, long &iter,
+                  const Compare1 &cmp1, const Compare2 &cmp2, sjtu::vector<sjtu::pair<Key, Value>> &vec) {
+        int index = BinarySearch(current_node.key, 0, current_node.size - 1, target, cmp1);
+        if (index == -1) index = current_node.size - 1;
+        iter = current_node.key[index].address;
+        //end of recursion
+        if (current_node.son_is_block) {
+            FindFirstEle(target.key, iter, cmp1, cmp2, vec);
+            return;
+        }
+        if (!current_node.node_type) {//is_root
+            current_node = son_of_root[index];
+        } else ReadNode(current_node, iter);
+        FindNode(target, iter, cmp1, cmp2, vec);
     }
 
     void BreakNode(Node &current, Node &father, int index) {

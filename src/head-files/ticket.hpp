@@ -38,6 +38,7 @@ class TicketDetail {
     friend TimeBased;
     friend CostBased;
     friend TicketSystem;
+
 public:
     TicketDetail() = default;
 
@@ -92,8 +93,19 @@ class TicketSystem {
 
     BPlusTree<Ticket, long> fromTicketTree{"from_ticket_tree", "from_ticket_list"};//real BPT
     BPlusTree<Ticket, long> toTicketTree{"to_ticket_tree", "to_ticket_list"};//real BPT
+//    BPlusTree<Ticket, long> timeTicketTree{"time_ticket_tree", "time_ticket_list"};//real BPT
 
     friend TrainSystem;
+
+    struct AddressSet {
+        sjtu::vector<long> from_transfer;
+        sjtu::vector<long> transfer_to;
+    };
+
+    struct Option {
+        std::string from, transfer, to;
+        TicketDetail ticket1, ticket2;
+    };
 
     /*
      * release_train
@@ -125,6 +137,41 @@ class TicketSystem {
                             const Time &date,
                             const int &size, FileManager<Seat> &seatFile);
 
+    void FindTransfer();
+    /*
+     * query_transfer
+     * find the ticket start from 'from'
+     * add transfer station name as key
+     * push address of the ticket into vector(one of the value)
+     */
+    void FindTransfer(const sjtu::vector<sjtu::pair<Ticket, long>> &vec,
+                      sjtu::map<std::string, AddressSet> &map,
+                      const Ticket &ticket);
+
+    /*
+     * query_transfer
+     * find the ticket start to 'to'
+     * check if transfer is possible
+     * TODO
+     * push option into option_vec(not necessary? one need the best option)
+     */
+    void FindTransfer(const sjtu::vector<sjtu::pair<Ticket, long>> &vec,
+                      sjtu::vector<Option> &option_vec,
+                      sjtu::map<std::string, AddressSet> &map,
+                      const Ticket &ticket);
+
+    /*
+     * query_transfer
+     * tickets between from->transfer->to exist
+     * different kinds of ticket can be found
+     * read from address to get TicketDetail
+     * if same Train avoided
+     * only store the valid transfer with the shortest time
+     */
+    void TryTransfer();
+
+    void PrintOption(const Option &option, FileManager<Seat> &seatFile);
+
 public:
     /*
      * release_train
@@ -153,7 +200,9 @@ public:
      * need to transfer
      * return best choice based on time or cost
      */
-    void QueryTransfer(const Parameter &parameter);
+    void QueryTransfer(const Parameter &parameter,
+                       FileManager<TicketDetail> &ticketFile,
+                       FileManager<Seat> &seatFile);
 
 
 };
@@ -178,6 +227,7 @@ void TicketSystem::AddTicket(const Station &from, const Station &to,
                       ticketFile, compareTicket);
     fromTicketTree.Insert(key, ticketFile.GetPreAddress(), compareFrom);
     toTicketTree.Insert(key, ticketFile.GetPreAddress(), compareTo);
+//    timeTicketTree.Insert(key, ticketFile.GetPreAddress(), compareTime);
 }
 
 void TicketSystem::FindTicket(const sjtu::vector<long> &vec, const int &size,
@@ -204,6 +254,18 @@ void TicketSystem::PrintTicket(const sjtu::vector<TicketDetail> &ticket_vec,
                   << to << ' ' << (ticket_vec[i].leaving_time + ticket_vec[i].time) << ' '
                   << ticket_vec[i].price << ' '
                   << seatFile.MinValue(address, 0, ticket_vec[i].station_interval);
+    }
+}
+
+void TicketSystem::FindTransfer(const sjtu::vector<sjtu::pair<Ticket, long>> &vec,
+                                sjtu::map<std::string, AddressSet> &map,
+                                const Ticket &ticket) {
+    //traverse vec to find stations start with 'from'
+    int size = vec.size();
+    for (int i = 0; i < size; ++i) {
+        if (sameFrom(ticket, vec[i].first)) {//possible ticket
+            map[std::string(vec[i].first.to)].from_transfer.push_back(vec[i].second);
+        }
     }
 }
 
@@ -265,6 +327,32 @@ void TicketSystem::QueryTicket(const Parameter &parameter,
     }
     //print
     PrintTicket(ticket_vec, from, to, time, number, seatFile);
+}
+
+void TicketSystem::QueryTransfer(const Parameter &parameter,
+                                 FileManager<TicketDetail> &ticketFile,
+                                 FileManager<Seat> &seatFile) {
+    //check parameter
+    std::string from, to, date, keyword;
+    if (!parameter.GetParameter('s', from) ||
+        !parameter.GetParameter('t', to) ||
+        !parameter.GetParameter('d', date))
+        return;
+    parameter.GetParameter('p', keyword);
+    Time time(date);//requested date
+    bool flag = (keyword == "cost");//true if sort based on cost
+    //find available tickets on given day
+    sjtu::vector<sjtu::pair<Ticket, long>> vec;
+    Ticket ticket(from, to, time, time);
+    //find ticket start from the requested station (possible date)
+    fromTicketTree.Find(ticket, compareFromTicket, isAvailableFrom, vec);
+    sjtu::map<std::string, AddressSet> map;
+    sjtu::vector<Option> option_vec;
+    //TODO
+    FindTransfer(vec, map, ticket);
+    FindTransfer(vec, option_vec, map, ticket);
+    //print the best option
+    PrintOption(option_vec.front(), seatFile);
 }
 
 
