@@ -256,11 +256,11 @@ public:
         }
         //print
         os << 0 << month << '-';
-        if (day < 9)os << 0;
+        if (day <= 9)os << 0;
         os << day << ' ';
-        if (hour < 9)os << 0;
+        if (hour <= 9)os << 0;
         os << hour << ':';
-        if (minute < 9)os << 0;
+        if (minute <= 9)os << 0;
         os << minute;
         return os;
     }
@@ -408,7 +408,7 @@ class Train {
     long station_addr = 0;
     long seat_addr = 0;
     char type = '\0';
-    bool released = false;
+//    bool released = false;
     friend TrainSystem;
     friend TicketSystem;
 public:
@@ -417,7 +417,6 @@ public:
     Train(const int &stationNum_, const Time &start_sale_, const Time &stop_sale_, const char &type_,
           const long &station, const long &seat);
 
-    bool Release();
 };
 
 Train::Train(const int &stationNum_, const Time &start_sale_, const Time &stop_sale_, const char &type_,
@@ -425,11 +424,6 @@ Train::Train(const int &stationNum_, const Time &start_sale_, const Time &stop_s
         stationNum(stationNum_), start_sale(start_sale_), stop_sale(stop_sale_), type(type_),
         station_addr(station), seat_addr(seat) {}
 
-bool Train::Release() {
-    if (released)return false;
-    released = true;
-    return true;
-}
 
 /*
  * Station class

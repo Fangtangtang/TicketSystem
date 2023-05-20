@@ -10,7 +10,7 @@
 template<class Key, class Value>
 class BPlusIndexTree {
 private:
-    static constexpr int node_size = 150;
+    static constexpr int node_size = 100;
     static constexpr int block_size = 1024;
 
     /*

@@ -244,7 +244,7 @@ void TrainSystem::AddStation(const std::string &stations,
                              const std::string &travel_times,
                              const std::string &stop_over_times,
                              const int &station_num,
-                             const Interval &start_time,
+                             const Interval &start_time,//set off at what time that day
                              FileManager<Station> &stationFile) {
     Scanner<std::string> scan_station(stations);
     Scanner<int> scan_price(prices);
@@ -263,7 +263,7 @@ void TrainSystem::AddStation(const std::string &stations,
         scan_travel_time.GetNum(travel_time);
         scan_stop_over_time.GetNum(stop_over_time);
         arriving_time = leaving_time + travel_time;
-        leaving_time += stop_over_time;
+        leaving_time = arriving_time + stop_over_time;
         stationFile.WriteEle(Station(name, sum, arriving_time, leaving_time));
     }
     //the last station
@@ -362,7 +362,7 @@ void TrainSystem::BuyTicket(long address, const long &move_base, const int &star
     address += move_base * sizeof(Seat);
     Seat seat;
     int iter = 0;
-    for (int i = start; i <= end; --i) {
+    for (int i = start; i <= end; ++i) {
         seat = vec[iter];
         seat.num -= number;
         seatFile.WriteEle(address, i, seat);

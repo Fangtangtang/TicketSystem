@@ -236,7 +236,7 @@ class TicketDetail {
     int station_interval = 0;//end-start
     int price = 0;
     int time = 0;
-    Time leaving_time;//leaving time of the train set off on first day
+    Time leaving_time;//leaving time of the train set off on first day(exact time)
     long seat_addr = 0;//start_addr of the first station's seat on start_sale day
 
     friend TimeBased;
@@ -581,7 +581,7 @@ void TicketSystem::PrintTicket(const sjtu::vector<TicketDetail> &ticket_vec,
     long address;
     for (int i = 0; i < size; ++i) {
         std::cout << '\n';
-        int lag = date - ticket_vec[i].leaving_time;
+        int lag = date.Lag(ticket_vec[i].leaving_time);
         address = ticket_vec[i].seat_addr +
                   ticket_vec[i].station_num * (lag) * sizeof(Seat);
         Time leaving = ticket_vec[i].leaving_time.Add(lag, 0);
@@ -636,7 +636,7 @@ void TicketSystem::TryTransfer(sjtu::map<std::string, AddressSet> &map, const Co
                                sjtu::vector<Option> option_vec) {
     Option opt1(100000, 20000000), opt2(100000, 20000000);
     //traverse map
-    for (const auto & iter : map) {
+    for (const auto &iter: map) {
         int size1 = iter.second.from_transfer.size();
         int size2 = iter.second.transfer_to.size();
         for (int ticket1 = 0; ticket1 < size1; ++ticket1) {
@@ -730,8 +730,8 @@ void TicketSystem::ReleaseTrain(const TrainID &trainID,
     sjtu::vector<Station> station_vec;
     stationFile.ReadEle(train.station_addr, train.stationNum, station_vec);
     //add every ticket
-    for (int start = 0; start < train.stationNum; ++start) {
-        for (int end = start + 1; end <= train.stationNum; ++end) {
+    for (int start = 0; start < train.stationNum - 1; ++start) {
+        for (int end = start + 1; end < train.stationNum; ++end) {
             AddTicket(station_vec[start], station_vec[end],
                       train.start_sale, train.stop_sale,
                       trainID, train.stationNum, end - start,
@@ -739,7 +739,6 @@ void TicketSystem::ReleaseTrain(const TrainID &trainID,
                       ticketFile);
         }
     }
-    std::cout << 0;
 }
 
 void TicketSystem::QueryTicket(const Parameter &parameter,

@@ -10,7 +10,7 @@
 template<class Key, class Value>
 class BPlusTree {
 private:
-    static constexpr int node_size = 128;
+    static constexpr int node_size = 100;
     static constexpr int block_size = 1024;
 
     //son: (,key]

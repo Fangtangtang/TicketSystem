@@ -91,7 +91,9 @@ void TokenScanner::ReadKey(char &ch) {
 }
 
 void TokenScanner::NextToken(std::string &str) {
-    while (input[tokenEnd] != ' ') {
+//    std::cout<<"\n===============";
+    while (input[tokenEnd] != ' '&&input[tokenEnd] != '\r') {
+//        std::cout<<input[tokenEnd]<<' ';
         ++tokenEnd;
         if (tokenEnd == length) break;
     }
@@ -201,7 +203,7 @@ void TokenScanner::UpdatePos() {
         return;
     }
     tokenStart = tokenEnd + 1;
-    while (input[tokenStart] == ' ') {
+    while (input[tokenStart] == ' '||input[tokenEnd] == '\r') {
         ++tokenStart;
         if (tokenStart == length) break;
     }
