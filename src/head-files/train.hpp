@@ -153,7 +153,7 @@ class TrainSystem {
      * try to buy ticket
      * return true if in need of waiting
      */
-    bool BuyTicket(const Train &train,
+    static bool BuyTicket(const Train &train,
                    const int &lag,
                    const int &number,
                    const int &start, const int &end, const int &price,
@@ -362,7 +362,7 @@ void TrainSystem::BuyTicket(long address, const long &move_base, const int &star
     address += move_base * sizeof(Seat);
     Seat seat;
     int iter = 0;
-    for (int i = start; i <= end; ++i) {
+    for (int i = start; i < end; ++i) {
         seat = vec[iter];
         seat.num -= number;
         seatFile.WriteEle(address, i, seat);
@@ -389,7 +389,7 @@ bool TrainSystem::BuyTicket(const Train &train, const int &lag, const int &numbe
             return false;
         }
     } else {//buy ticket
-        BuyTicket(train.seat_addr, lag * train.stationNum, start, end, vec, number, seatFile);
+        BuyTicket(train.seat_addr, lag * (train.stationNum - 1), start, end, vec, number, seatFile);
         std::cout << number * price;
         status = success;
         return true;

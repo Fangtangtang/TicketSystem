@@ -478,8 +478,8 @@ class TicketSystem {
      * check if ticket1 and ticket2 can make up a from-transfer-to ticket
      * return option and flag
      */
-    sjtu::pair<Option, bool> CheckTransferTicket(const TicketInf1 &ticket1, const TicketInf2 &ticketInf2,
-                                                 const std::string &transfer);
+    static sjtu::pair<Option, bool> CheckTransferTicket(const TicketInf1 &ticket1, const TicketInf2 &ticketInf2,
+                                                        const std::string &transfer);
 
     /*
      * query_transfer
@@ -582,14 +582,14 @@ void TicketSystem::PrintTicket(const sjtu::vector<TicketDetail> &ticket_vec,
     for (int i = 0; i < size; ++i) {
         std::cout << '\n';
         int lag = date.Lag(ticket_vec[i].leaving_time);
-        address = ticket_vec[i].seat_addr +
-                  ticket_vec[i].station_num * (lag) * sizeof(Seat);
+        address = ticket_vec[i].seat_addr +//addr of first day
+                  (ticket_vec[i].station_num - 1) * (lag) * sizeof(Seat);//move to day
         Time leaving = ticket_vec[i].leaving_time.Add(lag, 0);
         std::cout << ticket_vec[i].trainID << ' '
                   << from << ' ' << leaving << " -> "
                   << to << ' ' << (leaving + ticket_vec[i].time) << ' '
                   << ticket_vec[i].price << ' '
-                  << seatFile.MinValue(address, 0, ticket_vec[i].station_interval);
+                  << seatFile.MinValue(address, 0, ticket_vec[i].station_interval - 1);
     }
 }
 
@@ -735,7 +735,7 @@ void TicketSystem::ReleaseTrain(const TrainID &trainID,
             AddTicket(station_vec[start], station_vec[end],
                       train.start_sale, train.stop_sale,
                       trainID, train.stationNum, end - start,
-                      seatFile.GetAddress(train.seat_addr, end - start),
+                      seatFile.GetAddress(train.seat_addr, start),
                       ticketFile);
         }
     }

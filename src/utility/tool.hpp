@@ -11,6 +11,7 @@
 enum STATUS {
     success, pending, refunded
 };
+
 class TransactionDetail;
 
 class TrainSystem;
@@ -170,9 +171,8 @@ public:
 
     //return added
     //this added
-    Interval operator+(const int &delta) {
-        minutes += delta;
-        return *this;
+    Interval operator+(const int &delta) const {
+        return Interval(minutes + delta);
     }
 
     Interval operator+=(const int &delta) {
@@ -308,7 +308,7 @@ public:
     }
 
     Time Add(const int &day, const int &minute) const {
-        return Time(minutes + day * 1440 + minutes);
+        return Time(minutes + day * 1440 + minute);
     }
 
     int IntervalMinutes(const Time &other) const {

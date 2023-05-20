@@ -36,4 +36,5 @@ add_executable(code
         #my_data/tryParameter.cpp
         my_data/User/try1.cpp
 #        my_data/tryScanner.cpp
-      )
+#        my_data/Ticket/try1.cpp
+        )
