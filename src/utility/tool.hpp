@@ -203,7 +203,11 @@ public:
     explicit Time(const std::string &str) {
         int para1 = (str[0] - '0') * 10 + str[1] - '0';
         int para2 = (str[3] - '0') * 10 + str[4] - '0';
-        if (para1 == 8) para2 += 61;
+        if (para1 < 6 || para1 > 8) {
+            minutes = -1;
+            return;
+        }
+        else if (para1 == 8) para2 += 61;
         else if (para1 == 7) para2 += 30;
         --para2;
         minutes = para2 * 24 * 60;
@@ -263,6 +267,10 @@ public:
         if (minute <= 9)os << 0;
         os << minute;
         return os;
+    }
+
+    bool Check() const {
+        return minutes >= 0;
     }
 
     void PrintInformation(const int &interval) const {
@@ -928,7 +936,7 @@ public:
         os << information.from << ' ' << information.leaving_time;
         os << " -> ";
         os << information.to << ' ' << information.arriving_time << ' ';
-        os << information.price << ' ' << information.num << '\n';
+        os << information.price << ' ' << information.num;
         return os;
     }
 };

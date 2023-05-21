@@ -752,6 +752,10 @@ void TicketSystem::QueryTicket(const Parameter &parameter,
         return;
     parameter.GetParameter('p', keyword);
     Time time(date);//requested date
+    if(!time.Check()) {
+        std::cout<<0;
+        return;
+    }
     bool flag = (keyword == "cost");//true if sort based on cost
     //find ticket from ... to ...
     sjtu::vector<long> vec;
@@ -783,6 +787,10 @@ void TicketSystem::QueryTransfer(const Parameter &parameter,
         return;
     parameter.GetParameter('p', keyword);
     Time time(date);//requested date
+    if(!time.Check()) {
+        std::cout<<0;
+        return;
+    }
     bool flag = (keyword == "cost");//true if sort based on cost
     //find available tickets on given day
     Ticket ticket(from, to, time, time);

@@ -154,12 +154,12 @@ class TrainSystem {
      * return true if in need of waiting
      */
     static bool BuyTicket(const Train &train,
-                   const int &lag,
-                   const int &number,
-                   const int &start, const int &end, const int &price,
-                   const bool &flag,
-                   STATUS &status, long &start_addr, long &end_addr,
-                   FileManager<Seat> &seatFile);
+                          const int &lag,
+                          const int &number,
+                          const int &start, const int &end, const int &price,
+                          const bool &flag,
+                          STATUS &status, long &start_addr, long &end_addr,
+                          FileManager<Seat> &seatFile);
 
 public:
     /*
@@ -377,7 +377,7 @@ bool TrainSystem::BuyTicket(const Train &train, const int &lag, const int &numbe
     //find seat intending to buy
     sjtu::vector<Seat> vec;
     int min_num = number;
-    GetSeat(train.seat_addr, lag * train.stationNum, start, end, start_addr, end_addr, vec, min_num, seatFile);
+    GetSeat(train.seat_addr, lag * (train.stationNum - 1), start, end, start_addr, end_addr, vec, min_num, seatFile);
     //try to buy
     if (min_num < number) {
         if (flag) {//waiting
@@ -480,7 +480,12 @@ void TrainSystem::QueryTrain(const Parameter &parameter,
         std::cout << -1;
         return;
     }
-    if (PrintTrainInformation(vec.front(), trainID, Time(date), trainFile, stationFile, seatFile))return;
+    Time time(date);
+    if(!time.Check()) {
+        std::cout<<-1;
+        return;
+    }
+    if (PrintTrainInformation(vec.front(), trainID, time, trainFile, stationFile, seatFile))return;
     std::cout << -1;
 }
 
@@ -528,6 +533,10 @@ void TrainSystem::BuyTicket(const Parameter &parameter,
     trainFile.ReadEle(vec.front(), train);
     //check date
     Time date_(date);
+    if(!date_.Check()){
+        std::cout<<-1;
+        return;
+    }
     Interval leaving_time, arriving_time;
     int start, end;
     int price = GetStationIndex(from, to, start, end, leaving_time, arriving_time,
@@ -545,7 +554,7 @@ void TrainSystem::BuyTicket(const Parameter &parameter,
     //time lag between the leaving and date
     int lag = date_.Lag(leaving);
     leaving.AddDay(lag);
-    Time arriving = train.stop_sale + arriving_time;
+    Time arriving = train.start_sale + arriving_time;
     arriving.AddDay(lag);
     //really need to enqueue or not
     STATUS status;

@@ -145,14 +145,14 @@ public:
         ValueType min_value, value;
         r_w_file.seekg(start_addr + start * value_size);
         r_w_file.read(reinterpret_cast<char *> (&min_value), value_size);
-//        std::cout<<"====\n"<<min_value<<' ';
+//        std::cout<<"\n====\n"<<min_value<<' ';
         for (int i = start + 1; i <= end; ++i) {
             r_w_file.seekg(start_addr + i * value_size);
             r_w_file.read(reinterpret_cast<char *> (&value), value_size);
 //            std::cout<<value<<' ';
             min_value = std::min(min_value, value);
         }
-//        std::cout<<"====\n";
+//        std::cout<<"\n====\n";
         return min_value;
     }
 
