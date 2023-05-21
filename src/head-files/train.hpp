@@ -293,8 +293,8 @@ bool TrainSystem::PrintTrainInformation(const long &train_addr,
     std::cout << trainID << ' ' << train.type;
     Station station;
     Seat seat;
-    long station_address = train.station_addr, seat_address =
-            train.seat_addr + (train.stationNum - 1) * date.Lag(train.start_sale);
+    long station_address = train.station_addr,
+            seat_address = train.seat_addr + (train.stationNum - 1) * date.Lag(train.start_sale) * SEAT_SIZE;
 //    int price_sum = 0;
     //first station
     std::cout << '\n';
@@ -347,20 +347,20 @@ void TrainSystem::GetSeat(const long &address, const long &move_base, const int 
                           sjtu::vector<Seat> &vec, int &min_num,
                           FileManager<Seat> &seatFile) {
     Seat seat;
-    start_addr = address + move_base * sizeof(Seat);
+    start_addr = address + move_base * SEAT_SIZE;
     for (int i = start; i < end; ++i) {
         seatFile.ReadEle(start_addr, i, seat);
         min_num = std::min(min_num, seat.num);
         vec.push_back(seat);
     }
-    start_addr += start * sizeof(Seat);
+    start_addr += start * SEAT_SIZE;
     end_addr = seatFile.GetPreAddress();
 }
 
 void TrainSystem::BuyTicket(long address, const long &move_base, const int &start, const int &end,
                             const sjtu::vector<Seat> &vec,
                             const int &number, FileManager<Seat> &seatFile) {
-    address += move_base * sizeof(Seat);
+    address += move_base * SEAT_SIZE;
     Seat seat;
     int iter = 0;
     for (int i = start; i < end; ++i) {

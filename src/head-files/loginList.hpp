@@ -73,7 +73,7 @@ public:
      */
     int Logout(const Parameter &parameter);
 
-
+    void Clear();
 };
 
 short LoginList::CheckLoggedIn(const Parameter &parameter) {
@@ -101,6 +101,10 @@ int LoginList::Logout(const Parameter &parameter) {
     if (iter == loginList.end()) return -1;
     loginList.erase(iter);
     return 0;
+}
+
+void LoginList::Clear() {
+    loginList.clear();
 }
 
 #endif //TICKETSYSTEM_LOGINLIST_HPP

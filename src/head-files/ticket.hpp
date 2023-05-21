@@ -583,7 +583,7 @@ void TicketSystem::PrintTicket(const sjtu::vector<TicketDetail> &ticket_vec,
         std::cout << '\n';
         int lag = date.Lag(ticket_vec[i].leaving_time);
         address = ticket_vec[i].seat_addr +//addr of first day
-                  (ticket_vec[i].station_num - 1) * (lag) * sizeof(Seat);//move to day
+                  (ticket_vec[i].station_num - 1) * (lag) * SEAT_SIZE;//move to day
         Time leaving = ticket_vec[i].leaving_time.Add(lag, 0);
         std::cout << ticket_vec[i].trainID << ' '
                   << from << ' ' << leaving << " -> "
@@ -693,7 +693,7 @@ void TicketSystem::PrintOption(const sjtu::vector<Option> &option_vec, const Com
     //print best_opt
     int lag = date - best_opt.ticketDetail1.leaving_time;
     int address = best_opt.ticketDetail1.seat_addr +
-                  best_opt.ticketDetail1.station_num * (lag) * sizeof(Seat);
+                  best_opt.ticketDetail1.station_num * (lag) * SEAT_SIZE;
     Time leaving = best_opt.ticketDetail1.leaving_time.Add(lag, 0);
     std::cout << best_opt.ticketDetail1.trainID << ' '
               << from << ' ' << leaving << " -> "
@@ -705,7 +705,7 @@ void TicketSystem::PrintOption(const sjtu::vector<Option> &option_vec, const Com
     leaving = leaving + (best_opt.time - best_opt.ticketDetail2.time);
     lag = leaving - best_opt.ticketDetail2.leaving_time;
     address = best_opt.ticketDetail2.seat_addr +
-              best_opt.ticketDetail2.station_num * (lag) * sizeof(Seat);
+              best_opt.ticketDetail2.station_num * (lag) * SEAT_SIZE;
     std::cout << best_opt.ticketDetail2.trainID << ' '
               << best_opt.transfer << ' ' << leaving << " -> "
               << to << ' ' << (leaving + best_opt.ticketDetail2.time) << ' '

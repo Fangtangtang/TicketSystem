@@ -496,7 +496,7 @@ public:
     friend std::ostream &operator<<(std::ostream &os, const Seat &information);
 
 };
-
+const int SEAT_SIZE=sizeof (Seat);
 bool Seat::operator<(const Seat &a) const {
     return num < a.num;
 }
