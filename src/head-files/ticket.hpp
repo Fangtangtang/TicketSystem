@@ -252,6 +252,8 @@ public:
                  const Time &leaving_time_,
                  const long &seat_addr_);
 
+    friend std::ostream &operator<<(std::ostream &os, const TicketDetail &information);
+
 };
 
 TicketDetail::TicketDetail(const TrainID &trainID_,
@@ -263,6 +265,14 @@ TicketDetail::TicketDetail(const TrainID &trainID_,
         trainID(trainID_), station_num(station_num_), station_interval(station_interval_), price(price_), time(time_),
         leaving_time(leaving_time_),
         seat_addr(seat_addr_) {}
+
+std::ostream &operator<<(std::ostream &os, const TicketDetail &information) {
+    os<<'\n';
+    os<<information.trainID<<'\n';
+    os<<information.time<<' '<<information.price
+    <<' '<<information.leaving_time<<' '<<information.station_interval<<'\n';
+
+}
 
 class OptionTicket;
 
@@ -373,7 +383,7 @@ class TicketSystem {
     friend TrainSystem;
 
     struct TicketInf1 {
-        int cost;
+        int cost = 0;
         Time leaving_time;
         Time arriving_time;
         long ticket_addr = 0;
@@ -388,7 +398,7 @@ class TicketSystem {
     };
 
     struct TicketInf2 {
-        int cost;
+        int cost = 0;
         Time start_sale;
         Time stop_sale;
         int travel_time = 0;
@@ -599,7 +609,7 @@ void TicketSystem::FindTransferFrom(sjtu::map<std::string, AddressSet> &map, con
     fromTicketTree.Find(transfer_ticket, compareFromTicket, isAvailableFrom, vec);
     int size = vec.size();
     for (int i = 0; i < size; ++i) {
-        Time time = ticket.start_sale.Add(ticket.start_sale.Lag(vec[i].first.start_sale), 0);
+        Time time = vec[i].first.start_sale.Add(ticket.start_sale.Lag(vec[i].first.start_sale), 0);
         map[std::string(vec[i].first.to)].from_transfer.push_back(
                 TicketInf1(vec[i].first.cost, time, time + vec[i].first.travel_time, vec[i].second));
     }
@@ -625,7 +635,7 @@ TicketSystem::CheckTransferTicket(const TicketSystem::TicketInf1 &ticket1, const
                                   const std::string &transfer) {
     //the last ticket2 set off before ticket1 arrive
     if (compareExactTime(ticket2.stop_sale, ticket1.arriving_time))return sjtu::pair<Option, bool>(Option(), false);
-    Time arriving_time = ticket2.start_sale.Add(ticket2.start_sale.Lag(ticket1.arriving_time), ticket2.travel_time);
+    Time arriving_time = ticket2.start_sale.Add(ticket1.arriving_time.TimeLag(ticket2.start_sale), ticket2.travel_time);
     Option ans(ticket1.leaving_time.IntervalMinutes(arriving_time), ticket1.cost + ticket2.cost, transfer,
                ticket1.ticket_addr, ticket2.ticket_addr);
     return sjtu::pair<Option, bool>(ans, true);
@@ -701,11 +711,10 @@ void TicketSystem::PrintOption(const sjtu::vector<Option> &option_vec, const Com
               << best_opt.ticketDetail1.price << ' '
               << seatFile.MinValue(address, 0, best_opt.ticketDetail1.station_interval);
     std::cout << '\n';
-    (leaving + (best_opt.time - best_opt.ticketDetail2.time));
     leaving = leaving + (best_opt.time - best_opt.ticketDetail2.time);
-    lag = leaving - best_opt.ticketDetail2.leaving_time;
+    lag = leaving.Lag(best_opt.ticketDetail2.leaving_time);
     address = best_opt.ticketDetail2.seat_addr +
-              best_opt.ticketDetail2.station_num * (lag) * SEAT_SIZE;
+              (best_opt.ticketDetail2.station_num - 1) * (lag) * SEAT_SIZE;
     std::cout << best_opt.ticketDetail2.trainID << ' '
               << best_opt.transfer << ' ' << leaving << " -> "
               << to << ' ' << (leaving + best_opt.ticketDetail2.time) << ' '

@@ -248,7 +248,10 @@ public:
         day = hour / 24;
         hour %= 24;
         ++day;
-        if (day > 61) {
+        if (day > 92) {
+            month = 9;
+            day -= 92;
+        } else if (day > 61) {
             month = 8;
             day -= 61;
         } else {
@@ -303,6 +306,15 @@ public:
     int Lag(const Time &other) const {
         return minutes > other.minutes ? (minutes / 1440 - other.minutes / 1440)
                                        : (other.minutes / 1440 - minutes / 1440);
+    }
+
+    int TimeLag(const Time &other) const {
+        if (minutes >= other.minutes) {
+            if (minutes % 1440 >= other.minutes % 1440)return (minutes / 1440 - other.minutes / 1440);
+            return (minutes / 1440 - other.minutes / 1440) + 1;
+        } else {
+            return 0;
+        }
     }
 
     //time in day
@@ -581,6 +593,9 @@ public:
     Ticket(const std::string &from_, const std::string &to_, const Time &start_sale_, const Time &stop_sale_);
 
     bool operator<(const Ticket &a) const;
+
+    friend std::ostream &operator<<(std::ostream &os, const Ticket &information);
+
 };
 
 
@@ -618,6 +633,12 @@ bool Ticket::operator<(const Ticket &a) const {
     if (!(stop_sale == a.stop_sale)) return stop_sale < a.stop_sale;
     return start_sale < a.start_sale;
 
+}
+
+std::ostream &operator<<(std::ostream &os, const Ticket &information) {
+    os<<'\n';
+    os<<information.from<<' '<<information.to<<'\n';
+    os<<information.start_sale<<' '<<information.stop_sale<<'\n';
 }
 
 /*
