@@ -32,6 +32,7 @@ class TransactionSystem {
      * and rollback
      */
     static void RefundTicket(const TransactionDetail &transactionDetail,
+                             const int &space, const Waiting &waiting,
                              FileManager<Seat> &seatFile, WaitingList &waitingList,
                              FileManager<WaitingOrder> &waitingListFile,
                              FileManager<TransactionDetail> &transactionFile);
@@ -78,21 +79,19 @@ public:
  * ------------------------------------------------------------------------------------
  */
 void TransactionSystem::RefundTicket(const TransactionDetail &transactionDetail,
+                                     const int &space, const Waiting &waiting,
                                      FileManager<Seat> &seatFile, WaitingList &waitingList,
                                      FileManager<WaitingOrder> &waitingListFile,
                                      FileManager<TransactionDetail> &transactionFile) {
     Seat min_number(100000);
     Seat seat_num;
-    int space = transactionDetail.end_seat - transactionDetail.start_seat;
     for (int i = 0; i < space; ++i) {
         seatFile.ReadEle(transactionDetail.seat_address, i, seat_num);
         seat_num += transactionDetail.num;
         seatFile.WriteEle(transactionDetail.seat_address, i, seat_num);
         if (seat_num < min_number) min_number = seat_num;
     }
-    waitingList.Rollback(transactionDetail.seat_address,
-                         seatFile.GetAddress(transactionDetail.seat_address, space),
-                         min_number, waitingListFile, seatFile, transactionFile);
+    waitingList.Rollback(waiting, min_number, waitingListFile, seatFile, transactionFile);
 }
 
 /*
@@ -151,18 +150,23 @@ int TransactionSystem::RefundTicket(const Parameter &parameter, LoginList &login
     //check login
     Username user(username);
     if (loginList.CheckLoggedIn(user) < 0)return -1;
-    sjtu::vector<long> vec;
+    sjtu::vector<sjtu::pair<Transaction, long>> vec;
     transactionTree.Find(Transaction(user, 0), compareTransWeak, vec);
     if (num > vec.size()) return -1;
     TransactionDetail transactionDetail;
-    transactionFile.ReadEle(vec[vec.size() - num], transactionDetail);
+    transactionFile.ReadEle(vec[vec.size() - num].second, transactionDetail);
     if (transactionDetail.status == refunded) return -1;
     else {
+        int space = transactionDetail.end_seat - transactionDetail.start_seat;
+        Waiting waiting(transactionDetail.seat_address,
+                        seatFile.GetAddress(transactionDetail.seat_address, space),
+                        vec[vec.size() - num].first.timestamp);
         if (transactionDetail.status == success) {//success
-            RefundTicket(transactionDetail, seatFile, waitingList, waitingListFile, transactionFile);
+            RefundTicket(transactionDetail, space, waiting, seatFile, waitingList, waitingListFile, transactionFile);
         }
+        waitingList.RemoveFromWaitingList(waiting);
         transactionDetail.status = refunded;
-        transactionFile.WriteEle(vec[vec.size() - num], transactionDetail);
+        transactionFile.WriteEle(vec[vec.size() - num].second, transactionDetail);
         return 0;
     }
 }

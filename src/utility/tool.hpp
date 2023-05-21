@@ -839,6 +839,7 @@ class Transaction {
     int timestamp = 0;
     friend CompareTransStrict;
     friend CompareTransWeak;
+    friend TransactionSystem;
 public:
     Transaction() = default;
 

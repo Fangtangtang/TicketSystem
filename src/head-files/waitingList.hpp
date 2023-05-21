@@ -19,7 +19,9 @@
  */
 class CompareWaiting;
 
-class CompareWaitingList;
+class CompareStart;
+
+class CompareEnd;
 
 class CompareTimestamp;
 
@@ -31,7 +33,8 @@ class Waiting {
     int timestamp = 0;
 
     friend CompareWaiting;
-    friend CompareWaitingList;
+    friend CompareStart;
+    friend CompareEnd;
     friend CompareTimestamp;
     friend IsToBeModified;
     friend WaitingList;
@@ -42,12 +45,21 @@ public:
                                                                              end_seat_addr(end_addr), timestamp(time) {}
 
     bool operator<(const Waiting &other) const;
+
+    bool operator==(const Waiting &other) const;
+
 };
 
 bool Waiting::operator<(const Waiting &other) const {
-    if (end_seat_addr != other.end_seat_addr) return end_seat_addr < other.end_seat_addr;
     if (start_seat_addr != other.start_seat_addr) return start_seat_addr < other.start_seat_addr;
+    if (end_seat_addr != other.end_seat_addr) return end_seat_addr < other.end_seat_addr;
     return timestamp < other.timestamp;
+}
+
+bool Waiting::operator==(const Waiting &other) const {
+    if (start_seat_addr != other.start_seat_addr) return false;
+    if (end_seat_addr != other.end_seat_addr) return false;
+    return timestamp == other.timestamp;
 }
 
 /*
@@ -56,7 +68,7 @@ bool Waiting::operator<(const Waiting &other) const {
  * CompareWaiting:
  *     used to insert
  *
- * CompareWaitingList:
+ * CompareStart:
  *     used to find
  */
 struct CompareWaiting {
@@ -64,22 +76,32 @@ struct CompareWaiting {
 };
 
 bool CompareWaiting::operator()(const Waiting &a, const Waiting &b) const {
-    if (a.end_seat_addr != b.end_seat_addr) return a.end_seat_addr < b.end_seat_addr;
     if (a.start_seat_addr != b.start_seat_addr) return a.start_seat_addr < b.start_seat_addr;
+    if (a.end_seat_addr != b.end_seat_addr) return a.end_seat_addr < b.end_seat_addr;
     return a.timestamp < b.timestamp;
 }
 
 const CompareWaiting compareWaiting;
 
-struct CompareWaitingList {
+struct CompareStart {
     bool operator()(const Waiting &a, const Waiting &b) const;
 };
 
-bool CompareWaitingList::operator()(const Waiting &a, const Waiting &b) const {
-    return a.end_seat_addr < b.end_seat_addr;
+bool CompareStart::operator()(const Waiting &a, const Waiting &b) const {
+    return a.start_seat_addr < b.start_seat_addr;
 }
 
-const CompareWaitingList compareWaitingList;
+const CompareStart compareStart;
+
+struct CompareEnd {
+    bool operator()(const Waiting &a, const Waiting &b) const;
+};
+
+bool CompareEnd::operator()(const Waiting &a, const Waiting &b) const {
+    return a.end_seat_addr <= b.start_seat_addr;
+}
+
+const CompareEnd compareEnd;
 
 struct CompareTimestamp {
     bool operator()(const Waiting &a, const Waiting &b) const;
@@ -139,11 +161,11 @@ public:
 class WaitingList {
     BPlusIndexTree<Waiting, WaitingOrder> waitingListTree{"waiting_list_tree"};
 
-    static void RollBack(const sjtu::pair<Waiting, long> &pair,
-                         sjtu::vector<Seat> &seat_vec, Seat &min_seat, long &addr,
-                         long &start_addr,
-                         FileManager<WaitingOrder> &waitingListFile, FileManager<Seat> &seatFile,
-                         FileManager<TransactionDetail> &transactionFile);
+    void RollBack(const sjtu::pair<Waiting, long> &pair,
+                  sjtu::vector<Seat> &seat_vec, Seat &min_seat, long &addr,
+                  long &start_addr,
+                  FileManager<WaitingOrder> &waitingListFile, FileManager<Seat> &seatFile,
+                  FileManager<TransactionDetail> &transactionFile);
 
 public:
     /*
@@ -163,10 +185,12 @@ public:
      * traverse the vec to rollback
      * if transaction refunded or rollback, delete from tree
      */
-    void Rollback(const long &start_seat_addr, const long &end_seat_addr,
+    void Rollback(const Waiting &waiting,
                   Seat &minimal_num, FileManager<WaitingOrder> &waitingListFile,
                   FileManager<Seat> &seatFile,
                   FileManager<TransactionDetail> &transactionFile);
+
+    void RemoveFromWaitingList(const Waiting &waiting);
 };
 
 /*
@@ -209,6 +233,7 @@ void WaitingList::RollBack(const sjtu::pair<Waiting, long> &pair,
     transactionFile.ReadEle(waitingOrder.transaction_addr, transactionDetail);
     transactionDetail.ModifyStatus(success);
     transactionFile.WriteEle(waitingOrder.transaction_addr, transactionDetail);
+//    RemoveFromWaitingList(pair.first);
     min_seat -= waitingOrder.num;
 }
 
@@ -225,27 +250,33 @@ void WaitingList::StartWaiting(const TrainID &trainId, const int &from, const in
                            WaitingOrder(from, to, num, transaction_addr), waitingListFile, compareWaiting);
 }
 
-void WaitingList::Rollback(const long &start_seat_addr, const long &end_seat_addr,
+void WaitingList::Rollback(const Waiting &waiting,
                            Seat &minimal_num,
                            FileManager<WaitingOrder> &waitingListFile,
                            FileManager<Seat> &seatFile,
                            FileManager<TransactionDetail> &transactionFile) {
     sjtu::vector<sjtu::pair<Waiting, long>> vec;
-    waitingListTree.Find(Waiting(start_seat_addr, end_seat_addr, 0), compareWaitingList, isToBeModified, vec);
+    waitingListTree.Find(waiting, compareStart, compareEnd, vec);
     sjtu::Sort(vec, 0, vec.size() - 1, compareTimestamp);//sort based on timestamp
     //read all the seat information into a vector
     sjtu::vector<Seat> seat_vec;
     //traverse vec
     long addr, start_addr;
     for (auto &i: vec) {
-        RollBack(i, seat_vec, minimal_num, addr, start_addr, waitingListFile, seatFile, transactionFile);
-        if (minimal_num.num == 0) break;
+        if (isToBeModified(i.first, waiting)) {
+            RollBack(i, seat_vec, minimal_num, addr, start_addr, waitingListFile, seatFile, transactionFile);
+            if (minimal_num.num == 0) break;
+        }
     }
     //modify seat file
     for (auto &i: seat_vec) {
         seatFile.WriteEle(start_addr, i);
         start_addr += SEAT_SIZE;
     }
+}
+
+void WaitingList::RemoveFromWaitingList(const Waiting &waiting) {
+    waitingListTree.Delete(waiting);
 }
 
 
