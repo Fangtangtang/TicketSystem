@@ -88,7 +88,7 @@ void TransactionSystem::RefundTicket(const TransactionDetail &transactionDetail,
         seatFile.ReadEle(transactionDetail.seat_address, i, seat_num);
         seat_num += transactionDetail.num;
         seatFile.WriteEle(transactionDetail.seat_address, i, seat_num);
-        if (min_number < seat_num) min_number = seat_num;
+        if (seat_num < min_number) min_number = seat_num;
     }
     waitingList.Rollback(transactionDetail.seat_address,
                          seatFile.GetAddress(transactionDetail.seat_address, space),

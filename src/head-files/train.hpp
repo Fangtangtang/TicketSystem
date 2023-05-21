@@ -132,8 +132,8 @@ class TrainSystem {
      * return vector and min seat_num
      * if the same day, day == 0 -> move_base==0
      */
-    static void GetSeat(const long &address, const long &move_base, const int &start, const int &end,
-                        long &start_addr, long &end_addr,
+    static void GetSeat(const int &station_interval,//end-start
+                        const long &start_addr, long &end_addr,
                         sjtu::vector<Seat> &vec, int &min_num,
                         FileManager<Seat> &seatFile);
 
@@ -142,9 +142,9 @@ class TrainSystem {
      * in seatFile
      * buy ticket from station A to B on given date
      */
-    static void BuyTicket(long address, const long &move_base, const int &start, const int &end,
-                          const sjtu::vector<Seat> &vec, const int &number,
-                          FileManager<Seat> &seatFile);
+    static void BuyTicket(const int &station_interval, const long &start_addr,
+                          const sjtu::vector<Seat> &vec,
+                          const int &number, FileManager<Seat> &seatFile);
 
     /*
      * buy_ticket
@@ -342,32 +342,27 @@ int TrainSystem::GetStationIndex(char *from, char *to,
     return price;
 }
 
-void TrainSystem::GetSeat(const long &address, const long &move_base, const int &start, const int &end,
-                          long &start_addr, long &end_addr,
+void TrainSystem::GetSeat(const int &station_interval,//end-start
+                          const long &start_addr, long &end_addr,
                           sjtu::vector<Seat> &vec, int &min_num,
                           FileManager<Seat> &seatFile) {
     Seat seat;
-    start_addr = address + move_base * SEAT_SIZE;
-    for (int i = start; i < end; ++i) {
+    for (int i = 0; i < station_interval; ++i) {
         seatFile.ReadEle(start_addr, i, seat);
         min_num = std::min(min_num, seat.num);
         vec.push_back(seat);
     }
-    start_addr += start * SEAT_SIZE;
-    end_addr = seatFile.GetPreAddress();
+    end_addr = start_addr + station_interval * SEAT_SIZE;
 }
 
-void TrainSystem::BuyTicket(long address, const long &move_base, const int &start, const int &end,
+void TrainSystem::BuyTicket(const int &station_interval, const long &start_addr,
                             const sjtu::vector<Seat> &vec,
                             const int &number, FileManager<Seat> &seatFile) {
-    address += move_base * SEAT_SIZE;
     Seat seat;
-    int iter = 0;
-    for (int i = start; i < end; ++i) {
-        seat = vec[iter];
+    for (int i = 0; i < station_interval; ++i) {
+        seat = vec[i];
         seat.num -= number;
-        seatFile.WriteEle(address, i, seat);
-        ++iter;
+        seatFile.WriteEle(start_addr, i, seat);
     }
 }
 
@@ -378,7 +373,8 @@ bool TrainSystem::BuyTicket(const Train &train, const int &lag, const int &numbe
     //find seat intending to buy
     sjtu::vector<Seat> vec;
     int min_num = number;
-    GetSeat(train.seat_addr, lag * (train.stationNum - 1), start, end, start_addr, end_addr, vec, min_num, seatFile);
+    start_addr = train.seat_addr + (start + lag * (train.stationNum - 1)) * SEAT_SIZE;
+    GetSeat(end - start, start_addr, end_addr, vec, min_num, seatFile);
     //try to buy
     if (min_num < number) {
         if (flag) {//waiting
@@ -390,7 +386,7 @@ bool TrainSystem::BuyTicket(const Train &train, const int &lag, const int &numbe
             return false;
         }
     } else {//buy ticket
-        BuyTicket(train.seat_addr, lag * (train.stationNum - 1), start, end, vec, number, seatFile);
+        BuyTicket(end - start, start_addr, vec, number, seatFile);
         std::cout << number * price;
         status = success;
         return true;

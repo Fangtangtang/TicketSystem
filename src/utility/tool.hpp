@@ -206,8 +206,7 @@ public:
         if (para1 < 6 || para1 > 8) {
             minutes = -1;
             return;
-        }
-        else if (para1 == 8) para2 += 61;
+        } else if (para1 == 8) para2 += 61;
         else if (para1 == 7) para2 += 30;
         --para2;
         minutes = para2 * 24 * 60;
@@ -496,7 +495,9 @@ public:
     friend std::ostream &operator<<(std::ostream &os, const Seat &information);
 
 };
-const int SEAT_SIZE=sizeof (Seat);
+
+const int SEAT_SIZE = sizeof(Seat);
+
 bool Seat::operator<(const Seat &a) const {
     return num < a.num;
 }

@@ -141,6 +141,7 @@ class WaitingList {
 
     static void RollBack(const sjtu::pair<Waiting, long> &pair,
                          sjtu::vector<Seat> &seat_vec, Seat &min_seat, long &addr,
+                         long &start_addr,
                          FileManager<WaitingOrder> &waitingListFile, FileManager<Seat> &seatFile,
                          FileManager<TransactionDetail> &transactionFile);
 
@@ -174,6 +175,7 @@ public:
  */
 void WaitingList::RollBack(const sjtu::pair<Waiting, long> &pair,
                            sjtu::vector<Seat> &seat_vec, Seat &min_seat, long &addr,
+                           long &start_addr,
                            FileManager<WaitingOrder> &waitingListFile, FileManager<Seat> &seatFile,
                            FileManager<TransactionDetail> &transactionFile) {
     WaitingOrder waitingOrder;
@@ -181,24 +183,26 @@ void WaitingList::RollBack(const sjtu::pair<Waiting, long> &pair,
     if (min_seat.num < waitingOrder.num)return;//exceed
     Seat seat;
     if (seat_vec.empty()) {
-        addr = seatFile.GetAddress(pair.first.end_seat_addr, -waitingOrder.from);
-        for (int i = 0; i <= waitingOrder.to; ++i) {
-            seatFile.ReadEle(addr, i, seat);
+        addr = seatFile.GetAddress(pair.first.start_seat_addr, -waitingOrder.from);
+        start_addr = addr;
+        for (int i = 0; i < waitingOrder.to; ++i) {
+            seatFile.ReadEle(addr, seat);
             seat_vec.push_back(seat);
+            addr += SEAT_SIZE;
         }
     }
     while (addr <= pair.first.end_seat_addr) {
-        addr = seatFile.GetAddress(addr, 1);
         seatFile.ReadEle(addr, seat);
         seat_vec.push_back(seat);
+        addr += SEAT_SIZE;
     }
-    seat = seat_vec[waitingOrder.to];
-    for (int i = waitingOrder.from; i < waitingOrder.to; ++i) {
+    seat = seat_vec[waitingOrder.to - 1];
+    for (int i = waitingOrder.from; i < waitingOrder.to - 1; ++i) {
         seat = seat_vec[i] < seat ? seat_vec[i] : seat;
         if (seat.num < waitingOrder.num)return;
     }
     //succeed, modify seat and transaction status
-    for (int i = waitingOrder.from; i <= waitingOrder.to; ++i) {
+    for (int i = waitingOrder.from; i < waitingOrder.to; ++i) {
         seat_vec[i] -= waitingOrder.num;
     }
     TransactionDetail transactionDetail;
@@ -232,10 +236,15 @@ void WaitingList::Rollback(const long &start_seat_addr, const long &end_seat_add
     //read all the seat information into a vector
     sjtu::vector<Seat> seat_vec;
     //traverse vec
-    long addr;
+    long addr, start_addr;
     for (auto &i: vec) {
-        RollBack(i, seat_vec, minimal_num, addr, waitingListFile, seatFile, transactionFile);
+        RollBack(i, seat_vec, minimal_num, addr, start_addr, waitingListFile, seatFile, transactionFile);
         if (minimal_num.num == 0) break;
+    }
+    //modify seat file
+    for (auto &i: seat_vec) {
+        seatFile.WriteEle(start_addr, i);
+        start_addr += SEAT_SIZE;
     }
 }
 

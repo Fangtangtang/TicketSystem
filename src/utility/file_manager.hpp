@@ -164,7 +164,19 @@ public:
             r_w_file.read(reinterpret_cast<char *> (&valueType), value_size);
             std::cout << valueType << ' ';
         }
-        std::cout<<'\n';
+        std::cout << '\n';
+    }
+
+    void Print(long addr, const int num) {
+        std::cout << "\n ## \n";
+        for (int i = 0; i < num; ++i) {
+            ValueType valueType;
+            r_w_file.seekg(addr);
+            r_w_file.read(reinterpret_cast<char *> (&valueType), value_size);
+            std::cout << valueType << ' ';
+            addr += value_size;
+        }
+        std::cout << '\n';
     }
 
     void Check() {
