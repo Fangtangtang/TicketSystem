@@ -636,9 +636,9 @@ bool Ticket::operator<(const Ticket &a) const {
 }
 
 std::ostream &operator<<(std::ostream &os, const Ticket &information) {
-    os<<'\n';
-    os<<information.from<<' '<<information.to<<'\n';
-    os<<information.start_sale<<' '<<information.stop_sale<<'\n';
+    os << '\n';
+    os << information.from << ' ' << information.to << '\n';
+    os << information.start_sale << ' ' << information.stop_sale << '\n';
 }
 
 /*
@@ -761,47 +761,10 @@ struct CompareTicketStopSale {
 bool CompareTicketStopSale::operator()(const Ticket &a, const Ticket &b) const {
     int cmp = strcmp(a.from, b.from);
     if (cmp) return cmp < 0;
-    cmp = strcmp(a.to, b.to);
-    if (cmp) return cmp < 0;
-    return a.stop_sale < b.stop_sale;
+    return strcmp(a.to, b.to) < 0;
 }
 
 const CompareTicketStopSale compareTicketStopSale;
-
-//struct CompareFromTicket {
-//    bool operator()(const Ticket &a, const Ticket &b) const;
-//};
-//
-//bool CompareFromTicket::operator()(const Ticket &a, const Ticket &b) const {
-//    int cmp = strcmp(a.from, b.from);
-//    if (cmp) return cmp < 0;
-//    return a.stop_sale < b.stop_sale;
-//}
-//
-//const CompareFromTicket compareFromTicket;
-//
-
-//struct CompareToTicket {
-//    bool operator()(const Ticket &a, const Ticket &b) const;
-//};
-//
-//bool CompareToTicket::operator()(const Ticket &a, const Ticket &b) const {
-//    int cmp = strcmp(a.to, b.to);
-//    if (cmp) return cmp < 0;
-//    return a.stop_sale < b.stop_sale;
-//}
-//
-//const CompareToTicket compareToTicket;
-//
-//struct CompareTimeTicket {
-//    bool operator()(const Ticket &a, const Ticket &b) const;
-//};
-//
-//bool CompareTimeTicket::operator()(const Ticket &a, const Ticket &b) const {
-//    return a.stop_sale < b.stop_sale;
-//}
-//
-//const CompareTimeTicket compareTimeTicket;
 
 struct IsAvailableTicket {
     bool operator()(const Ticket &a, const Ticket &b) const;
@@ -809,8 +772,7 @@ struct IsAvailableTicket {
 
 //a:target
 bool IsAvailableTicket::operator()(const Ticket &a, const Ticket &b) const {
-    if (strcmp(a.from, b.from)) return false;
-    if (strcmp(a.to, b.to)) return false;
+    if (b.stop_sale < a.start_sale)return false;
     if (a.stop_sale < b.start_sale) return false;
     return true;
 }

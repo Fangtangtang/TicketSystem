@@ -267,10 +267,10 @@ TicketDetail::TicketDetail(const TrainID &trainID_,
         seat_addr(seat_addr_) {}
 
 std::ostream &operator<<(std::ostream &os, const TicketDetail &information) {
-    os<<'\n';
-    os<<information.trainID<<'\n';
-    os<<information.time<<' '<<information.price
-    <<' '<<information.leaving_time<<' '<<information.station_interval<<'\n';
+    os << '\n';
+    os << information.trainID << '\n';
+    os << information.time << ' ' << information.price
+       << ' ' << information.leaving_time << ' ' << information.station_interval << '\n';
 
 }
 
@@ -435,7 +435,7 @@ class TicketSystem {
      * query_ticket\query_transfer
      * read from file
      */
-    static void FindTicket(const sjtu::vector<long> &vec, const int &size,
+    static void FindTicket(const Ticket &ticket, const sjtu::vector<sjtu::pair<Ticket, long>> &vec,
                            FileManager<TicketDetail> &ticketFile,
                            sjtu::vector<TicketDetail> &tickets);
 
@@ -574,13 +574,16 @@ void TicketSystem::AddTicket(const Station &from, const Station &to,
 //    timeTicketTree.Insert(key, ticketFile.GetPreAddress(), compareTime);
 }
 
-void TicketSystem::FindTicket(const sjtu::vector<long> &vec, const int &size,
+void TicketSystem::FindTicket(const Ticket &ticket, const sjtu::vector<sjtu::pair<Ticket, long>> &vec,
                               FileManager<TicketDetail> &ticketFile,
                               sjtu::vector<TicketDetail> &tickets) {
     TicketDetail ticketDetail;
+    int size = vec.size();
     for (int i = 0; i < size; ++i) {
-        ticketFile.ReadEle(vec[i], ticketDetail);
-        tickets.push_back(ticketDetail);
+        if (isAvailableTicket(vec[i].first, ticket)) {
+            ticketFile.ReadEle(vec[i].second, ticketDetail);
+            tickets.push_back(ticketDetail);
+        }
     }
 }
 
@@ -767,13 +770,13 @@ void TicketSystem::QueryTicket(const Parameter &parameter,
     }
     bool flag = (keyword == "cost");//true if sort based on cost
     //find ticket from ... to ...
-    sjtu::vector<long> vec;
-    ticketTree.Find(Ticket(from, to, time, time),
-                    compareTicketStopSale, isAvailableTicket,
-                    vec);
+    sjtu::vector<sjtu::pair<Ticket, long>> vec;
+    Ticket ticket(from, to, time, time);
+    ticketTree.Find(ticket,
+                    compareTicketStopSale, vec);
     sjtu::vector<TicketDetail> ticket_vec;
-    int number = vec.size();
-    FindTicket(vec, number, ticketFile, ticket_vec);
+    FindTicket(ticket, vec, ticketFile, ticket_vec);
+    int number = ticket_vec.size();
     std::cout << number;
     //sort
     if (flag) {//sort based on cost
