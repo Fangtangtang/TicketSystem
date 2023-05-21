@@ -7,7 +7,7 @@ cmake_install.cmake
 ./code
 schedule.md
 intro.md
-data/
+testcases/
 my_data/
 ./src/head-files/ticket.cpp
 ./src/head-files/releasedTrain.hpp
@@ -16,3 +16,5 @@ clear.sh
 CLEAN.sh
 *_info*
 *_tree
+run-test
+code

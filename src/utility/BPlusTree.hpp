@@ -346,8 +346,7 @@ private:
     void GetEle(const ValueType &target, int index_in_block,
                 const Compare &cmp, sjtu::vector<sjtu::pair<Key, Value>> &vec) {
         while (index_in_block < current_block.size &&
-               !(cmp(current_block.storage[index_in_block].key, target.key) ||
-                 cmp(target.key, current_block.storage[index_in_block].key))) {
+               cmp(current_block.storage[index_in_block].key, target.key)) {
             vec.push_back(sjtu::pair<Key, Value>(current_block.storage[index_in_block].key,
                                                  current_block.storage[index_in_block].value));
             ++index_in_block;
@@ -384,8 +383,7 @@ private:
             ReadBlock(current_block, current_block.next_block_address);
             index_in_block = BinarySearch(current_block.storage, 0, current_block.size - 1, target, cmp1);
         }
-        if (!(cmp2(current_block.storage[index_in_block].key, target.key) ||
-              cmp2(target.key, current_block.storage[index_in_block].key))) {
+        if (cmp2(current_block.storage[index_in_block].key, target.key)) {
             GetEle(target, index_in_block, cmp2, vec);
         } else return;
     }

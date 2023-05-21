@@ -193,8 +193,8 @@ struct IsAvailableFrom {
 //a:target
 bool IsAvailableFrom::operator()(const TransferTicket &a, const TransferTicket &b) const {
     if (strcmp(a.from, b.from)) return false;
-    if (a.stop_sale < b.start_sale) return false;
-    return true;
+//    if (a.stop_sale < b.start_sale) return false;
+    return !compareExactTime(a.stop_sale, b.start_sale);
 }
 
 const IsAvailableFrom isAvailableFrom;
@@ -206,8 +206,7 @@ struct IsAvailableTo {
 //a:target
 bool IsAvailableTo::operator()(const TransferTicket &a, const TransferTicket &b) const {
     if (strcmp(a.to, b.to)) return false;
-    if (b.stop_sale < a.stop_sale) return false;
-    return true;
+    return !compareExactTime(a.stop_sale, b.start_sale);
 }
 
 const IsAvailableTo isAvailableTo;
@@ -492,7 +491,8 @@ class TicketSystem {
      *     more with same time and cost
      */
     template<class Compare>
-    void TryTransfer(sjtu::map<std::string, AddressSet> &map, const Compare &cmp, sjtu::vector<Option> option_vec);
+    void TryTransfer(sjtu::map<std::string, AddressSet> &map, const Compare &cmp,
+                     sjtu::vector<Option> &option_vec);
 
     /*
      * check if the "best" is valid
@@ -612,7 +612,7 @@ void TicketSystem::FindTransferTo(sjtu::map<std::string, AddressSet> &map, const
     int size = vec.size();
     for (int i = 0; i < size; ++i) {
         try {
-            map.at(std::string(vec[i].first.to)).transfer_to.push_back(
+            map.at(std::string(vec[i].first.from)).transfer_to.push_back(
                     TicketInf2(vec[i].first.cost, vec[i].first.start_sale, vec[i].first.stop_sale,
                                vec[i].first.travel_time, vec[i].second)
             );
@@ -633,7 +633,7 @@ TicketSystem::CheckTransferTicket(const TicketSystem::TicketInf1 &ticket1, const
 
 template<class Compare>
 void TicketSystem::TryTransfer(sjtu::map<std::string, AddressSet> &map, const Compare &cmp,
-                               sjtu::vector<Option> option_vec) {
+                               sjtu::vector<Option> &option_vec) {
     Option opt1(100000, 20000000), opt2(100000, 20000000);
     //traverse map
     for (const auto &iter: map) {
@@ -752,8 +752,8 @@ void TicketSystem::QueryTicket(const Parameter &parameter,
         return;
     parameter.GetParameter('p', keyword);
     Time time(date);//requested date
-    if(!time.Check()) {
-        std::cout<<0;
+    if (!time.Check()) {
+        std::cout << 0;
         return;
     }
     bool flag = (keyword == "cost");//true if sort based on cost
@@ -787,8 +787,8 @@ void TicketSystem::QueryTransfer(const Parameter &parameter,
         return;
     parameter.GetParameter('p', keyword);
     Time time(date);//requested date
-    if(!time.Check()) {
-        std::cout<<0;
+    if (!time.Check()) {
+        std::cout << 0;
         return;
     }
     bool flag = (keyword == "cost");//true if sort based on cost
