@@ -293,7 +293,8 @@ bool TrainSystem::PrintTrainInformation(const long &train_addr,
     std::cout << trainID << ' ' << train.type;
     Station station;
     Seat seat;
-    long station_address = train.station_addr, seat_address = train.seat_addr;
+    long station_address = train.station_addr, seat_address =
+            train.seat_addr + (train.stationNum - 1) * date.Lag(train.start_sale);
 //    int price_sum = 0;
     //first station
     std::cout << '\n';
@@ -347,7 +348,7 @@ void TrainSystem::GetSeat(const long &address, const long &move_base, const int 
                           FileManager<Seat> &seatFile) {
     Seat seat;
     start_addr = address + move_base * sizeof(Seat);
-    for (int i = start; i <= end; ++i) {
+    for (int i = start; i < end; ++i) {
         seatFile.ReadEle(start_addr, i, seat);
         min_num = std::min(min_num, seat.num);
         vec.push_back(seat);
@@ -481,8 +482,8 @@ void TrainSystem::QueryTrain(const Parameter &parameter,
         return;
     }
     Time time(date);
-    if(!time.Check()) {
-        std::cout<<-1;
+    if (!time.Check()) {
+        std::cout << -1;
         return;
     }
     if (PrintTrainInformation(vec.front(), trainID, time, trainFile, stationFile, seatFile))return;
@@ -533,8 +534,8 @@ void TrainSystem::BuyTicket(const Parameter &parameter,
     trainFile.ReadEle(vec.front(), train);
     //check date
     Time date_(date);
-    if(!date_.Check()){
-        std::cout<<-1;
+    if (!date_.Check()) {
+        std::cout << -1;
         return;
     }
     Interval leaving_time, arriving_time;
