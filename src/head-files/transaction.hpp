@@ -158,8 +158,8 @@ int TransactionSystem::RefundTicket(const Parameter &parameter, LoginList &login
     int space = transactionDetail.end_seat - transactionDetail.start_seat;
     Waiting waiting(transactionDetail.seat_address - SEAT_SIZE * transactionDetail.start_seat,
                     vec[vec.size() - num].first.timestamp);
-    std::cout<<"\nCHECK";
-    waitingList.Check();
+//    std::cout<<"\nCHECK";
+//    waitingList.Check();
     if (transactionDetail.status == refunded) {
         waitingList.RemoveFromWaitingList(waiting);
         return -1;

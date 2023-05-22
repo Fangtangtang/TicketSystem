@@ -991,10 +991,10 @@ private:
     bool RemoveInBlock(const Key &key, long &iter, bool &adjust_flag) {
         ReadBlock(current_block, iter);
         print_block = current_block;
-        if (sizeof(Key) == 16 && sizeof(Value) == 24) {
-            std::cout << "\n##################\n";
-            PrintEle();
-        }
+//        if (sizeof(Key) == 16 && sizeof(Value) == 24) {
+//            std::cout << "\n##################\n";
+//            PrintEle();
+//        }
         EleGroup target(key);
         int index_in_block = BinarySearch(current_block.storage, 0, current_block.size - 1, target);
         if (current_block.storage[index_in_block].key == key) {//the ele to be removed

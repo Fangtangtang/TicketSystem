@@ -238,6 +238,7 @@ public:
 
     template<class Compare>
     void Find(const Key &key, const Compare &cmp, sjtu::vector<Value> &vec) {
+        if(!root_node.size) return;
         current_node = root_node;//start from root
         long iter;
         KeyGroup target(key);
@@ -246,6 +247,7 @@ public:
 
     template<class Compare1, class Compare2>
     void Find(const Key &key, const Compare1 &cmp1, const Compare2 &cmp2, sjtu::vector<sjtu::pair<Key, Value>> &vec) {
+        if(!root_node.size) return;
         current_node = root_node;//start from root
         long iter;
         KeyGroup target(key);
@@ -253,6 +255,7 @@ public:
     }
 
     void Find(const Key &key) {
+        if(!root_node.size) return;
         current_node = root_node;//start from root
         long iter;
         KeyGroup target(key);
