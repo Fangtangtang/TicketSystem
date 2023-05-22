@@ -46,6 +46,11 @@ public:
     bool operator<(const Username &other) const;
 
     bool operator==(const Username &other) const;
+
+    friend std::ostream &operator<<(std::ostream &os, const Username &information) {
+        os << information.username << ' ';
+    }
+
 };
 
 Username::Username(char *username_) {
@@ -846,6 +851,11 @@ public:
     Transaction(Username username_, int timestamp_);
 
     friend bool operator<(const Transaction &a, const Transaction &b);
+
+    friend std::ostream &operator<<(std::ostream &os, const Transaction &information) {
+        os << information.username << ' ' << information.timestamp << '\n';
+    }
+
 };
 
 Transaction::Transaction(Username username_, int timestamp_) : username(username_), timestamp(timestamp_) {}

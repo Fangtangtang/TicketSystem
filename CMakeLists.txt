@@ -37,4 +37,23 @@ add_executable(code
         my_data/User/try1.cpp
 #        my_data/tryScanner.cpp
 #        my_data/Ticket/try1.cpp
+#        my_data/trySort.cpp
         )
+
+
+#set(test_prefix "${PROJECT_SOURCE_DIR}/testcases")
+#file(GLOB tests RELATIVE "${test_prefix}" testcases/*)
+#
+#foreach (test-name IN ITEMS ${tests})
+#    if (NOT IS_DIRECTORY "${test_prefix}/${test-name}")
+#        continue()
+#    endif ()
+#    add_test(NAME "${test-name}"
+#            COMMAND bash ../run-test.sh "${test_prefix}" "${test-name}" "$<TARGET_FILE:code>"
+#            WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/run
+##            TIMEOUT 30
+#            )
+#    set_tests_properties("${test-name}" PROPERTIES TIMEOUT 30)
+#endforeach ()
+#
+#enable_testing()

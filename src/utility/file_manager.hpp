@@ -158,12 +158,12 @@ public:
 
     void Print() {
         std::cout << Num << " ## ";
-        for (int i = 0; i < Num; ++i) {
-            ValueType valueType;
-            r_w_file.seekg(i * value_size);
-            r_w_file.read(reinterpret_cast<char *> (&valueType), value_size);
-            std::cout << valueType << ' ';
-        }
+//        for (int i = 0; i < Num; ++i) {
+//            ValueType valueType;
+//            r_w_file.seekg(i * value_size);
+//            r_w_file.read(reinterpret_cast<char *> (&valueType), value_size);
+//            std::cout << valueType << ' ';
+//        }
         std::cout << '\n';
     }
 

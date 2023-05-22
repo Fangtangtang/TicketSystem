@@ -155,18 +155,32 @@ int TransactionSystem::RefundTicket(const Parameter &parameter, LoginList &login
     if (num > vec.size()) return -1;
     TransactionDetail transactionDetail;
     transactionFile.ReadEle(vec[vec.size() - num].second, transactionDetail);
-    if (transactionDetail.status == refunded) return -1;
-    else {
-        int space = transactionDetail.end_seat - transactionDetail.start_seat;
-        Waiting waiting(seatFile.GetAddress(transactionDetail.seat_address, -transactionDetail.start_seat),
-                        transactionDetail.seat_address,
-                        seatFile.GetAddress(transactionDetail.seat_address, space),
-                        vec[vec.size() - num].first.timestamp);
+    int space = transactionDetail.end_seat - transactionDetail.start_seat;
+    Waiting waiting(transactionDetail.seat_address - SEAT_SIZE * transactionDetail.start_seat,
+                    vec[vec.size() - num].first.timestamp);
+    std::cout<<"\nCHECK";
+    waitingList.Check();
+    if (transactionDetail.status == refunded) {
+        waitingList.RemoveFromWaitingList(waiting);
+        return -1;
+    } else {
+//        int space = transactionDetail.end_seat - transactionDetail.start_seat;
+//        Waiting waiting(transactionDetail.seat_address - SEAT_SIZE * transactionDetail.start_seat,
+//                        vec[vec.size() - num].first.timestamp);
+//        std::cout << "!!!!!!" << parameter.GetTimestamp() << ' '
+//                  << transactionDetail.seat_address - SEAT_SIZE * transactionDetail.start_seat << '\n';
         if (transactionDetail.status == success) {//success
+//            std::cout<<"\nCHECK";
+//            waitingList.Check();
             RefundTicket(transactionDetail, space, waiting, seatFile, waitingList, waitingListFile, transactionFile);
+//            std::cout<<"\nCHECK";
+//            waitingList.Check();
         }
         waitingList.RemoveFromWaitingList(waiting);
+//        std::cout<<"\nCHECK";
+//        waitingList.Check();
         transactionDetail.status = refunded;
+//        std::cout << "\n####" << transactionDetail.trainID << ' ' << transactionDetail << '\n';
         transactionFile.WriteEle(vec[vec.size() - num].second, transactionDetail);
         return 0;
     }

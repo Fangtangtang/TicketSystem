@@ -18,3 +18,5 @@ CLEAN.sh
 *_tree
 run-test
 code
+run-test.sh
+run/

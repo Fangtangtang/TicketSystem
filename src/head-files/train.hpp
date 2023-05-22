@@ -43,6 +43,11 @@ public:
 
     friend bool operator==(const TrainIndex &a, const TrainIndex &b);
 
+    friend std::ostream &operator<<(std::ostream &os, const TrainIndex &information) {
+        os << information.ID << ' ';
+        return os;
+    }
+
 };
 
 
@@ -569,8 +574,9 @@ void TrainSystem::BuyTicket(const Parameter &parameter,
                                                              transactionFile);
     //enqueue
     if (status == pending) {
-        waitingList.StartWaiting(ID, start, end, number, parameter.GetTimestamp(),
-                                 start_addr, end_addr, train_on_day, transaction_addr, waitingListFile);
+//        std::cout<<"^^^^"<<parameter.GetTimestamp()<<' '<<train_on_day<<'\n';
+        waitingList.StartWaiting(start, end, number, parameter.GetTimestamp(), train_on_day, transaction_addr,
+                                 waitingListFile);
     }
 }
 

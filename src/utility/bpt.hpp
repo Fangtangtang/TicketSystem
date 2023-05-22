@@ -4,6 +4,7 @@
 #include <fstream>
 #include <iostream>
 #include <string>
+#include <queue>
 #include "vector.hpp"
 #include "file_manager.hpp"
 
@@ -37,6 +38,10 @@ private:
             return key;
         }
 
+        friend std::ostream &operator<<(std::ostream &os, const EleGroup &block) {
+            os << block.key << ' ';
+            return os;
+        }
     };
 
     struct Node {
@@ -57,6 +62,7 @@ private:
             key[1] = keyGroup2;
         }
 
+
     };
 
     //all the blocks are linked like a linkList
@@ -73,6 +79,14 @@ private:
             storage[0].address = addr;
         }
 
+        friend std::ostream &operator<<(std::ostream &os, const Block &block) {
+//            os << "BLOCK " << block.size << '\n';
+            for (int i = 0; i < block.size; ++i) {
+                os << block.storage[i] << '\n';
+            }
+            os << '\n';
+            return os;
+        }
     };
 
     /*
@@ -89,7 +103,8 @@ private:
     Node son_of_root[node_size];//son of root_node
 
     Node current_node;
-    Block current_block;
+    Block current_block, print_block;
+    int print_index;
 
     //associated with file when construct the tree
     std::fstream r_w_tree;
@@ -137,6 +152,69 @@ public:
             for (int i = 0; i < num; ++i) {
                 WriteNode(son_of_root[i], root_node.key[i].address);
             }
+        }
+    }
+
+    void PrintBlock(std::queue<Block> block_queue) {
+        Block first_block = block_queue.front();
+//        std::cout << "PRINT BLOCK AS LEAF\n";
+//        while (!block_queue.empty()) {
+//            current_block = block_queue.front();
+//            block_queue.pop();
+//            std::cout << current_block;
+//        }
+        std::cout << "PRINT BLOCK AS LIST\n";
+        while (true) {
+            std::cout << first_block;
+            if (first_block.next_block_address > 0) {
+                ReadBlock(first_block, first_block.next_block_address);
+            } else break;
+        }
+    }
+
+    void Print() {
+        //write root_node
+        WriteNode(root_node, root);
+        if (!root_node.son_is_block) {
+            int num = root_node.size;
+            for (int i = 0; i < num; ++i) {
+                WriteNode(son_of_root[i], root_node.key[i].address);
+            }
+        }
+        std::queue<Node> print_queue;
+        std::queue<Block> block_queue;
+        Node print_node, son;
+        Block son_block;
+        print_queue.push(root_node);
+        while (!print_queue.empty()) {
+            print_node = print_queue.front();
+            print_queue.pop();
+//            std::cout << print_node;
+            if (print_node.son_is_block) {
+                for (int i = 0; i < print_node.size; ++i) {
+                    ReadBlock(son_block, print_node.key[i].address);
+                    block_queue.push(son_block);
+                }
+            } else
+                for (int i = 0; i < print_node.size; ++i) {
+                    ReadNode(son, print_node.key[i].address);
+                    print_queue.push(son);
+                }
+        }
+        PrintBlock(block_queue);
+    }
+
+    void PrintEle() {
+        print_index = 0;
+        while (print_index < print_block.size) {
+            std::cout << print_block.storage[print_index].key;
+            ++print_index;
+        }
+        if (print_index == print_block.size && print_block.next_block_address > 0) {
+            long iter = print_block.next_block_address;
+            ReadBlock(print_block, iter);
+            print_index = 0;
+            PrintEle();
         }
     }
 
@@ -211,6 +289,7 @@ public:
     //based on cmp
     template<class Compare>
     void Find(const Key &key, const Compare &cmp, sjtu::vector<long> &vec) {
+        if (!root_node.size) return;
         current_node = root_node;//start from root
         long iter;
         EleGroup target(key);
@@ -219,14 +298,23 @@ public:
 
     template<class Compare>
     void Find(const Key &key, const Compare &cmp, sjtu::vector<sjtu::pair<Key, long>> &vec) {
+//        if(sizeof(Key)==16) {
+//            std::cout<<"\n##################\n";
+//            Print();
+//        }
+        if (!root_node.size) return;
+
+//        if (!r_w_tree.good()) std::cout << "11!!!!!!!!!!!!!!!!!!!!!!!";
         current_node = root_node;//start from root
         long iter;
         EleGroup target(key);
         FindNode(target, iter, cmp, vec);
+//        if (!r_w_tree.good()) std::cout << "22!!!!!!!!!!!!!!!!!!!!!!!";
     }
 
     //based on <
     long Find(const Key &key, long &block_addr, int &ele_index) {
+        if (!root_node.size) return -1;
         current_node = root_node;//start from root
         EleGroup target(key);
         return FindNode(target, block_addr, ele_index);
@@ -237,6 +325,7 @@ public:
     //2: used to find ==
     template<class Compare1, class Compare2>
     void Find(const Key &key, const Compare1 &cmp1, const Compare2 &cmp2, sjtu::vector<long> &vec) {
+        if(!root_node.size) return;
         current_node = root_node;//start from root
         long iter;
         EleGroup target(key);
@@ -245,6 +334,7 @@ public:
 
     template<class Compare1, class Compare2>
     void Find(const Key &key, const Compare1 &cmp1, const Compare2 &cmp2, sjtu::vector<sjtu::pair<Key, long>> &vec) {
+        if(!root_node.size) return;
         current_node = root_node;//start from root
         long iter;
         EleGroup target(key);
@@ -254,6 +344,10 @@ public:
     void RewriteKey(const Key &key, const long &block_addr, const int &ele_index) {
         current_block.storage[ele_index].key = key;
         WriteBlock(current_block, block_addr);
+    }
+
+    void Check() {
+        if (!r_w_tree.good()) std::cout << "!!!!!!!!!!!!!!!!!!!!!!!";
     }
 
 private:
@@ -326,6 +420,11 @@ private:
     template<class Compare>
     void GetEle(const EleGroup &target, int index_in_block, const Compare &cmp,
                 sjtu::vector<sjtu::pair<Key, long>> &vec) {
+//        if (sizeof(Key) == 16) {
+//            std::cout << "\n##################\n";
+//            PrintEle();
+//        }
+//        if (!r_w_tree.good()) std::cout << "88!!!!!!!!!!!!!!!!!!!!!!!";
         while (index_in_block < current_block.size &&
                !(cmp(current_block.storage[index_in_block].key, target.key) ||
                  cmp(target.key, current_block.storage[index_in_block].key))) {
@@ -333,11 +432,13 @@ private:
                                                 current_block.storage[index_in_block].address));
             ++index_in_block;
         }
+//        if (!r_w_tree.good()) std::cout << "99!!!!!!!!!!!!!!!!!!!!!!!";
         if (index_in_block == current_block.size && current_block.next_block_address > 0) {
             long iter = current_block.next_block_address;
             ReadBlock(current_block, iter);
             GetEle(target, 0, cmp, vec);
         }
+//        if (!r_w_tree.good()) std::cout << "00!!!!!!!!!!!!!!!!!!!!!!!";
     }
 
     template<class Compare>
@@ -387,6 +488,12 @@ private:
     template<class Compare>
     void FindFirstEle(const EleGroup &target, long &iter, const Compare &cmp,
                       sjtu::vector<sjtu::pair<Key, long>> &vec) {
+//        if (sizeof(Key) == 16) {
+//            std::cout << "\n##################\n";
+//            PrintEle();
+//        }
+//        if (!r_w_tree.good()) std::cout << "77!!!!!!!!!!!!!!!!!!!!!!!";
+
         ReadBlock(current_block, iter);
         int index_in_block = BinarySearch(current_block.storage, 0, current_block.size - 1, target, cmp);
         while (index_in_block == -1 && current_block.next_block_address != -1) {
@@ -394,11 +501,19 @@ private:
             index_in_block = BinarySearch(current_block.storage, 0, current_block.size - 1, target, cmp);
         }
         if (index_in_block == -1)return;
+//        if(sizeof(Key)==16) {
+//            std::cout<<"\n##################\n";
+//            PrintEle();
+//        }
         if (!(cmp(current_block.storage[index_in_block].key, target.key) ||
               cmp(target.key, current_block.storage[index_in_block].key))) {
-            //print from current, along the linked blocks
+            print_block = current_block;
+            print_index = index_in_block;
             GetEle(target, index_in_block, cmp, vec);
-        } else return;
+//            std::cout << '\n';
+//            if (!r_w_tree.good())
+//                std::cout << "000!!!!!!!!!!!!!!!!!!!!!!!";
+        }
     }
 
     long FindFirstEle(const EleGroup &target, long &block_addr, int &ele_index) {
@@ -471,12 +586,15 @@ private:
 
     template<class Compare>
     void FindNode(const EleGroup &target, long &iter, const Compare &cmp, sjtu::vector<sjtu::pair<Key, long>> &vec) {
+//       PrintEle();
+//        if (!r_w_tree.good()) std::cout << "33!!!!!!!!!!!!!!!!!!!!!!!";
         int index = BinarySearch(current_node.key, 0, current_node.size - 1, target, cmp);
         if (index == -1) index = current_node.size - 1;
         iter = current_node.key[index].address;
         //end of recursion
         if (current_node.son_is_block) {
             FindFirstEle(target, iter, cmp, vec);
+//            if (!r_w_tree.good()) std::cout << "44!!!!!!!!!!!!!!!!!!!!!!!";
             return;
         }
         if (!current_node.node_type) {//is_root
@@ -872,6 +990,11 @@ private:
 
     bool RemoveInBlock(const Key &key, long &iter, bool &adjust_flag) {
         ReadBlock(current_block, iter);
+        print_block = current_block;
+        if (sizeof(Key) == 16 && sizeof(Value) == 24) {
+            std::cout << "\n##################\n";
+            PrintEle();
+        }
         EleGroup target(key);
         int index_in_block = BinarySearch(current_block.storage, 0, current_block.size - 1, target);
         if (current_block.storage[index_in_block].key == key) {//the ele to be removed
