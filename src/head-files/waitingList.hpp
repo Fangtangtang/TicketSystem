@@ -19,30 +19,29 @@
  */
 class CompareWaiting;
 
-class CompareStart;
-
-class CompareEnd;
+class CompareWaitingList;
 
 class CompareTimestamp;
 
 class IsToBeModified;
 
 class Waiting {
-    long start_seat_addr = -1;
-    long end_seat_addr = -1;
+    long train_on_day = -1;//addr of first seat, unique for train released that day
+    long start_seat_addr = -1;//addr of the first seat
+    long end_seat_addr = -1;//addr of the last seat
     int timestamp = 0;
 
     friend CompareWaiting;
-    friend CompareStart;
-    friend CompareEnd;
+    friend CompareWaitingList;
     friend CompareTimestamp;
     friend IsToBeModified;
     friend WaitingList;
 public:
     Waiting() = default;
 
-    Waiting(const long &start_addr, const long &end_addr, const int &time) : start_seat_addr(start_addr),
-                                                                             end_seat_addr(end_addr), timestamp(time) {}
+    Waiting(const long &train_on_day, const long &start_addr,
+            const long &end_addr, const int &time) : train_on_day(train_on_day), start_seat_addr(start_addr),
+                                                     end_seat_addr(end_addr), timestamp(time) {}
 
     bool operator<(const Waiting &other) const;
 
@@ -51,12 +50,12 @@ public:
 };
 
 bool Waiting::operator<(const Waiting &other) const {
-    if (start_seat_addr != other.start_seat_addr) return start_seat_addr < other.start_seat_addr;
-    if (end_seat_addr != other.end_seat_addr) return end_seat_addr < other.end_seat_addr;
+    if (train_on_day != other.train_on_day) return train_on_day < other.train_on_day;
     return timestamp < other.timestamp;
 }
 
 bool Waiting::operator==(const Waiting &other) const {
+    if (train_on_day != other.train_on_day) return false;
     if (start_seat_addr != other.start_seat_addr) return false;
     if (end_seat_addr != other.end_seat_addr) return false;
     return timestamp == other.timestamp;
@@ -67,41 +66,27 @@ bool Waiting::operator==(const Waiting &other) const {
  * ----------------------------------
  * CompareWaiting:
  *     used to insert
- *
- * CompareStart:
- *     used to find
  */
 struct CompareWaiting {
     bool operator()(const Waiting &a, const Waiting &b) const;
 };
 
 bool CompareWaiting::operator()(const Waiting &a, const Waiting &b) const {
-    if (a.start_seat_addr != b.start_seat_addr) return a.start_seat_addr < b.start_seat_addr;
-    if (a.end_seat_addr != b.end_seat_addr) return a.end_seat_addr < b.end_seat_addr;
+    if (a.train_on_day != b.train_on_day)return a.train_on_day < b.train_on_day;
     return a.timestamp < b.timestamp;
 }
 
 const CompareWaiting compareWaiting;
 
-struct CompareStart {
+struct CompareWaitingList {
     bool operator()(const Waiting &a, const Waiting &b) const;
 };
 
-bool CompareStart::operator()(const Waiting &a, const Waiting &b) const {
-    return a.start_seat_addr < b.start_seat_addr;
+bool CompareWaitingList::operator()(const Waiting &a, const Waiting &b) const {
+    return a.train_on_day < b.train_on_day;
 }
 
-const CompareStart compareStart;
-
-struct CompareEnd {
-    bool operator()(const Waiting &a, const Waiting &b) const;
-};
-
-bool CompareEnd::operator()(const Waiting &a, const Waiting &b) const {
-    return a.end_seat_addr <= b.start_seat_addr;
-}
-
-const CompareEnd compareEnd;
+const CompareWaitingList compareWaitingList;
 
 struct CompareTimestamp {
     bool operator()(const Waiting &a, const Waiting &b) const;
@@ -162,8 +147,7 @@ class WaitingList {
     BPlusIndexTree<Waiting, WaitingOrder> waitingListTree{"waiting_list_tree"};
 
     void RollBack(const sjtu::pair<Waiting, long> &pair,
-                  sjtu::vector<Seat> &seat_vec, Seat &min_seat, long &addr,
-                  long &start_addr,
+                  sjtu::vector<Seat> &seat_vec, Seat &min_seat, long &addr, int &num,
                   FileManager<WaitingOrder> &waitingListFile, FileManager<Seat> &seatFile,
                   FileManager<TransactionDetail> &transactionFile);
 
@@ -175,6 +159,7 @@ public:
      */
     void StartWaiting(const TrainID &trainId, const int &from, const int &to, const int &num,
                       const int &timestamp, const long &start_seat_addr, const long &end_seat_addr,
+                      const long &train_on_day,
                       const long &transaction_addr, FileManager<WaitingOrder> &waitingListFile);
 
     /*
@@ -198,8 +183,7 @@ public:
  * -----------------------------------------------------------------------------------------------------------------------------------------------------------------
  */
 void WaitingList::RollBack(const sjtu::pair<Waiting, long> &pair,
-                           sjtu::vector<Seat> &seat_vec, Seat &min_seat, long &addr,
-                           long &start_addr,
+                           sjtu::vector<Seat> &seat_vec, Seat &min_seat, long &addr, int &num,
                            FileManager<WaitingOrder> &waitingListFile, FileManager<Seat> &seatFile,
                            FileManager<TransactionDetail> &transactionFile) {
     WaitingOrder waitingOrder;
@@ -207,20 +191,22 @@ void WaitingList::RollBack(const sjtu::pair<Waiting, long> &pair,
     if (min_seat.num < waitingOrder.num)return;//exceed
     Seat seat;
     if (seat_vec.empty()) {
-        addr = seatFile.GetAddress(pair.first.start_seat_addr, -waitingOrder.from);
-        start_addr = addr;
+        addr = pair.first.train_on_day;
         for (int i = 0; i < waitingOrder.to; ++i) {
             seatFile.ReadEle(addr, seat);
             seat_vec.push_back(seat);
             addr += SEAT_SIZE;
         }
-    }
-    while (addr <= pair.first.end_seat_addr) {
+        num = waitingOrder.to;
+    }//TODO
+    while (num < waitingOrder.to) {
         seatFile.ReadEle(addr, seat);
         seat_vec.push_back(seat);
         addr += SEAT_SIZE;
+        ++num;
     }
     seat = seat_vec[waitingOrder.to - 1];
+    if (seat.num < waitingOrder.num)return;
     for (int i = waitingOrder.from; i < waitingOrder.to - 1; ++i) {
         seat = seat_vec[i] < seat ? seat_vec[i] : seat;
         if (seat.num < waitingOrder.num)return;
@@ -243,10 +229,10 @@ void WaitingList::RollBack(const sjtu::pair<Waiting, long> &pair,
  */
 void WaitingList::StartWaiting(const TrainID &trainId, const int &from, const int &to,
                                const int &num, const int &timestamp,
-                               const long &start_seat_addr, const long &end_seat_addr,
+                               const long &start_seat_addr, const long &end_seat_addr, const long &train_on_day,
                                const long &transaction_addr,
                                FileManager<WaitingOrder> &waitingListFile) {
-    waitingListTree.Insert(Waiting(start_seat_addr, end_seat_addr, timestamp),
+    waitingListTree.Insert(Waiting(train_on_day, start_seat_addr, end_seat_addr, timestamp),
                            WaitingOrder(from, to, num, transaction_addr), waitingListFile, compareWaiting);
 }
 
@@ -256,17 +242,18 @@ void WaitingList::Rollback(const Waiting &waiting,
                            FileManager<Seat> &seatFile,
                            FileManager<TransactionDetail> &transactionFile) {
     sjtu::vector<sjtu::pair<Waiting, long>> vec;
-    waitingListTree.Find(waiting, compareStart, compareEnd, vec);
+    waitingListTree.Find(waiting, compareWaitingList, vec);
     sjtu::Sort(vec, 0, vec.size() - 1, compareTimestamp);//sort based on timestamp
     //read all the seat information into a vector
     sjtu::vector<Seat> seat_vec;
     //traverse vec
-    long addr, start_addr;
+    long addr, start_addr = waiting.train_on_day;
+    int num = 0;
     for (auto &i: vec) {
-        if (isToBeModified(i.first, waiting)) {
-            RollBack(i, seat_vec, minimal_num, addr, start_addr, waitingListFile, seatFile, transactionFile);
-            if (minimal_num.num == 0) break;
-        }
+//        if (isToBeModified(waiting, i.first)) {
+        RollBack(i, seat_vec, minimal_num, addr, num, waitingListFile, seatFile, transactionFile);
+        if (minimal_num.num == 0) break;
+//        }
     }
     //modify seat file
     for (auto &i: seat_vec) {

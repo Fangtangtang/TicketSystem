@@ -158,7 +158,8 @@ int TransactionSystem::RefundTicket(const Parameter &parameter, LoginList &login
     if (transactionDetail.status == refunded) return -1;
     else {
         int space = transactionDetail.end_seat - transactionDetail.start_seat;
-        Waiting waiting(transactionDetail.seat_address,
+        Waiting waiting(seatFile.GetAddress(transactionDetail.seat_address, -transactionDetail.start_seat),
+                        transactionDetail.seat_address,
                         seatFile.GetAddress(transactionDetail.seat_address, space),
                         vec[vec.size() - num].first.timestamp);
         if (transactionDetail.status == success) {//success

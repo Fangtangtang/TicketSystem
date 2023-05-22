@@ -875,7 +875,7 @@ const CompareTransStrict compareTransStrict;
 
 /*
  * used in "index_based" find
- * use username as index
+ * use username as indexd
  */
 struct CompareTransWeak {
     bool operator()(const Transaction &a, const Transaction &b) const {
