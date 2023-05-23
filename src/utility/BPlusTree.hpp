@@ -4,6 +4,7 @@
 #include <fstream>
 #include <iostream>
 #include <string>
+#include <queue>
 #include "vector.hpp"
 #include "pair.hpp"
 
@@ -89,6 +90,13 @@ private:
             storage[0].value = value;
         }
 
+        friend std::ostream &operator<<(std::ostream &os, const Block &block) {
+            for (int i = 0; i < block.size; ++i) {
+                os << block.storage[i].key << '\n';
+            }
+            os << '\n';
+            return os;
+        }
     };
 
     /*
@@ -112,6 +120,48 @@ private:
     std::fstream r_w_list;
 
 public:
+    void PrintBlock(std::queue<Block> block_queue) {
+        Block first_block = block_queue.front();
+        std::cout << "PRINT BLOCK AS LIST\n";
+        while (true) {
+            std::cout << first_block;
+            if (first_block.next_block_address > 0) {
+                ReadBlock(first_block, first_block.next_block_address);
+            } else break;
+        }
+    }
+
+    void Print() {
+        //write root_node
+        WriteNode(root_node, root);
+        if (!root_node.son_is_block) {
+            int num = root_node.size;
+            for (int i = 0; i < num; ++i) {
+                WriteNode(son_of_root[i], root_node.key[i].address);
+            }
+        }
+        std::queue<Node> print_queue;
+        std::queue<Block> block_queue;
+        Node print_node, son;
+        Block son_block;
+        print_queue.push(root_node);
+        while (!print_queue.empty()) {
+            print_node = print_queue.front();
+            print_queue.pop();
+            if (print_node.son_is_block) {
+                for (int i = 0; i < print_node.size; ++i) {
+                    ReadBlock(son_block, print_node.key[i].address);
+                    block_queue.push(son_block);
+                }
+            } else
+                for (int i = 0; i < print_node.size; ++i) {
+                    ReadNode(son, print_node.key[i].address);
+                    print_queue.push(son);
+                }
+        }
+        PrintBlock(block_queue);
+    }
+
     //associate the tree with file
     BPlusTree(const std::string &file_name, const std::string &list_name) {
         r_w_tree.open(file_name);
@@ -263,6 +313,9 @@ public:
         FindNode(target, iter, cmp1, cmp2, vec);
     }
 
+    void Check() {
+        if (!r_w_tree.good()) std::cout << "!!!!!!!!!!!!!!!!!!!!!!!";
+    }
 
 private:
 
@@ -346,28 +399,12 @@ private:
         }
     }
 
-    template<class Compare>
-    void GetEle(const ValueType &target, int index_in_block, const Compare &cmp,
-                sjtu::vector<sjtu::pair<Key, Value>> &vec) {
-        while (index_in_block < current_block.size &&
-               !(cmp(current_block.storage[index_in_block].key, target.key) ||
-                 cmp(target.key, current_block.storage[index_in_block].key))) {
-            vec.push_back(sjtu::pair<Key, Value>(current_block.storage[index_in_block].key,
-                                                 current_block.storage[index_in_block].value));
-            ++index_in_block;
-        }
-        if (index_in_block == current_block.size && current_block.next_block_address > 0) {
-            long iter = current_block.next_block_address;
-            ReadBlock(current_block, iter);
-            GetEle(target, 0, cmp, vec);
-        }
-    }
-
 //    template<class Compare>
-//    void GetEle(const ValueType &target, int index_in_block,
-//                const Compare &cmp, sjtu::vector<sjtu::pair<Key, Value>> &vec) {
+//    void GetEle(const ValueType &target, int index_in_block, const Compare &cmp,
+//                sjtu::vector<sjtu::pair<Key, Value>> &vec) {
 //        while (index_in_block < current_block.size &&
-//               cmp(current_block.storage[index_in_block].key, target.key)) {
+//               !(cmp(current_block.storage[index_in_block].key, target.key) ||
+//                 cmp(target.key, current_block.storage[index_in_block].key))) {
 //            vec.push_back(sjtu::pair<Key, Value>(current_block.storage[index_in_block].key,
 //                                                 current_block.storage[index_in_block].value));
 //            ++index_in_block;
@@ -378,6 +415,22 @@ private:
 //            GetEle(target, 0, cmp, vec);
 //        }
 //    }
+
+    template<class Compare>
+    void GetEle(const ValueType &target, int index_in_block,
+                const Compare &cmp, sjtu::vector<sjtu::pair<Key, Value>> &vec) {
+        while (index_in_block < current_block.size &&
+               cmp(current_block.storage[index_in_block].key, target.key)) {
+            vec.push_back(sjtu::pair<Key, Value>(current_block.storage[index_in_block].key,
+                                                 current_block.storage[index_in_block].value));
+            ++index_in_block;
+        }
+        if (index_in_block == current_block.size && current_block.next_block_address > 0) {
+            long iter = current_block.next_block_address;
+            ReadBlock(current_block, iter);
+            GetEle(target, 0, cmp, vec);
+        }
+    }
 
     template<class Compare>
     void FindFirstEle(const Key &key, long &iter, const Compare &cmp, sjtu::vector<Value> &vec) {
@@ -403,6 +456,7 @@ private:
             ReadBlock(current_block, current_block.next_block_address);
             index_in_block = BinarySearch(current_block.storage, 0, current_block.size - 1, target, cmp);
         }
+        if (index_in_block == -1)return;
         if (!(cmp(current_block.storage[index_in_block].key, target.key) ||
               cmp(target.key, current_block.storage[index_in_block].key))) {
             GetEle(target, index_in_block, cmp, vec);
@@ -419,6 +473,7 @@ private:
             ReadBlock(current_block, current_block.next_block_address);
             index_in_block = BinarySearch(current_block.storage, 0, current_block.size - 1, target, cmp1);
         }
+        if (index_in_block == -1)return;
         if (cmp2(current_block.storage[index_in_block].key, target.key)) {
             GetEle(target, index_in_block, cmp2, vec);
         } else return;
@@ -567,9 +622,9 @@ private:
         ValueType target(key, value);
         int index_in_block = BinarySearch(current_block.storage, 0, current_block.size - 1, target, cmp);
         if (index_in_block == -1)index_in_block = current_block.size;
-        else if (!(cmp(current_block.storage[index_in_block].key, target.key) ||
-                   cmp(target.key, current_block.storage[index_in_block].key)))
-            return;
+//        else if (!(cmp(current_block.storage[index_in_block].key, target.key) ||
+//                   cmp(target.key, current_block.storage[index_in_block].key)))
+//            return;
         for (int i = current_block.size; i > index_in_block; --i) {
             current_block.storage[i] = current_block.storage[i - 1];
         }

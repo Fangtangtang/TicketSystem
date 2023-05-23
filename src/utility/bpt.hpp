@@ -212,7 +212,8 @@ public:
 
     //insert based on cmp1
     template<class Compare>
-    bool Insert(const Key &key, const Value &value, FileManager<Value> &r_w_value, const Compare &cmp) {
+    bool Insert(const Key &key, const Value &value, FileManager<Value> &r_w_value, const Compare &cmp,
+                bool allow_repetition = false) {
         if (!root_node.size) {//empty
             Block new_block(key, r_w_value.WriteEle(value));
             ++root_node.size;
@@ -223,7 +224,7 @@ public:
             return true;
         }
         EleGroup target(key);
-        bool flag = InsertInNode(key, target, value, root_node, r_w_value, cmp);
+        bool flag = InsertInNode(key, target, value, root_node, r_w_value, cmp, allow_repetition);
         if (root_node.size == node_size) {//root need to break
             //write son_of_root
             if (!root_node.son_is_block) {
@@ -310,7 +311,7 @@ public:
     //2: used to find ==
     template<class Compare1, class Compare2>
     void Find(const Key &key, const Compare1 &cmp1, const Compare2 &cmp2, sjtu::vector<long> &vec) {
-        if(!root_node.size) return;
+        if (!root_node.size) return;
         current_node = root_node;//start from root
         long iter;
         EleGroup target(key);
@@ -319,7 +320,7 @@ public:
 
     template<class Compare1, class Compare2>
     void Find(const Key &key, const Compare1 &cmp1, const Compare2 &cmp2, sjtu::vector<sjtu::pair<Key, long>> &vec) {
-        if(!root_node.size) return;
+        if (!root_node.size) return;
         current_node = root_node;//start from root
         long iter;
         EleGroup target(key);
@@ -662,7 +663,7 @@ private:
 
     template<class Compare>
     bool InsertInNode(const Key &key, const EleGroup &target, const Value &value, Node &current,
-                      FileManager<Value> &r_w_value, const Compare &cmp, long iter = -1) {
+                      FileManager<Value> &r_w_value, const Compare &cmp, const bool &allow_repetition, long iter = -1) {
         bool write_current_flag = false;//if current is changed and is not root or son_of_root
         bool flag;
         int index = BinarySearch(current.key, 0, current.size - 1, target);
@@ -673,21 +674,22 @@ private:
         }
         if (current.son_is_block) {
             ReadBlock(current_block, current.key[index].address);
-            flag = InsertInBlock(key, target, value, r_w_value, cmp);
+            flag = InsertInBlock(key, target, value, r_w_value, cmp, allow_repetition);
             if (current_block.size == block_size) {
                 BreakBlock(current, index);
                 if (current.node_type < 0) write_current_flag = true;
             } else WriteBlock(current_block, current.key[index].address);
         } else {
             if (!current.node_type) {//is root
-                flag = InsertInNode(key, target, value, son_of_root[index], r_w_value, cmp);
+                flag = InsertInNode(key, target, value, son_of_root[index], r_w_value, cmp, allow_repetition);
                 if (son_of_root[index].size == node_size) {
                     BreakNode(son_of_root[index], current, index);
                 }
             } else {
                 Node next_node;
                 ReadNode(next_node, current.key[index].address);
-                flag = InsertInNode(key, target, value, next_node, r_w_value, cmp, current.key[index].address);
+                flag = InsertInNode(key, target, value, next_node, r_w_value, cmp, allow_repetition,
+                                    current.key[index].address);
                 if (next_node.size == node_size) {
                     BreakNode(next_node, current, index);
                     if (current.node_type < 0) write_current_flag = true;
@@ -700,12 +702,14 @@ private:
 
     template<class Compare>
     bool InsertInBlock(const Key &key, EleGroup target, const Value &value, FileManager<Value> &r_w_value,
-                       const Compare &cmp) {
+                       const Compare &cmp, const bool &allow_repetition) {
         int index_in_block = BinarySearch(current_block.storage, 0, current_block.size - 1, target);
         if (index_in_block == -1)index_in_block = current_block.size;
-        else if (!(cmp(current_block.storage[index_in_block].key, target.key) ||
-                   cmp(target.key, current_block.storage[index_in_block].key)))
-            return false;
+        else {
+            if ((!allow_repetition) && !(cmp(current_block.storage[index_in_block].key, target.key) ||
+                                         cmp(target.key, current_block.storage[index_in_block].key)))
+                return false;
+        }
         target.address = r_w_value.WriteEle(value);
         for (int i = current_block.size; i > index_in_block; --i) {
             current_block.storage[i] = current_block.storage[i - 1];
