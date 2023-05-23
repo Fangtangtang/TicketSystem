@@ -107,13 +107,14 @@ struct CompareFrom {
 };
 
 bool CompareFrom::operator()(const TransferTicket &a, const TransferTicket &b) const {
-    int cmp = strcmp(a.from, b.from);
-    if (cmp) return cmp < 0;
-    if (!(a.stop_sale == b.stop_sale)) return a.stop_sale < b.stop_sale;
-    if (!(a.start_sale == b.start_sale))return a.start_sale < b.start_sale;
-    cmp = strcmp(a.to, b.to);
-    if (cmp) return cmp < 0;
-    return a.travel_time < b.travel_time;
+    return strcmp(a.from, b.from) < 0;
+//    int cmp = strcmp(a.from, b.from);
+//    if (cmp) return cmp < 0;
+//    if (!(a.stop_sale == b.stop_sale)) return a.stop_sale < b.stop_sale;
+//    if (!(a.start_sale == b.start_sale))return a.start_sale < b.start_sale;
+//    cmp = strcmp(a.to, b.to);
+//    if (cmp) return cmp < 0;
+//    return a.travel_time < b.travel_time;
 
 }
 
@@ -124,13 +125,14 @@ struct CompareTo {
 };
 
 bool CompareTo::operator()(const TransferTicket &a, const TransferTicket &b) const {
-    int cmp = strcmp(a.to, b.to);
-    if (cmp) return cmp < 0;
-    if (!(a.stop_sale == b.stop_sale)) return a.stop_sale < b.stop_sale;
-    if (!(a.start_sale == b.start_sale))return a.start_sale < b.start_sale;
-    cmp = strcmp(a.from, b.from);
-    if (cmp) return cmp < 0;
-    return a.travel_time < b.travel_time;
+    return strcmp(a.to, b.to) < 0;
+//    int cmp = strcmp(a.to, b.to);
+//    if (cmp) return cmp < 0;
+//    if (!(a.stop_sale == b.stop_sale)) return a.stop_sale < b.stop_sale;
+//    if (!(a.start_sale == b.start_sale))return a.start_sale < b.start_sale;
+//    cmp = strcmp(a.from, b.from);
+//    if (cmp) return cmp < 0;
+//    return a.travel_time < b.travel_time;
 }
 
 const CompareTo compareTo;
@@ -594,8 +596,7 @@ void TicketSystem::PrintTicket(const sjtu::vector<TicketDetail> &ticket_vec,
 void TicketSystem::FindTransferFrom(sjtu::map<std::string, AddressSet> &map, const Ticket &ticket) {
     sjtu::vector<sjtu::pair<TransferTicket, long>> vec;
     TransferTicket transfer_ticket(ticket, 0, 0);
-    fromTicketTree.Find(transfer_ticket, compareFromTicket, isAvailableFrom, vec);
-
+    fromTicketTree.Find(transfer_ticket, compareFrom, vec);
     int size = vec.size();
     for (int i = 0; i < size; ++i) {
         if (ticket.stop_sale < vec[i].first.start_sale || vec[i].first.stop_sale < ticket.start_sale) continue;
@@ -608,7 +609,7 @@ void TicketSystem::FindTransferFrom(sjtu::map<std::string, AddressSet> &map, con
 void TicketSystem::FindTransferTo(sjtu::map<std::string, AddressSet> &map, const Ticket &ticket) {
     sjtu::vector<sjtu::pair<TransferTicket, long>> vec;
     TransferTicket transfer_ticket(ticket, 0, 0);
-    toTicketTree.Find(transfer_ticket, compareToTicket, isAvailableTo, vec);
+    toTicketTree.Find(transfer_ticket, compareTo, vec);
     int size = vec.size();
     for (int i = 0; i < size; ++i) {
         try {
