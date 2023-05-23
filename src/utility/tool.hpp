@@ -243,7 +243,8 @@ public:
     }
 
     friend int operator-(const Time &a, const Time &b) {
-        return 1 + (a.minutes - b.minutes) / 1440;
+        if (a.minutes > b.minutes) return 1 + (a.minutes - b.minutes) / 1440;
+        return 0;
     }
 
     friend std::ostream &operator<<(std::ostream &os, const Time &time_) {

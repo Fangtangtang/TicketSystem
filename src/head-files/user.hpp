@@ -124,6 +124,17 @@ int UserSystem::AddUser(const Parameter &parameter, FileManager<User> &userFile)
 }
 
 int UserSystem::AddUser(const Parameter &parameter, LoginList &loginList, FileManager<User> &userFile) {
+    if(userTree.Empty()){
+        std::string username;
+        char password[31], name[16], mailAddr[31];
+        if (!parameter.GetParameter('u', username) ||
+            !parameter.GetParameter('p', password) ||
+            !parameter.GetParameter('n', name) ||
+            !parameter.GetParameter('m', mailAddr))
+            return -1;
+        if (userTree.Insert(Username(username), User(password, name, mailAddr), userFile, compareUsername)) return 0;
+        return -1;
+    }
     //check parameter
     short privilege;
     std::string username;

@@ -102,8 +102,9 @@ private:
     Node son_of_root[node_size];//son of root_node
 
     Node current_node;
-    Block current_block, print_block;
-    int print_index;
+    Block current_block;
+//    print_block;
+//    int print_index;
 
     //associated with file when construct the tree
     std::fstream r_w_tree;
@@ -154,6 +155,10 @@ public:
         }
     }
 
+    bool Empty() {
+        return root_node.size == 0;
+    }
+
     void PrintBlock(std::queue<Block> block_queue) {
         Block first_block = block_queue.front();
         std::cout << "PRINT BLOCK AS LIST\n";
@@ -196,19 +201,19 @@ public:
         PrintBlock(block_queue);
     }
 
-    void PrintEle() {
-        print_index = 0;
-        while (print_index < print_block.size) {
-            std::cout << print_block.storage[print_index].key;
-            ++print_index;
-        }
-        if (print_index == print_block.size && print_block.next_block_address > 0) {
-            long iter = print_block.next_block_address;
-            ReadBlock(print_block, iter);
-            print_index = 0;
-            PrintEle();
-        }
-    }
+//    void PrintEle() {
+//        print_index = 0;
+//        while (print_index < print_block.size) {
+//            std::cout << print_block.storage[print_index].key;
+//            ++print_index;
+//        }
+//        if (print_index == print_block.size && print_block.next_block_address > 0) {
+//            long iter = print_block.next_block_address;
+//            ReadBlock(print_block, iter);
+//            print_index = 0;
+//            PrintEle();
+//        }
+//    }
 
     //insert based on cmp1
     template<class Compare>
@@ -476,8 +481,8 @@ private:
         if (index_in_block == -1)return;
         if (!(cmp(current_block.storage[index_in_block].key, target.key) ||
               cmp(target.key, current_block.storage[index_in_block].key))) {
-            print_block = current_block;
-            print_index = index_in_block;
+//            print_block = current_block;
+//            print_index = index_in_block;
             GetEle(target, index_in_block, cmp, vec);
         }
     }
@@ -956,7 +961,7 @@ private:
 
     bool RemoveInBlock(const Key &key, long &iter, bool &adjust_flag) {
         ReadBlock(current_block, iter);
-        print_block = current_block;
+//        print_block = current_block;
         EleGroup target(key);
         int index_in_block = BinarySearch(current_block.storage, 0, current_block.size - 1, target);
         if (current_block.storage[index_in_block].key == key) {//the ele to be removed
