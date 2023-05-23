@@ -271,7 +271,7 @@ std::ostream &operator<<(std::ostream &os, const TicketDetail &information) {
     os << information.trainID << '\n';
     os << information.time << ' ' << information.price
        << ' ' << information.leaving_time << ' ' << information.station_interval << '\n';
-
+    return os;
 }
 
 class OptionTicket;
@@ -378,7 +378,6 @@ class TicketSystem {
 
     BPlusTree<TransferTicket, long> fromTicketTree{"from_ticket_tree", "from_ticket_list"};//real BPT
     BPlusTree<TransferTicket, long> toTicketTree{"to_ticket_tree", "to_ticket_list"};//real BPT
-//    BPlusTree<Ticket, long> timeTicketTree{"time_ticket_tree", "time_ticket_list"};//real BPT
 
     friend TrainSystem;
 
@@ -391,10 +390,11 @@ class TicketSystem {
         TicketInf1() = default;
 
         TicketInf1(const int &cost_,
-                   const Time &leaving, const Time &arriving, const long &address) : cost(cost_),
-                                                                                     leaving_time(leaving),
-                                                                                     arriving_time(arriving),
-                                                                                     ticket_addr(address) {}
+                   const Time &leaving, const Time &arriving,
+                   const long &address) : cost(cost_),
+                                          leaving_time(leaving),
+                                          arriving_time(arriving),
+                                          ticket_addr(address) {}
     };
 
     struct TicketInf2 {
@@ -612,6 +612,7 @@ void TicketSystem::FindTransferFrom(sjtu::map<std::string, AddressSet> &map, con
     fromTicketTree.Find(transfer_ticket, compareFromTicket, isAvailableFrom, vec);
     int size = vec.size();
     for (int i = 0; i < size; ++i) {
+        if (ticket.stop_sale < vec[i].first.start_sale || vec[i].first.stop_sale < ticket.start_sale) continue;
         Time time = vec[i].first.start_sale.Add(ticket.start_sale.Lag(vec[i].first.start_sale), 0);
         map[std::string(vec[i].first.to)].from_transfer.push_back(
                 TicketInf1(vec[i].first.cost, time, time + vec[i].first.travel_time, vec[i].second));
@@ -647,7 +648,6 @@ TicketSystem::CheckTransferTicket(const TicketSystem::TicketInf1 &ticket1, const
 template<class Compare>
 void TicketSystem::TryTransfer(sjtu::map<std::string, AddressSet> &map, const Compare &cmp,
                                sjtu::vector<Option> &option_vec) {
-    Option opt1(100000, 20000000), opt2(100000, 20000000);
     //traverse map
     for (const auto &iter: map) {
         int size1 = iter.second.from_transfer.size();
@@ -658,21 +658,11 @@ void TicketSystem::TryTransfer(sjtu::map<std::string, AddressSet> &map, const Co
                                                                    iter.second.transfer_to[ticket2],
                                                                    iter.first);
                 if (ans.second) {//ticket exists
-                    if (cmp(ans.first, opt1)) {//<opt1
-                        std::swap(opt1, opt2);
-                        opt1 = ans.first;
-                    } else if (cmp(ans.first, opt2)) {//<opt2
-                        opt2 = ans.first;
-                    } else if (cmp(opt2, ans.first)) {//==opt2
-                        option_vec.push_back(ans.first);
-                    }
+                    option_vec.push_back(ans.first);
                 }
             }
         }
     }
-    Option sample(100000, 20000000);
-    if (cmp(opt1, sample)) option_vec.push_back(opt1);
-    if (cmp(opt2, sample)) option_vec.push_back(opt2);
 }
 
 template<class Compare>
@@ -688,10 +678,7 @@ void TicketSystem::PrintOption(const sjtu::vector<Option> &option_vec, const Com
     int i = 0;
     for (; i < option_vec.size(); ++i) {
         OptionTicket opt(option_vec[i], ticketFile);
-        if (opt.ticketDetail1.trainID == opt.ticketDetail2.trainID) {
-            if (date.Lag(opt.ticketDetail1.leaving_time) != opt.ticketDetail1.station_interval)continue;
-            else opt.time += 1440;//wait for a day
-        }
+        if (opt.ticketDetail1.trainID == opt.ticketDetail2.trainID)continue;
         best_opt = opt;
         break;
     }
@@ -701,12 +688,13 @@ void TicketSystem::PrintOption(const sjtu::vector<Option> &option_vec, const Com
     }
     for (; i < option_vec.size(); ++i) {
         OptionTicket opt(option_vec[i], ticketFile);
+        if (opt.ticketDetail1.trainID == opt.ticketDetail2.trainID) continue;
         if (cmp(opt, best_opt)) best_opt = opt;
     }
     //print best_opt
     int lag = date - best_opt.ticketDetail1.leaving_time;
     int address = best_opt.ticketDetail1.seat_addr +
-                  best_opt.ticketDetail1.station_num * (lag) * SEAT_SIZE;
+                  (best_opt.ticketDetail1.station_num - 1) * (lag) * SEAT_SIZE;
     Time leaving = best_opt.ticketDetail1.leaving_time.Add(lag, 0);
     std::cout << best_opt.ticketDetail1.trainID << ' '
               << from << ' ' << leaving << " -> "

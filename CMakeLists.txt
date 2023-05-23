@@ -53,7 +53,7 @@ add_executable(code
 #            WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/run
 ##            TIMEOUT 30
 #            )
-#    set_tests_properties("${test-name}" PROPERTIES TIMEOUT 30)
+#    set_tests_properties("${test-name}" PROPERTIES TIMEOUT 1000000)
 #endforeach ()
 #
 #enable_testing()

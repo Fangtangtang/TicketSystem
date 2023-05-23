@@ -300,7 +300,6 @@ bool TrainSystem::PrintTrainInformation(const long &train_addr,
     Seat seat;
     long station_address = train.station_addr,
             seat_address = train.seat_addr + (train.stationNum - 1) * date.Lag(train.start_sale) * SEAT_SIZE;
-//    int price_sum = 0;
     //first station
     std::cout << '\n';
     stationFile.ReadEle(station_address, station);
@@ -574,7 +573,6 @@ void TrainSystem::BuyTicket(const Parameter &parameter,
                                                              transactionFile);
     //enqueue
     if (status == pending) {
-//        std::cout<<"^^^^"<<parameter.GetTimestamp()<<' '<<train_on_day<<'\n';
         waitingList.StartWaiting(start, end, number, parameter.GetTimestamp(), train_on_day, transaction_addr,
                                  waitingListFile);
     }

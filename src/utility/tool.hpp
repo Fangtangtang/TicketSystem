@@ -49,6 +49,7 @@ public:
 
     friend std::ostream &operator<<(std::ostream &os, const Username &information) {
         os << information.username << ' ';
+        return os;
     }
 
 };
@@ -313,10 +314,12 @@ public:
                                        : (other.minutes / 1440 - minutes / 1440);
     }
 
+    //TODO mod ==
     int TimeLag(const Time &other) const {
         if (minutes >= other.minutes) {
-            if (minutes % 1440 >= other.minutes % 1440)return (minutes / 1440 - other.minutes / 1440);
-            return (minutes / 1440 - other.minutes / 1440) + 1;
+            if (minutes % 1440 > other.minutes % 1440)
+                return (minutes / 1440 - other.minutes / 1440)+1;
+            return (minutes / 1440 - other.minutes / 1440) ;
         } else {
             return 0;
         }
@@ -644,6 +647,7 @@ std::ostream &operator<<(std::ostream &os, const Ticket &information) {
     os << '\n';
     os << information.from << ' ' << information.to << '\n';
     os << information.start_sale << ' ' << information.stop_sale << '\n';
+    return os;
 }
 
 /*
@@ -854,6 +858,7 @@ public:
 
     friend std::ostream &operator<<(std::ostream &os, const Transaction &information) {
         os << information.username << ' ' << information.timestamp << '\n';
+        return os;
     }
 
 };

@@ -23,8 +23,6 @@ class CompareWaitingList;
 
 class Waiting {
     long train_on_day = -1;//addr of first seat, unique for train released that day
-//    long start_seat_addr = -1;//addr of the first seat
-//    long end_seat_addr = -1;//addr of the last seat
     int timestamp = 0;
 
     friend CompareWaiting;
@@ -160,11 +158,7 @@ void WaitingList::RollBack(const sjtu::pair<Waiting, long> &pair,
                            FileManager<WaitingOrder> &waitingListFile, FileManager<Seat> &seatFile,
                            FileManager<TransactionDetail> &transactionFile) {
     WaitingOrder waitingOrder;
-//    std::cout << "\nWAITING_INF:" << pair.first.timestamp << ' '
-//              << pair.first.start_seat_addr << " " << pair.first.end_seat_addr;
     waitingListFile.ReadEle(pair.second, waitingOrder);
-//    std::cout << "\nTRY_ROLLBACK:" << waitingOrder.from << ' ' << waitingOrder.to << " " << waitingOrder.num;
-//    if (min_seat.num < waitingOrder.num)return;//exceed
     Seat seat;
     if (seat_vec.empty()) {
         addr = pair.first.train_on_day;
@@ -174,12 +168,7 @@ void WaitingList::RollBack(const sjtu::pair<Waiting, long> &pair,
             addr += SEAT_SIZE;
         }
         num = waitingOrder.to;
-    }//TODO
-//    std::cout << "\nSEAT-------------\n";
-//    for (auto &j: seat_vec) {
-//        std::cout << j << ' ';
-//    }
-//    std::cout << "\nSEAT----------\n";
+    }
     while (num < waitingOrder.to) {
         seatFile.ReadEle(addr, seat);
         seat_vec.push_back(seat);
@@ -200,7 +189,6 @@ void WaitingList::RollBack(const sjtu::pair<Waiting, long> &pair,
     transactionFile.ReadEle(waitingOrder.transaction_addr, transactionDetail);
     transactionDetail.ModifyStatus(success);
     transactionFile.WriteEle(waitingOrder.transaction_addr, transactionDetail);
-//    min_seat -= waitingOrder.num;
 }
 
 /*
@@ -212,12 +200,8 @@ void WaitingList::StartWaiting(const int &from, const int &to,
                                const long &train_on_day,
                                const long &transaction_addr,
                                FileManager<WaitingOrder> &waitingListFile) {
-//    std::cout << "\nPRINT" << ' ';
-//    waitingListTree.PrintEle();
     waitingListTree.Insert(Waiting(train_on_day, timestamp),
                            WaitingOrder(from, to, num, transaction_addr), waitingListFile, compareWaiting);
-//    std::cout << "\nPRINT" << ' ';
-//    waitingListTree.PrintEle();
 }
 
 void WaitingList::Rollback(const Waiting &waiting,
@@ -225,37 +209,21 @@ void WaitingList::Rollback(const Waiting &waiting,
                            FileManager<WaitingOrder> &waitingListFile,
                            FileManager<Seat> &seatFile,
                            FileManager<TransactionDetail> &transactionFile) {
-//    std::cout << "\nPRINT" << ' ';
-//    waitingListTree.PrintEle();
-//    std::cout<<"CHECK";
-//    Check();
     sjtu::vector<sjtu::pair<Waiting, long>> vec;
     waitingListTree.Find(waiting, compareWaitingList, vec);
-//    std::cout<<"\nCHECK";
-//    Check();
-//    std::cout << "\nPRINT" << ' ';
-//    waitingListTree.PrintEle();
-//    std::cout<<"\nCHECK";
-//    Check();
-//    sjtu::Sort(vec, 0, vec.size() - 1, compareTimestamp);//sort based on timestamp
     //read all the seat information into a vector
     sjtu::vector<Seat> seat_vec;
     //traverse vec
     long addr, start_addr = waiting.train_on_day;
     int num = 0;
-//    std::cout << "\nVEC_SIZE:" << vec.size() << '\n';
     for (auto &i: vec) {
         RollBack(i, seat_vec, minimal_num, addr, num, waitingListFile, seatFile, transactionFile);
-//        if (minimal_num.num == 0) break;
     }
     //modify seat file
-//    std::cout << "\nSEAT++++++++++++\n";
     for (auto &i: seat_vec) {
-//        std::cout << i << ' ';
         seatFile.WriteEle(start_addr, i);
         start_addr += SEAT_SIZE;
     }
-//    std::cout << "\nSEAT++++++++++++\n";
 }
 
 void WaitingList::RemoveFromWaitingList(const Waiting &waiting) {
