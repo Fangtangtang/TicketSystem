@@ -166,8 +166,6 @@ struct CompareToTicket {
     bool operator()(const TransferTicket &a, const TransferTicket &b) const;
 };
 
-//TODO
-//modify?
 bool CompareToTicket::operator()(const TransferTicket &a, const TransferTicket &b) const {
     int cmp = strcmp(a.to, b.to);
     if (cmp) return cmp < 0;
@@ -193,7 +191,6 @@ struct IsAvailableFrom {
 //a:target
 bool IsAvailableFrom::operator()(const TransferTicket &a, const TransferTicket &b) const {
     if (strcmp(a.from, b.from)) return false;
-//    if (a.stop_sale < b.start_sale) return false;
     return !compareExactTime(a.stop_sale, b.start_sale);
 }
 
@@ -210,18 +207,6 @@ bool IsAvailableTo::operator()(const TransferTicket &a, const TransferTicket &b)
 }
 
 const IsAvailableTo isAvailableTo;
-
-struct IsAvailableTime {
-    bool operator()(const TransferTicket &a, const TransferTicket &b) const;
-};
-
-//a:target
-bool IsAvailableTime::operator()(const TransferTicket &a, const TransferTicket &b) const {
-    if (a.stop_sale < b.start_sale) return false;
-    return true;
-}
-
-const IsAvailableTime isAvailableTime;
 
 class TimeBased;
 
@@ -610,6 +595,7 @@ void TicketSystem::FindTransferFrom(sjtu::map<std::string, AddressSet> &map, con
     sjtu::vector<sjtu::pair<TransferTicket, long>> vec;
     TransferTicket transfer_ticket(ticket, 0, 0);
     fromTicketTree.Find(transfer_ticket, compareFromTicket, isAvailableFrom, vec);
+
     int size = vec.size();
     for (int i = 0; i < size; ++i) {
         if (ticket.stop_sale < vec[i].first.start_sale || vec[i].first.stop_sale < ticket.start_sale) continue;

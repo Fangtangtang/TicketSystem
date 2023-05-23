@@ -254,14 +254,6 @@ public:
         FindNode(target, iter, cmp1, cmp2, vec);
     }
 
-    void Find(const Key &key) {
-        if(!root_node.size) return;
-        current_node = root_node;//start from root
-        long iter;
-        KeyGroup target(key);
-        FindNode(target, iter);
-    }
-
 
 private:
 

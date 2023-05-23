@@ -318,8 +318,8 @@ public:
     int TimeLag(const Time &other) const {
         if (minutes >= other.minutes) {
             if (minutes % 1440 > other.minutes % 1440)
-                return (minutes / 1440 - other.minutes / 1440)+1;
-            return (minutes / 1440 - other.minutes / 1440) ;
+                return (minutes / 1440 - other.minutes / 1440) + 1;
+            return (minutes / 1440 - other.minutes / 1440);
         } else {
             return 0;
         }
@@ -914,6 +914,7 @@ class TransactionDetail {
     long seat_address = 0;//store train_address in train_information file for faster read
     short start_seat{}, end_seat{};
     friend TransactionSystem;
+    friend WaitingList;
 public:
     TransactionDetail() = default;
 
