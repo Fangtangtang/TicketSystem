@@ -561,7 +561,6 @@ void TicketSystem::AddTicket(const Station &from, const Station &to,
     TransferTicket transfer_ticket(key, travel_time, price);
     fromTicketTree.Insert(transfer_ticket, ticketFile.GetPreAddress(), compareFrom);
     toTicketTree.Insert(transfer_ticket, ticketFile.GetPreAddress(), compareTo);
-//    timeTicketTree.Insert(key, ticketFile.GetPreAddress(), compareTime);
 }
 
 void TicketSystem::FindTicket(const Ticket &ticket, const sjtu::vector<sjtu::pair<Ticket, long>> &vec,
@@ -691,7 +690,7 @@ void TicketSystem::PrintOption(const sjtu::vector<Option> &option_vec, const Com
               << from << ' ' << leaving << " -> "
               << best_opt.transfer << ' ' << (leaving + best_opt.ticketDetail1.time) << ' '
               << best_opt.ticketDetail1.price << ' '
-              << seatFile.MinValue(address, 0, best_opt.ticketDetail1.station_interval);
+              << seatFile.MinValue(address, 0, best_opt.ticketDetail1.station_interval - 1);
     std::cout << '\n';
     leaving = leaving + (best_opt.time - best_opt.ticketDetail2.time);
     lag = leaving.Lag(best_opt.ticketDetail2.leaving_time);
@@ -701,7 +700,7 @@ void TicketSystem::PrintOption(const sjtu::vector<Option> &option_vec, const Com
               << best_opt.transfer << ' ' << leaving << " -> "
               << to << ' ' << (leaving + best_opt.ticketDetail2.time) << ' '
               << best_opt.ticketDetail2.price << ' '
-              << seatFile.MinValue(address, 0, best_opt.ticketDetail2.station_interval);
+              << seatFile.MinValue(address, 0, best_opt.ticketDetail2.station_interval - 1);
 }
 
 /*
