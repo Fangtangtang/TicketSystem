@@ -426,7 +426,7 @@ int TrainSystem::AddTrain(const Parameter &parameter,
     Time start_sale = FirstTime(sale_date);
     Time stop_sale = SecondTime(sale_date);
     if (trainTree.Insert(TrainIndex(TrainID(trainID)),
-                         Train(station_num, start_sale, stop_sale,
+                         Train(station_num, seat_num, start_sale, stop_sale,
                                type, stationFile.GetAddress(), seatFile.GetAddress()),
                          trainFile, compareTrainIndex)) {
         //if succeeded, write in stationFile and seatFile
@@ -533,9 +533,16 @@ void TrainSystem::BuyTicket(const Parameter &parameter,
     //read train
     Train train;
     trainFile.ReadEle(vec.front(), train);
+//    std::cout<<"\n##" << train_index << train;
     //check date
     Time date_(date);
     if (!date_.Check()) {
+        std::cout << -1;
+        return;
+    }
+    //check seat
+//    std::cout<<"!!"<<train.seat_num<<' '<<number<<'\n';
+    if(train.seat_num<number){
         std::cout << -1;
         return;
     }

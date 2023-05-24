@@ -243,7 +243,11 @@ public:
     }
 
     friend int operator-(const Time &a, const Time &b) {
-        if (a.minutes > b.minutes) return 1 + (a.minutes - b.minutes) / 1440;
+        if (a.minutes > b.minutes) {
+//            if ((a.minutes - b.minutes) % 1440)
+                return 1 + (a.minutes - b.minutes) / 1440;
+//            return (a.minutes - b.minutes) / 1440;
+        }
         return 0;
     }
 
@@ -431,6 +435,7 @@ public:
  */
 class Train {
     int stationNum = 0;
+    int seat_num = 0;
     Time start_sale;
     Time stop_sale;
     long station_addr = 0;
@@ -442,15 +447,24 @@ class Train {
 public:
     Train() = default;
 
-    Train(const int &stationNum_, const Time &start_sale_, const Time &stop_sale_, const char &type_,
+    Train(const int &stationNum_, const int &seat_num, const Time &start_sale_, const Time &stop_sale_,
+          const char &type_,
           const long &station, const long &seat);
+
+    friend std::ostream &operator<<(std::ostream &os, const Train &information);
 
 };
 
-Train::Train(const int &stationNum_, const Time &start_sale_, const Time &stop_sale_, const char &type_,
+Train::Train(const int &stationNum_, const int &seat_num, const Time &start_sale_, const Time &stop_sale_,
+             const char &type_,
              const long &station, const long &seat) :
-        stationNum(stationNum_), start_sale(start_sale_), stop_sale(stop_sale_), type(type_),
+        stationNum(stationNum_), seat_num(seat_num), start_sale(start_sale_), stop_sale(stop_sale_), type(type_),
         station_addr(station), seat_addr(seat) {}
+
+std::ostream &operator<<(std::ostream &os, const Train &information) {
+    os << information.start_sale << ' ' << information.stop_sale << ' ' << information.stationNum << '\n';
+    return os;
+}
 
 
 /*
