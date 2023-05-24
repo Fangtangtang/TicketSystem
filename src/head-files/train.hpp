@@ -219,6 +219,7 @@ public:
                    FileManager<TransactionDetail> &transactionFile,
                    FileManager<WaitingOrder> &waitingListFile);
 
+    void Clean();
 };
 
 /*
@@ -533,16 +534,13 @@ void TrainSystem::BuyTicket(const Parameter &parameter,
     //read train
     Train train;
     trainFile.ReadEle(vec.front(), train);
-//    std::cout<<"\n##" << train_index << train;
-    //check date
     Time date_(date);
     if (!date_.Check()) {
         std::cout << -1;
         return;
     }
     //check seat
-//    std::cout<<"!!"<<train.seat_num<<' '<<number<<'\n';
-    if(train.seat_num<number){
+    if (train.seat_num < number) {
         std::cout << -1;
         return;
     }
@@ -583,6 +581,10 @@ void TrainSystem::BuyTicket(const Parameter &parameter,
         waitingList.StartWaiting(start, end, number, parameter.GetTimestamp(), train_on_day, transaction_addr,
                                  waitingListFile);
     }
+}
+
+void TrainSystem::Clean() {
+    trainTree.Clean();
 }
 
 

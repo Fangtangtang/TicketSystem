@@ -31,6 +31,8 @@ void ProcessLine(Parameter parameter,
 );
 
 int main() {
+//    freopen("../my_data/User/test1", "r", stdin);
+//    freopen("my_test1", "w", stdout);
     std::ios_base::sync_with_stdio(false);
     std::cin.tie(nullptr);
     std::cout.tie(nullptr);
@@ -122,8 +124,13 @@ void ProcessLine(Parameter parameter,
     } else if (cmd == "refund_ticket") {
         std::cout << transactionSystem.RefundTicket(parameter, loginList, trainSystem, transactionFile, seatFile,
                                                     waitingList, waitingListFile);
-    } else if (cmd == "clear") {
+    } else if (cmd == "clean") {
         loginList.Clear();
+        userSystem.Clean();
+        trainSystem.Clean();
+        waitingList.Clean();
+        transactionSystem.Clean();
+        ticketSystem.Clean();
     } else if (cmd == "exit") {
         std::cout << "bye";
         flag = true;

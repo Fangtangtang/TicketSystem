@@ -455,16 +455,6 @@ class TicketSystem {
 
     /*
      * query_transfer
-     * find the ticket start from 'from'
-     * add transfer station name as key
-     * push address of the ticket into vector(one of the value)
-     */
-//    void FindTransfer(const sjtu::vector<sjtu::pair<Ticket, long>> &vec,
-//                      sjtu::map<std::string, AddressSet> &map,
-//                      const Ticket &ticket);
-
-    /*
-     * query_transfer
      * find the ticket start to 'to' available on or after given date
      * if vec1 in map[] not empty, possible transfer
      * push TicketInf2 into vec2
@@ -536,6 +526,7 @@ public:
                        FileManager<TicketDetail> &ticketFile,
                        FileManager<Seat> &seatFile);
 
+    void Clean();
 };
 
 /*
@@ -800,6 +791,12 @@ void TicketSystem::QueryTransfer(const Parameter &parameter,
         TryTransfer(map, timeBased, option_vec);
         PrintOption(option_vec, timeBased, time, from, to, ticketFile, seatFile);
     }
+}
+
+void TicketSystem::Clean() {
+    ticketTree.Clean();
+    fromTicketTree.Clean();
+    toTicketTree.Clean();
 }
 
 

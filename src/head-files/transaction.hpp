@@ -72,6 +72,7 @@ public:
                      FileManager<Seat> &seatFile,
                      WaitingList &waitingList, FileManager<WaitingOrder> &waitingListFile);
 
+    void Clean();
 };
 
 /*
@@ -169,6 +170,10 @@ int TransactionSystem::RefundTicket(const Parameter &parameter, LoginList &login
         transactionFile.WriteEle(vec[vec.size() - num].second, transactionDetail);
         return 0;
     }
+}
+
+void TransactionSystem::Clean() {
+    transactionTree.Clean();
 }
 
 

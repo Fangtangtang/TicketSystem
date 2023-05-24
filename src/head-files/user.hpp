@@ -98,15 +98,7 @@ public:
      */
     int Login(const Parameter &parameter, LoginList &loginList, FileManager<User> &userFile);
 
-    /*
-     * login
-     * if user isn't in loginList, find if the user exist
-     * return privilege if exist
-     * return false if not exist or wrong password
-     */
-    sjtu::pair<char *, bool> FindUser(const Parameter &parameter);
-
-    sjtu::pair<int, bool> FindUser(const Parameter &parameter, const Username &username);
+    void Clean();
 
 };
 
@@ -124,7 +116,7 @@ int UserSystem::AddUser(const Parameter &parameter, FileManager<User> &userFile)
 }
 
 int UserSystem::AddUser(const Parameter &parameter, LoginList &loginList, FileManager<User> &userFile) {
-    if(userTree.Empty()){
+    if (userTree.Empty()) {
         std::string username;
         char password[31], name[16], mailAddr[31];
         if (!parameter.GetParameter('u', username) ||
@@ -243,6 +235,10 @@ int UserSystem::Login(const Parameter &parameter, LoginList &loginList, FileMana
     if (strcmp(user.password, password)) return -1;//wrong password
     loginList.Login(username1, user.privilege);
     return 0;
+}
+
+void UserSystem::Clean() {
+    userTree.Clean();
 }
 
 

@@ -4,7 +4,6 @@
 #include <fstream>
 #include <iostream>
 #include <string>
-#include <queue>
 #include "vector.hpp"
 #include "file_manager.hpp"
 
@@ -94,6 +93,7 @@ private:
      * write back when destruct
      */
     long root = 0;
+    std::string file;
     /*
      * read root_node and its son nodes into memory when construct
      * write back when breakRoot(root changed), breakNode(add new son to root) and destruct
@@ -103,15 +103,13 @@ private:
 
     Node current_node;
     Block current_block;
-//    print_block;
-//    int print_index;
 
-    //associated with file when construct the tree
     std::fstream r_w_tree;
 
 public:
 
     explicit BPlusIndexTree(const std::string &file_name) {
+        file = file_name;
         r_w_tree.open(file_name);
         if (!r_w_tree.good()) {//doesn't exist
             r_w_tree.open(file_name, std::ios::out);
@@ -155,65 +153,26 @@ public:
         }
     }
 
+    void Clean() {
+        root_node = Node();
+        for (auto &i: son_of_root) {
+            i = Node();
+        }
+        r_w_tree.close();
+        r_w_tree.open(file, std::ios::trunc);
+        r_w_tree.close();
+        r_w_tree.open(file);
+        r_w_tree.seekp(0);//将指针定位到文件开头
+        r_w_tree.write(reinterpret_cast<char *> (&root), sizeof(root));
+        root_node.node_type = 0;
+        r_w_tree.seekp(0, std::ios::end);
+        root = r_w_tree.tellp();
+        r_w_tree.write(reinterpret_cast<char *> (&root_node), sizeof(root_node));
+    }
+
     bool Empty() {
         return root_node.size == 0;
     }
-
-    void PrintBlock(std::queue<Block> block_queue) {
-        Block first_block = block_queue.front();
-        std::cout << "PRINT BLOCK AS LIST\n";
-        while (true) {
-            std::cout << first_block;
-            if (first_block.next_block_address > 0) {
-                ReadBlock(first_block, first_block.next_block_address);
-            } else break;
-        }
-    }
-
-    void Print() {
-        //write root_node
-        WriteNode(root_node, root);
-        if (!root_node.son_is_block) {
-            int num = root_node.size;
-            for (int i = 0; i < num; ++i) {
-                WriteNode(son_of_root[i], root_node.key[i].address);
-            }
-        }
-        std::queue<Node> print_queue;
-        std::queue<Block> block_queue;
-        Node print_node, son;
-        Block son_block;
-        print_queue.push(root_node);
-        while (!print_queue.empty()) {
-            print_node = print_queue.front();
-            print_queue.pop();
-            if (print_node.son_is_block) {
-                for (int i = 0; i < print_node.size; ++i) {
-                    ReadBlock(son_block, print_node.key[i].address);
-                    block_queue.push(son_block);
-                }
-            } else
-                for (int i = 0; i < print_node.size; ++i) {
-                    ReadNode(son, print_node.key[i].address);
-                    print_queue.push(son);
-                }
-        }
-        PrintBlock(block_queue);
-    }
-
-//    void PrintEle() {
-//        print_index = 0;
-//        while (print_index < print_block.size) {
-//            std::cout << print_block.storage[print_index].key;
-//            ++print_index;
-//        }
-//        if (print_index == print_block.size && print_block.next_block_address > 0) {
-//            long iter = print_block.next_block_address;
-//            ReadBlock(print_block, iter);
-//            print_index = 0;
-//            PrintEle();
-//        }
-//    }
 
     //insert based on cmp1
     template<class Compare>

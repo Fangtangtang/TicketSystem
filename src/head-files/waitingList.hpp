@@ -147,6 +147,8 @@ public:
     void Check() {
         waitingListTree.Check();
     }
+
+    void Clean();
 };
 
 /*
@@ -235,6 +237,10 @@ void WaitingList::Rollback(const Waiting &waiting,
 
 void WaitingList::RemoveFromWaitingList(const Waiting &waiting) {
     waitingListTree.Delete(waiting);
+}
+
+void WaitingList::Clean() {
+    waitingListTree.Clean();
 }
 
 
