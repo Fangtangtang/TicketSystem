@@ -9,8 +9,6 @@
 #include "head-files/train.hpp"
 #include "head-files/waitingList.hpp"
 
-bool Initialize();
-
 /*
  * read request and process
  * flag == true if exit
@@ -36,7 +34,7 @@ int main() {
     std::ios_base::sync_with_stdio(false);
     std::cin.tie(nullptr);
     std::cout.tie(nullptr);
-    bool flag = Initialize();
+    bool flag;
     //construct file_managers
     FileManager<User> userFile("user_information");
     FileManager<TransactionDetail> transactionFile{"transaction_information"};
@@ -53,6 +51,8 @@ int main() {
     WaitingList waitingList;
     LoginList loginList;
     Parameter parameter;
+
+
     //process line in a loop
     while (std::cin) {
         ProcessLine(parameter,
@@ -75,18 +75,6 @@ int main() {
     return 0;
 }
 
-bool Initialize() {
-    std::fstream test;
-    test.open("user_information");
-    if (!test.good()) {
-        test.close();
-        return true;
-    } else {
-        test.close();
-        return false;
-    }
-}
-
 void ProcessLine(Parameter parameter,
                  UserSystem &userSystem,
                  TrainSystem &trainSystem,
@@ -105,8 +93,7 @@ void ProcessLine(Parameter parameter,
     std::string cmd = parameter.ReadLine();
     std::cout << '[' << parameter.GetTimestamp() << "] ";
     if (cmd == "add_user") {
-        if (flag)std::cout << userSystem.AddUser(parameter, userFile);//add first
-        else std::cout << userSystem.AddUser(parameter, loginList, userFile);
+        std::cout << userSystem.AddUser(parameter, loginList, userFile);
     } else if (cmd == "login") {
         std::cout << userSystem.Login(parameter, loginList, userFile);
     } else if (cmd == "logout") {
@@ -133,10 +120,10 @@ void ProcessLine(Parameter parameter,
     } else if (cmd == "query_order") {
         transactionSystem.QueryOrder(parameter, loginList, transactionFile);
     } else if (cmd == "refund_ticket") {
-        std::cout<<transactionSystem.RefundTicket(parameter, loginList, trainSystem, transactionFile, seatFile,
-                                       waitingList, waitingListFile);
-    } else if (cmd == "clean") {
-        //TODO
+        std::cout << transactionSystem.RefundTicket(parameter, loginList, trainSystem, transactionFile, seatFile,
+                                                    waitingList, waitingListFile);
+    } else if (cmd == "clear") {
+        loginList.Clear();
     } else if (cmd == "exit") {
         std::cout << "bye";
         flag = true;

@@ -899,6 +899,14 @@ namespace sjtu {
             if (tmp.second) return const_iterator(this, tmp.first);
             else return const_iterator(this, past_the_end);
         }
+
+        pair<iterator, bool> Find(const Key &key) {
+            if (size_of_map == 0) return pair<iterator, bool>(iterator(), false);
+            pair<node *, bool> tmp = findNode(key, root_node.right);
+            if (tmp.second) return pair<iterator, bool>(iterator(this, tmp.first), true);
+            else return pair<iterator, bool>(iterator(), false);
+//            iterator(this, past_the_end);
+        }
     };
 
 }

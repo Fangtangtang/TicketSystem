@@ -682,7 +682,7 @@ void TicketSystem::PrintOption(const sjtu::vector<Option> &option_vec, const Com
         if (cmp(opt, best_opt)) best_opt = opt;
     }
     //print best_opt
-    int lag = date - best_opt.ticketDetail1.leaving_time;
+    int lag = date.Lag(best_opt.ticketDetail1.leaving_time);
     int address = best_opt.ticketDetail1.seat_addr +
                   (best_opt.ticketDetail1.station_num - 1) * (lag) * SEAT_SIZE;
     Time leaving = best_opt.ticketDetail1.leaving_time.Add(lag, 0);

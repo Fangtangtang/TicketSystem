@@ -79,15 +79,18 @@ public:
 short LoginList::CheckLoggedIn(const Parameter &parameter) {
     std::string username;
     if (!parameter.GetParameter('c', username)) return -1;//missing parameter
-    sjtu::map<Username, short, CompareUsername>::iterator iter = loginList.find(Username(username));
-    if (iter == loginList.end()) return -1;
-    return iter->second;//privilege
+    sjtu::pair<sjtu::map<Username, short, CompareUsername>::iterator, bool> iter = loginList.Find(Username(username));
+    if (iter.second) return iter.first->second;
+    return -1;
+//    sjtu::map<Username, short, CompareUsername>::iterator iter = loginList.find(Username(username));
+//    if (iter == loginList.end()) return -1;
+//    return iter->second;//privilege
 }
 
 short LoginList::CheckLoggedIn(const Username &username) {
-    sjtu::map<Username, short, CompareUsername>::iterator iter = loginList.find(username);
-    if (iter == loginList.end()) return -1;
-    return iter->second;//privilege
+    sjtu::pair<sjtu::map<Username, short, CompareUsername>::iterator, bool> iter = loginList.Find(username);
+    if (iter.second) return iter.first->second;
+    return -1;
 }
 
 void LoginList::Login(const Username &username, const short &privilege) {
