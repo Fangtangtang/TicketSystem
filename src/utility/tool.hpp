@@ -81,7 +81,7 @@ struct CompareUsername {
         return strcmp(a.username, b.username) < 0;
     }
 
-    int CompareStr(const Username &a, const Username &b) const {
+    static int CompareStr(const Username &a, const Username &b) {
         return strcmp(a.username, b.username);
     }
 };
@@ -136,23 +136,6 @@ std::ostream &operator<<(std::ostream &os, const TrainID &information) {
     os << information.trainID;
     return os;
 }
-
-
-/*
- * Compare class for TrainID
- * =============================================================================
- */
-struct CompareTrainID {
-    bool operator()(const TrainID &a, const TrainID &b) {
-        return strcmp(a.trainID, b.trainID) < 0;
-    }
-
-    int CompareStr(const TrainID &a, const TrainID &b) const {
-        return strcmp(a.trainID, b.trainID);
-    }
-};
-
-const CompareTrainID compareTrainID;
 
 /*
  * Interval class
@@ -244,9 +227,7 @@ public:
 
     friend int operator-(const Time &a, const Time &b) {
         if (a.minutes > b.minutes) {
-//            if ((a.minutes - b.minutes) % 1440)
-                return 1 + (a.minutes - b.minutes) / 1440;
-//            return (a.minutes - b.minutes) / 1440;
+            return 1 + (a.minutes - b.minutes) / 1440;
         }
         return 0;
     }
@@ -285,41 +266,12 @@ public:
     bool Check() const {
         return minutes >= 0;
     }
-
-    void PrintInformation(const int &interval) const {
-        int month, day, hour, minute = minutes;
-        //convert
-        hour = minute / 60;
-        minute %= 60;
-        day = hour / 24;
-        hour %= 24;
-        ++day;
-        day += interval;
-        if (day > 61) {
-            month = 8;
-            day -= 61;
-        } else {
-            if (day > 30) {
-                month = 7;
-                day -= 30;
-            } else month = 6;
-        }
-        //print
-        std::cout << 0 << month << '-';
-        if (day < 9)std::cout << 0;
-        std::cout << day << ' ';
-        if (hour < 9)std::cout << 0;
-        std::cout << hour << ':';
-        if (minute < 9)std::cout << 0;
-        std::cout << minute;
-    }
-
+    
     int Lag(const Time &other) const {
         return minutes > other.minutes ? (minutes / 1440 - other.minutes / 1440)
                                        : (other.minutes / 1440 - minutes / 1440);
     }
 
-    //TODO mod ==
     int TimeLag(const Time &other) const {
         if (minutes >= other.minutes) {
             if (minutes % 1440 > other.minutes % 1440)
@@ -329,12 +281,7 @@ public:
             return 0;
         }
     }
-
-    //time in day
-    Interval CalTime() const {
-        return Interval(minutes % 1440);
-    }
-
+    
     void AddDay(const int &day) {
         minutes += day * 1440;
     }
@@ -356,75 +303,6 @@ struct CompareExactTime {
 
 const CompareExactTime compareExactTime;
 
-class MyTime {
-    short month = 0;
-    short date = 0;
-    short hour = 0;
-    short minute = 0;
-public:
-    MyTime() = default;
-
-    MyTime(short month_, short date_, short hour_, short minute_) : month(month_), date(date_),
-                                                                    hour(hour_), minute(minute_) {};
-
-    friend std::ostream &operator<<(std::ostream &os, const MyTime &time_) {
-        os << 0 << time_.month << '-';
-        if (time_.date < 9)os << 0;
-        os << time_.date << ' ';
-        if (time_.hour < 9)os << 0;
-        os << time_.hour << ':';
-        if (time_.minute < 9)os << 0;
-        os << time_.minute;
-        return os;
-    }
-
-    friend MyTime operator+(const MyTime &a, const MyTime &b) {
-        auto minute_ = short(a.minute + b.minute);
-        auto hour_ = short(a.hour + b.hour + minute_ / 60);
-        minute_ %= 60;
-        auto date_ = short(a.date + b.date + hour_ / 24);
-        hour_ %= 24;
-        auto month_ = short(a.month + b.month);
-        if (month_ == 6) {
-            if (date_ > 30) {
-                ++month_;
-                date_ -= 30;
-            }
-        }
-        if (month_ == 7) {
-            if (date_ > 31) {
-                ++month_;
-                date_ -= 31;
-            }
-        }
-        return {month_, date_, hour_, minute_};
-    }
-
-    /*
-     * add minute_ to time
-     * calculate from relative time to accurate time
-     */
-    void addMinute(const short &minute_) {
-        minute = short(minute_ + minute);
-        hour = short(hour + minute / 60);
-        minute %= 60;
-        date = short(date + hour / 24);
-        hour %= 24;
-        if (month == 6) {
-            if (date > 30) {
-                ++month;
-                date -= 30;
-            }
-        }
-        if (month == 7) {
-            if (date > 31) {
-                ++month;
-                date -= 31;
-            }
-        }
-    }
-};
-
 /*
  * Train class
  * -------------------------------------------------------------------------------------------------------------
@@ -441,7 +319,6 @@ class Train {
     long station_addr = 0;
     long seat_addr = 0;
     char type = '\0';
-//    bool released = false;
     friend TrainSystem;
     friend TicketSystem;
 public:
@@ -568,7 +445,7 @@ class CompareTo;
 
 class CompareTime;
 
-class CompareTicketStopSale;
+class CompareTicketFromTo;
 
 class CompareFromTicket;
 
@@ -582,8 +459,6 @@ class IsAvailableFrom;
 
 class IsAvailableTo;
 
-class IsAvailableTime;
-
 
 class Ticket {
     char from[31] = {'\0'};
@@ -596,14 +471,13 @@ class Ticket {
     friend CompareFrom;
     friend CompareTo;
     friend CompareTime;
-    friend CompareTicketStopSale;
+    friend CompareTicketFromTo;
     friend CompareFromTicket;
     friend CompareToTicket;
     friend CompareTimeTicket;
     friend IsAvailableTicket;
     friend IsAvailableFrom;
     friend IsAvailableTo;
-    friend IsAvailableTime;
 public:
     Ticket() = default;
 
@@ -696,7 +570,7 @@ std::ostream &operator<<(std::ostream &os, const Ticket &information) {
  *     ---------------------
  *     stop_sale start_sale to from *
  *
- * CompareTicketStopSale:
+ * CompareTicketFromTo:
  *     from to stop_sale(cmp1 of query_ticket)
  *
  * CompareFromTicket:
@@ -736,59 +610,17 @@ bool CompareTicket::operator()(const Ticket &a, const Ticket &b) const {
 
 const CompareTicket compareTicket;
 
-//struct CompareFrom {
-//    bool operator()(const Ticket &a, const Ticket &b) const;
-//};
-//
-//bool CompareFrom::operator()(const Ticket &a, const Ticket &b) const {
-//    int cmp = strcmp(a.from, b.from);
-//    if (cmp) return cmp < 0;
-//    if (!(a.stop_sale == b.stop_sale)) return a.stop_sale < b.stop_sale;
-//    if (!(a.start_sale == b.start_sale))return a.start_sale < b.start_sale;
-//    return strcmp(a.to, b.to);
-//}
-//
-//const CompareFrom compareFrom;
-//
-//struct CompareTo {
-//    bool operator()(const Ticket &a, const Ticket &b) const;
-//};
-//
-//bool CompareTo::operator()(const Ticket &a, const Ticket &b) const {
-//    int cmp = strcmp(a.to, b.to);
-//    if (cmp) return cmp < 0;
-//    if (!(a.stop_sale == b.stop_sale)) return a.stop_sale < b.stop_sale;
-//    if (!(a.start_sale == b.start_sale))return a.start_sale < b.start_sale;
-//    return strcmp(a.from, b.from);
-//}
-//
-//const CompareTo compareTo;
-//
-//struct CompareTime {
-//    bool operator()(const Ticket &a, const Ticket &b) const;
-//};
-//
-//bool CompareTime::operator()(const Ticket &a, const Ticket &b) const {
-//    if (!(a.stop_sale == b.stop_sale)) return a.stop_sale < b.stop_sale;
-//    if (!(a.start_sale == b.start_sale))return a.start_sale < b.start_sale;
-//    int cmp = strcmp(a.to, b.to);
-//    if (cmp) return cmp < 0;
-//    return strcmp(a.from, b.from);
-//}
-//
-//const CompareTime compareTime;
-
-struct CompareTicketStopSale {
+struct CompareTicketFromTo {
     bool operator()(const Ticket &a, const Ticket &b) const;
 };
 
-bool CompareTicketStopSale::operator()(const Ticket &a, const Ticket &b) const {
+bool CompareTicketFromTo::operator()(const Ticket &a, const Ticket &b) const {
     int cmp = strcmp(a.from, b.from);
     if (cmp) return cmp < 0;
     return strcmp(a.to, b.to) < 0;
 }
 
-const CompareTicketStopSale compareTicketStopSale;
+const CompareTicketFromTo compareTicketFromTo;
 
 struct IsAvailableTicket {
     bool operator()(const Ticket &a, const Ticket &b) const;
@@ -802,54 +634,6 @@ bool IsAvailableTicket::operator()(const Ticket &a, const Ticket &b) const {
 }
 
 const IsAvailableTicket isAvailableTicket;
-
-//struct IsAvailableFrom {
-//    bool operator()(const Ticket &a, const Ticket &b) const;
-//};
-//
-////a:target
-//bool IsAvailableFrom::operator()(const Ticket &a, const Ticket &b) const {
-//    if (strcmp(a.from, b.from)) return false;
-//    if (a.stop_sale < b.start_sale) return false;
-//    return true;
-//}
-//
-//const IsAvailableFrom isAvailableFrom;
-//
-//struct IsAvailableTo {
-//    bool operator()(const Ticket &a, const Ticket &b) const;
-//};
-
-//a:target
-//bool IsAvailableTo::operator()(const Ticket &a, const Ticket &b) const {
-//    if (strcmp(a.to, b.to)) return false;
-//    if (a.stop_sale < b.start_sale) return false;
-//    return true;
-//}
-//
-//const IsAvailableTo isAvailableTo;
-//
-//struct IsAvailableTime {
-//    bool operator()(const Ticket &a, const Ticket &b) const;
-//};
-//
-////a:target
-//bool IsAvailableTime::operator()(const Ticket &a, const Ticket &b) const {
-//    if (a.stop_sale < b.start_sale) return false;
-//    return true;
-//}
-//
-//const IsAvailableTime isAvailableTime;
-//
-//struct SameFrom {
-//    bool operator()(const Ticket &a, const Ticket &b) const;
-//};
-//
-//bool SameFrom::operator()(const Ticket &a, const Ticket &b) const {
-//    return strcmp(a.from, b.from) == 0;
-//}
-//
-//const SameFrom sameFrom;
 
 /*
  * Transaction class

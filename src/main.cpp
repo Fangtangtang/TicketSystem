@@ -31,8 +31,6 @@ void ProcessLine(Parameter parameter,
 );
 
 int main() {
-//    freopen("../my_data/User/test1", "r", stdin);
-//    freopen("my_test1", "w", stdout);
     std::ios_base::sync_with_stdio(false);
     std::cin.tie(nullptr);
     std::cout.tie(nullptr);
@@ -109,7 +107,8 @@ void ProcessLine(Parameter parameter,
     } else if (cmd == "delete_train") {
         std::cout << trainSystem.DeleteTrain(parameter);
     } else if (cmd == "release_train") {
-        std::cout << trainSystem.ReleaseTrain(parameter, ticketSystem, trainFile, stationFile, seatFile, ticketFile);
+        std::cout << trainSystem.ReleaseTrain(parameter, ticketSystem,
+                                              trainFile, stationFile, seatFile, ticketFile);
     } else if (cmd == "query_train") {
         trainSystem.QueryTrain(parameter, trainFile, stationFile, seatFile);
     } else if (cmd == "query_ticket") {
@@ -122,7 +121,8 @@ void ProcessLine(Parameter parameter,
     } else if (cmd == "query_order") {
         transactionSystem.QueryOrder(parameter, loginList, transactionFile);
     } else if (cmd == "refund_ticket") {
-        std::cout << transactionSystem.RefundTicket(parameter, loginList, trainSystem, transactionFile, seatFile,
+        std::cout << transactionSystem.RefundTicket(parameter, loginList, trainSystem,
+                                                    transactionFile, seatFile,
                                                     waitingList, waitingListFile);
     } else if (cmd == "clean") {
         loginList.Clear();

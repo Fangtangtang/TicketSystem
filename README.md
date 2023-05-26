@@ -479,32 +479,86 @@
 
   `bye`
 
-## 3 系统组成
-### 用户信息管理
-#### 文件
-- user
+## 3 组成
+### utility
+#### 管理系统公用的类及Compare
+##### 位置
+tool.hpp
 
-### 车次信息管理
-#### 文件
-- train
-- released_train
+##### 内容
+**Username**
 
-### 交易信息管理
-#### 文件
-- transaction
+- Username类，用户的唯一标识
+- CompareUsername：字典序比较用户名
 
-### 登录栈
+**TrainID**
+- TrainID类，火车唯一标识
+- CompareTrainID：字典序比较TrainID
 
-## 4 成分
-### 存储
-bpt
-vector（带sort）
+**Train**
 
-### 命令解析
-tokenscanner
+- Train类，含火车基础信息及火车具体信息文件地址
 
-### 具体执行
-user_manager
-train_manager
-released_train_manager
-transaction_manager
+**Station**
+- Station类，火车站基础信息
+
+**Seat**
+- Seat类，每一班车两站间的座位数
+
+**Ticket**
+- Ticket类，单张火车票信息
+- Compare：
+   - CompareTicket：严格比较from、to、stop_sale、start_sale
+   - CompareTicketFromTo：比较from、to
+   - IsAvailableTicket：比较售票日期
+
+**Transaction**
+- Transaction类，用户交易基础信息
+- Compare：
+  - CompareTransStrict：比较用户名和时间戳
+  - CompareTransWeak：比较用户名
+
+**TransactionDetail**
+- TransactionDetail类，用户交易信息细节
+
+
+#### 管理系统公用工具
+##### 位置
+tool.hpp
+
+##### 内容
+**Interval**
+- Interval类，处理相对时间（时间间隔）
+
+**Time**
+- Time类，处理6月1日到9月的绝对时间
+- CompareExactTime：比较绝对时间
+
+**Scanner**
+- Scanner类，处理"a|b|c"形式字符串，解析为string或int
+
+#### 容器
+##### vector
+
+##### map
+
+##### FileManager
+文件管理类
+在文件中读写、取地址
+
+##### BPlusIndexTree
+仅用于索引的B+树
+
+和FileManager关联，
+
+使用FileManager插入文件，B+树存文件中地址
+
+##### BPlusTree
+B+树
+
+#### 其他
+##### exceptions
+##### pair
+
+### head-file
+

@@ -440,8 +440,6 @@ private:
         if (index_in_block == -1)return;
         if (!(cmp(current_block.storage[index_in_block].key, target.key) ||
               cmp(target.key, current_block.storage[index_in_block].key))) {
-//            print_block = current_block;
-//            print_index = index_in_block;
             GetEle(target, index_in_block, cmp, vec);
         }
     }
@@ -920,7 +918,6 @@ private:
 
     bool RemoveInBlock(const Key &key, long &iter, bool &adjust_flag) {
         ReadBlock(current_block, iter);
-//        print_block = current_block;
         EleGroup target(key);
         int index_in_block = BinarySearch(current_block.storage, 0, current_block.size - 1, target);
         if (current_block.storage[index_in_block].key == key) {//the ele to be removed

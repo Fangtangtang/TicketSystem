@@ -582,9 +582,6 @@ private:
         ValueType target(key, value);
         int index_in_block = BinarySearch(current_block.storage, 0, current_block.size - 1, target, cmp);
         if (index_in_block == -1)index_in_block = current_block.size;
-//        else if (!(cmp(current_block.storage[index_in_block].key, target.key) ||
-//                   cmp(target.key, current_block.storage[index_in_block].key)))
-//            return;
         for (int i = current_block.size; i > index_in_block; --i) {
             current_block.storage[i] = current_block.storage[i - 1];
         }

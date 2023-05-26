@@ -36,14 +36,13 @@ class TransferTicket : public Ticket {
     friend CompareFrom;
     friend CompareTo;
     friend CompareTime;
-    friend CompareTicketStopSale;
+    friend CompareTicketFromTo;
     friend CompareFromTicket;
     friend CompareToTicket;
     friend CompareTimeTicket;
     friend IsAvailableTicket;
     friend IsAvailableFrom;
     friend IsAvailableTo;
-    friend IsAvailableTime;
 public:
     TransferTicket() = default;
 
@@ -51,17 +50,11 @@ public:
                                                                                       travel_time(travel_time_),
                                                                                       cost(cost_) {}
 
-//    friend std::ostream &operator<<(std::ostream &os, const TransferTicket &information) {
-//        os<<information.travel_time<<' '<<information.cost<<'\n';
-//        return os;
-//    }
 };
 
 /*
  * Compare class for TransferTicket
  * ==========================================================
- * //TODO
- * compare time to be modified
  * CompareFrom:
  *     used to insert in real from bpt
  *     ---------------------
@@ -746,7 +739,7 @@ void TicketSystem::QueryTicket(const Parameter &parameter,
     sjtu::vector<sjtu::pair<Ticket, long>> vec;
     Ticket ticket(from, to, time, time);
     ticketTree.Find(ticket,
-                    compareTicketStopSale, vec);
+                    compareTicketFromTo, vec);
     sjtu::vector<TicketDetail> ticket_vec;
     FindTicket(ticket, vec, ticketFile, ticket_vec);
     int number = ticket_vec.size();
