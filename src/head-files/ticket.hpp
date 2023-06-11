@@ -713,10 +713,6 @@ void TicketSystem::ReleaseTrain(const TrainID &trainID,
                       ticketFile);
         }
     }
-//    std::cout << "\nCHECK:\n";
-//    fromTicketTree.Check(), toTicketTree.Check();
-//    fromTicketTree.Print();
-//    toTicketTree.Print();
 }
 
 void TicketSystem::QueryTicket(const Parameter &parameter,

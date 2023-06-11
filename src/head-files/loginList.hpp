@@ -18,17 +18,6 @@
 #include "../utility/tool.hpp"
 #include "parameter.hpp"
 
-class UserShortcut {
-    short privilege = 10;
-    long addr = -1;
-public:
-    UserShortcut() = default;
-
-    UserShortcut(const short &privilege_, const long &addr_);
-};
-
-UserShortcut::UserShortcut(const short &privilege_, const long &addr_) : privilege(privilege_), addr(addr_) {}
-
 /*
  * manage operations about loginList
  */
@@ -82,9 +71,6 @@ short LoginList::CheckLoggedIn(const Parameter &parameter) {
     sjtu::pair<sjtu::map<Username, short, CompareUsername>::iterator, bool> iter = loginList.Find(Username(username));
     if (iter.second) return iter.first->second;
     return -1;
-//    sjtu::map<Username, short, CompareUsername>::iterator iter = loginList.find(Username(username));
-//    if (iter == loginList.end()) return -1;
-//    return iter->second;//privilege
 }
 
 short LoginList::CheckLoggedIn(const Username &username) {

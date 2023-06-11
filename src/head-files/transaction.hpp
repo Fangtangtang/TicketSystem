@@ -166,7 +166,6 @@ int TransactionSystem::RefundTicket(const Parameter &parameter, LoginList &login
             RefundTicket(transactionDetail, space, waiting, seatFile, waitingList, waitingListFile, transactionFile);
         } else waitingList.RemoveFromWaitingList(waiting);
         transactionDetail.status = refunded;
-//        std::cout << "\n####" << transactionDetail.trainID << ' ' << transactionDetail << '\n';
         transactionFile.WriteEle(vec[vec.size() - num].second, transactionDetail);
         return 0;
     }

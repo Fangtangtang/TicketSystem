@@ -161,9 +161,6 @@ void WaitingList::RollBack(const sjtu::pair<Waiting, long> &pair,
                            FileManager<TransactionDetail> &transactionFile) {
     WaitingOrder waitingOrder;
     waitingListFile.ReadEle(pair.second, waitingOrder);
-//    std::cout << "\nWAITING_INF:" << pair.first.timestamp << ' ';
-//    std::cout << "\nTRY_ROLLBACK:" << waitingOrder.from << ' ' << waitingOrder.to << " " << waitingOrder.num;
-
     Seat seat;
     if (seat_vec.empty()) {
         addr = pair.first.train_on_day;
@@ -192,9 +189,7 @@ void WaitingList::RollBack(const sjtu::pair<Waiting, long> &pair,
     }
     TransactionDetail transactionDetail;
     transactionFile.ReadEle(waitingOrder.transaction_addr, transactionDetail);
-//    std::cout << "\n####" << transactionDetail.trainID << ' ' << transactionDetail << '\n';
     transactionDetail.ModifyStatus(success);
-//    std::cout << "\n####" << transactionDetail.trainID << ' ' << transactionDetail << '\n';
     transactionFile.WriteEle(waitingOrder.transaction_addr, transactionDetail);
     waitingListTree.Delete(pair.first);
 }
@@ -227,7 +222,6 @@ void WaitingList::Rollback(const Waiting &waiting,
     for (auto &i: vec) {
         RollBack(i, seat_vec, minimal_num, addr, num, waitingListFile, seatFile, transactionFile);
     }
-//    std::cout << "\nVEC_SIZE:" << vec.size() << '\n';
     //modify seat file
     for (auto &i: seat_vec) {
         seatFile.WriteEle(start_addr, i);

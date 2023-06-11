@@ -6,7 +6,6 @@
  *         query_profile
  *         modify_profile
  *         login
- *
  */
 
 #ifndef TICKETSYSTEM_USER_HPP
