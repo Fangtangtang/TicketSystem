@@ -21,3 +21,4 @@ code
 run-test.sh
 run/
 *.log
+func.md

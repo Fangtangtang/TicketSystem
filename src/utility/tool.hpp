@@ -792,7 +792,6 @@ public:
         string = input.substr(tokenStart, tokenEnd - tokenStart);
         Update();
     }
-
 };
 
 
