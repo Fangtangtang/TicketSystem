@@ -562,3 +562,195 @@ B+树
 
 ### head-file
 
+## 4 Implementation
+构建相应的文件和管理系统
+
+用循环来处理命令，`processLine`
+
+- 若读到`exit`，`flag`返回`true`退出，`return 0`
+- 函数实现
+  - 参数处理器处理一行指令
+  - 根据指令要求进入各个系统处理
+
+
+
+### `add_user`
+
+`userSystem:AddUser`
+
+- 首次添加（user的BPIT是空树），检查参数，直接插入
+- 非首次，检查参数
+  - 在`loginList`找`current_user`，检查优先级合法性（若未登录，优先级为负数）
+  - 向BPIT中插入，若已经存在，插入失败
+
+
+
+### `login`
+
+`userSystem:login`
+
+- 检查参数，检查用户合法性（已经登录？存在？密码正确？）
+- 加入`loginList`
+
+
+
+### `logout`
+
+`loginList:logout`
+
+- `loginList`是一个`map`，检查用户是否已经登录
+- `erase`
+
+
+
+### `query_profile`
+
+`userASystem:QueryProfile`
+
+- 检查参数，检查登录
+- BPIT中查找，检查权限
+- 输出信息
+
+
+
+### `modify_profile`
+
+`userSystem:ModifyProfile`
+
+- 检查参数，检查登录
+- BPIT中查找，检查权限
+- `Filemanager`根据地址读取完整信息，修改，覆盖写入文件
+
+
+
+### `add_train`
+
+`trainSystem:AddTrain`
+
+- 检查参数
+
+- 截取起售、停售时间
+
+- 向`trainTree(BPIT)`中插入基本信息
+
+  - 成功
+    - `AddStation`
+      - 插入站的基础信息：站名、从出发站开始累计价格、到站相对时间、离站相对时间
+    - `AddSeat`
+      - 插入总天数、总站间隔数个车座信息
+
+  
+
+### `delete_train`
+
+`trainSystem:DeleteTrain`
+
+- 检查合法性
+- `delete`
+
+
+
+### `release_train`
+
+`trainSystem:ReleaseTrain`
+
+- 检查是否存在，released
+- release
+  - `trainTree.RewriteKey`
+  - `ReleaseTRain`
+    - 读取火车信息
+    - 读取车站信息
+    - 二层循环`AddTicket`(`ticket:`站名、到达时间（起售-停售）)
+      - `ticketTree`(BPIT)
+      - `fromTicketTree`,`toTicketTree`(BPT)：value是ticket地址
+
+
+
+### `query_train`
+
+`trainSystem:QueryTrain`
+
+- 检查参数、检查是否存在
+  - 存在，`PrintTrainInformation`
+    - `FileMAnager`读取，将火车基础信息转化为输出信息
+
+
+
+### `query_ticket`
+
+- 检查参数，判断排序依据
+- 从`ticketTree`找到所有符合条件的
+  - `Find`找到所有符合条件的`ticket`的地址
+  - `FindTicket`找到具体的票
+  - 排序输出
+
+### `query_transfer`
+
+- 检查参数（包括时间合法性），判断排序依据
+- 找可能符合要求的换乘车票
+
+  - 从起始站到某中转站的所有合法车票存在map里
+
+  - `FindTransferFrom`找起始站匹配的车票，使用`map[]`若中转站未出现过，新建中转站。将车票地址加入到`vec`
+  - `FindTransferTo`查找到达站匹配的车票，检查起始站是否在map里。使用`map.at()`，若不存在，抛出异常；存在车票地址插入`vec`
+- 构建option_vec，存所有可用选择
+  - `TryTransfer`遍历map，判断是否为可用中转站
+    - `CheckTransferTicket`，判断是否真正可行（时间合法）
+    - 合法，插入option_vec
+  - `PrintOption`，判断合法性（同一辆？），找最优解输出
+
+
+
+### `buy_ticket`
+
+- 检查参数，标记是否接受候补
+- 检查用户是否已经登录
+- 找火车，初步检查（合法时间？要求车票永远无法满足？）
+- `GetStationIndex`
+  - 检查车站、时间合法性
+  - 计算费用
+  - 引用参数`start,end`给出station的下标，`leaving_time`给出相对时间，用于计算票的起售时间
+- 各种合法性的判断
+- `BuyTicket`，计算到具体某天的seat，尝试买票。票不足，是否候补
+- 交易成功，记录交易信息`transactionSystem.AddTransaction`
+  - 若候补`waitingList.StartWaiting`
+    - key：该班次第一二站seat的文件地址（用来唯一确定车次），时间戳
+    - value：站的index，票数，交易信息地址
+
+
+
+### `query_order`
+
+- 检查参数，检查用户是否登录
+- `transactionTree`找用户所有交易信息，插入vec
+- 反向遍历输出要求项
+
+
+
+### `refund_ticket`
+
+- 检查参数，检查用户是否登录
+- `transactionTree`找用户所有交易信息，插入vec
+- 找到退票交易，读`transactionDetail`
+- 检查交易状态
+  - `refunded`
+  - `success`：`RefundTicket`
+    - 票回补
+    - `waitingList.Rollback`
+      - 所有该班次现有车票放在seat_vec
+      - 找到所有该班次车的pending交易，插入vec
+      - 遍历vec，`RollBack`
+        - 读车票，判断是否满足，做增减，修改`transactionFile`和`waitingListTree`
+      - 将回滚后seat写回文件
+  - `pending`直接从`waitingList`删掉
+  - 修稿交易状态，写回交易文件
+
+
+
+### `clean`
+
+调用`loginList`的`Clear`：将map清空
+
+调用`userSystem`，`trainSystem`，`waitingList`，`transactionSystem`，`ticketSystem`的`Clean`：将BPT、BPIT清空
+
+ 
